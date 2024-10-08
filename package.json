@@ -1,0 +1,36 @@
+{
+  "name": "wdb-template",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "prepare": "husky"
+  },
+  "dependencies": {
+    "next": "14.2.13",
+    "react": "^18",
+    "react-dom": "^18"
+  },
+  "devDependencies": {
+    "@radix-ui/react-switch": "^1.1.0",
+    "@types/node": "^20",
+    "@types/react": "^18",
+    "@types/react-dom": "^18",
+    "eslint": "^8",
+    "eslint-config-next": "14.2.13",
+    "husky": "^9.1.6",
+    "lint-staged": "^15.2.10",
+    "postcss": "^8",
+    "prettier": "^3.3.3",
+    "prettier-plugin-tailwindcss": "^0.6.6",
+    "tailwindcss": "^3.4.1",
+    "typescript": "^5"
+  },
+  "lint-staged": {
+    "*.{js,jsx,ts,tsx}": "eslint",
+    "*.{js,jsx,ts,tsx,css,md}": "prettier --write"
+  }
+}
