@@ -29,6 +29,9 @@ const config: Config = {
         textPrimary: "#FFFFFF",
         textSecondary: "#BFBFBF",
       },
+      fontFamily: {
+        sans: ["Inter"],
+      },
     },
   },
   plugins: [],
