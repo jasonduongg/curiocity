@@ -1,4 +1,5 @@
 import CustomSwitch from "@/components/CustomSwitch";
+import S3Button from "@/components/S3Button";
 
 export default function Home() {
   return (
@@ -11,6 +12,7 @@ export default function Home() {
         information!
       </p>
       <CustomSwitch />
+      <S3Button />
     </div>
   );
 }
