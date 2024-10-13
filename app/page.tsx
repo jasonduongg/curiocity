@@ -1,7 +1,9 @@
-import TextEditor from "@/components/TextEditor";
+import CustomSwitch from "@/components/CustomSwitch";
+import S3Button from "@/components/S3Button";
 
 export default function Home() {
   return (
+     <S3Button />
     <div className="flex h-screen flex-col space-y-4">
       <h1 className="text-2xl">Curiocity x WDB</h1>
 
