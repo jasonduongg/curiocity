@@ -18,9 +18,8 @@ const TextEditor = () => {
 
     const params = {
       Bucket: process.env.S3_UPLOAD_BUCKET || "",
-      Key: file.name,
+      Key: "test",
       Body: content,
-      ContentType: content.type,
     };
 
     try {
