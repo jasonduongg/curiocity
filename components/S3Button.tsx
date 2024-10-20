@@ -1,18 +1,19 @@
-"use client"
+"use client";
 import { useState, useRef } from "react";
 
 export default function S3Button() {
   const [imageUrl, setImageUrl] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (
+    event: React.ChangeEvent<HTMLInputElement>,
+  ) => {
     const file = event.target.files?.[0];
 
     if (!file) return;
 
     try {
-
-      const response = await fetch("/api/s3-upload", {
+      const response = await fetch("/api/db", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -34,7 +35,7 @@ export default function S3Button() {
       });
 
       if (uploadResponse.ok) {
-        const s3FilePath = signedUrl.split('?')[0];
+        const s3FilePath = signedUrl.split("?")[0];
         setImageUrl(s3FilePath);
       } else {
         console.error("Failed to upload file to S3");
@@ -46,11 +47,11 @@ export default function S3Button() {
 
   return (
     <div>
-      <input 
-        type="file" 
-        ref={fileInputRef} 
-        style={{ display: "none" }} 
-        onChange={handleFileChange} 
+      <input
+        type="file"
+        ref={fileInputRef}
+        style={{ display: "none" }}
+        onChange={handleFileChange}
       />
 
       <button
