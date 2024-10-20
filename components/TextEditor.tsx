@@ -1,112 +1,95 @@
 "use client";
 
-import React, { forwardRef, useEffect, useLayoutEffect, useRef } from "react";
-import Quill, { DeltaStatic } from "quill";
-import "quill/dist/quill.snow.css";
+import React, { useState } from "react";
+import ReactQuill from "react-quill";
+import "react-quill/dist/quill.snow.css";
+import Button from "./Button";
+import AWS from "aws-sdk";
 
-interface EditorProps {
-  readOnly?: boolean;
-  defaultValue?: DeltaStatic | string;
-  onTextChange?: (
-    delta: DeltaStatic,
-    oldDelta: DeltaStatic,
-    source: string,
-  ) => void;
-  onSelectionChange?: (
-    range: Quill.RangeStatic | null,
-    oldRange: Quill.RangeStatic | null,
-    source: string,
-  ) => void;
-}
+const TextEditor = () => {
+  const s3 = new AWS.S3({
+    accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+    region: process.env.S3_UPLOAD_REGION,
+  });
 
-const Editor = forwardRef<Quill | null, EditorProps>(
-  (
-    { readOnly = false, defaultValue = "", onTextChange, onSelectionChange },
-    ref,
-  ) => {
-    const containerRef = useRef<HTMLDivElement>(null);
+  const handleUpload = async () => {
+    if (!content) return;
 
-    const defaultValueRef = useRef<DeltaStatic | string | undefined>(
-      defaultValue,
-    );
-    const onTextChangeRef = useRef<
-      | ((delta: DeltaStatic, oldDelta: DeltaStatic, source: string) => void)
-      | undefined
-    >(onTextChange);
-    const onSelectionChangeRef = useRef<
-      | ((
-          range: Quill.RangeStatic | null,
-          oldRange: Quill.RangeStatic | null,
-          source: string,
-        ) => void)
-      | undefined
-    >(onSelectionChange);
+    const params = {
+      Bucket: process.env.S3_UPLOAD_BUCKET || "",
+      Key: "test",
+      Body: content,
+    };
 
-    useLayoutEffect(() => {
-      onTextChangeRef.current = onTextChange;
-      onSelectionChangeRef.current = onSelectionChange;
-    }, [onTextChange, onSelectionChange]);
+    try {
+      const response = await s3.upload(params).promise();
+      console.log("File uploaded successfully:", response);
+      alert("File uploaded successfully!");
+    } catch (error) {
+      console.error("Error uploading file:", error);
+      alert(`Error uploading file: ${error.message}`);
+    }
+  };
 
-    useEffect(() => {
-      if (ref && typeof ref !== "function" && ref.current) {
-        ref.current.enable(!readOnly);
-      }
-    }, [ref, readOnly]);
+  const [content, setContent] = useState("");
 
-    useEffect(() => {
-      const container = containerRef.current;
-      if (!container) return;
+  // Quill modules configuration
+  const modules = {
+    toolbar: [
+      [{ header: "1" }, { header: "2" }, { font: [] }],
+      [{ size: [] }],
+      ["bold", "italic", "underline", "strike", "blockquote"],
+      [
+        { list: "ordered" },
+        { list: "bullet" },
+        { indent: "-1" },
+        { indent: "+1" },
+      ],
+      ["link", "image", "video"],
+      ["clean"],
+    ],
+    clipboard: {
+      // toggle to add extra line breaks when pasting HTML:
+      matchVisual: false,
+    },
+  };
 
-      const editorContainer = container.ownerDocument.createElement("div");
-      container.appendChild(editorContainer);
+  return (
+    <div>
+      <div className="flex h-[10rem] items-center justify-center">
+        <h1 className="text-6xl font-extrabold">Qull.Js Text Editor</h1>
+      </div>
 
-      const quill = new Quill(editorContainer, {
-        theme: "snow",
-        readOnly: readOnly,
-      });
+      <ReactQuill
+        className="h-[10rem]"
+        theme="snow"
+        formats={[
+          "header",
+          "font",
+          "size",
+          "bold",
+          "italic",
+          "underline",
+          "strike",
+          "blockquote",
+          "list",
+          "bullet",
+          "indent",
+          "link",
+          "image",
+          "video",
+        ]}
+        placeholder="Write something amazing..."
+        modules={modules}
+        onChange={setContent}
+        value={content}
+      />
 
-      if (ref) {
-        if (typeof ref === "function") {
-          ref(quill);
-        } else {
-          (ref as React.MutableRefObject<Quill | null>).current = quill;
-        }
-      }
+      <Button label="save" onClick={handleUpload} />
+      <Button label="delete" onClick={handleUpload} />
+    </div>
+  );
+};
 
-      if (defaultValueRef.current) {
-        if (typeof defaultValueRef.current === "string") {
-          quill.setText(defaultValueRef.current);
-        } else {
-          quill.setContents(defaultValueRef.current);
-        }
-      }
-
-      quill.on("text-change", (delta, oldDelta, source) => {
-        onTextChangeRef.current?.(delta, oldDelta, source);
-      });
-
-      quill.on("selection-change", (range, oldRange, source) => {
-        onSelectionChangeRef.current?.(range, oldRange, source);
-      });
-
-      return () => {
-        if (ref) {
-          if (typeof ref === "function") {
-            ref(null);
-          } else {
-            (ref as React.MutableRefObject<Quill | null>).current = null;
-          }
-        }
-        container.innerHTML = "";
-      };
-    }, [ref, readOnly]);
-
-    return (
-      <div ref={containerRef} style={{ width: "50%", height: "100%" }}></div>
-    );
-  },
-);
-
-Editor.displayName = "Editor";
-
-export default Editor;
+export default TextEditor;
