@@ -10,7 +10,7 @@
     "prepare": "husky"
   },
   "dependencies": {
-    "@aws-sdk/client-dynamodb": "^3.670.0",
+    "@aws-sdk/client-dynamodb": "^3.674.0",
     "@aws-sdk/client-lex-runtime-v2": "^3.670.0",
     "@aws-sdk/client-s3": "^3.670.0",
     "@aws-sdk/lib-dynamodb": "^3.670.0",
@@ -18,7 +18,8 @@
     "@radix-ui/react-label": "^2.1.0",
     "aws-sdk": "^2.1691.0",
     "dotenv": "^16.4.5",
-    "next": "14.2.13",
+    "next": "^14.2.13",
+    "next-auth": "^4.24.8",
     "next-s3-upload": "^0.3.4",
     "quill": "^2.0.2",
     "react": "^18",
