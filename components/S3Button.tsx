@@ -1,62 +1,31 @@
-"use client"
-import { useState, useRef } from "react";
+"use client";
+
+import { useState } from "react";
+import { useS3Upload } from "next-s3-upload";
 
 export default function S3Button() {
   const [imageUrl, setImageUrl] = useState("");
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const { FileInput, openFileDialog, uploadToS3 } = useS3Upload();
 
-  const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
+  const handleFileChange = async (file: any) => {
+    const { url } = await uploadToS3(file);
+    setImageUrl(url);
 
-    if (!file) return;
-
-    try {
-
-      const response = await fetch("/api/s3-upload", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          fileName: file.name,
-          fileType: file.type,
-        }),
-      });
-
-      const { url: signedUrl } = await response.json();
-
-      const uploadResponse = await fetch(signedUrl, {
-        method: "PUT",
-        headers: {
-          "Content-Type": file.type,
-        },
-        body: file,
-      });
-
-      if (uploadResponse.ok) {
-        const s3FilePath = signedUrl.split('?')[0];
-        setImageUrl(s3FilePath);
-      } else {
-        console.error("Failed to upload file to S3");
-      }
-    } catch (error) {
-      console.error("Error uploading file:", error);
-    }
+    // call db api to add file path to document
+    fetch("/api/db", {
+      method: "PUT",
+      body: JSON.stringify({
+        url: url,
+      }),
+    });
   };
 
   return (
     <div>
-      <input 
-        type="file" 
-        ref={fileInputRef} 
-        style={{ display: "none" }} 
-        onChange={handleFileChange} 
-      />
+      <FileInput onChange={handleFileChange} />
 
       <button
-        onClick={() => {
-          fileInputRef.current?.click();
-        }}
+        onClick={openFileDialog}
         style={{
           backgroundColor: "transparent",
           color: "black",
@@ -71,14 +40,7 @@ export default function S3Button() {
         Upload file
       </button>
 
-      {imageUrl && (
-        <div>
-          <p>File uploaded successfully!</p>
-          <a href={imageUrl} target="_blank" rel="noopener noreferrer">
-            View Uploaded File
-          </a>
-        </div>
-      )}
+      {imageUrl && <img src={imageUrl} />}
     </div>
   );
 }
