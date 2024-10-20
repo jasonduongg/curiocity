@@ -57,10 +57,6 @@ const TextEditor = () => {
 
   return (
     <div>
-      <div className="flex h-[10rem] items-center justify-center">
-        <h1 className="text-6xl font-extrabold">Qull.Js Text Editor</h1>
-      </div>
-
       <ReactQuill
         className="h-[10rem]"
         theme="snow"

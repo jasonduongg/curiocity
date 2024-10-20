@@ -6,9 +6,11 @@ import TextInput from "@/components/TextInput";
 import TableRow from "@/components/TableRow";
 import { FileIcon } from "@radix-ui/react-icons";
 import NavBar from "@/components/NavBar";
+import TextEditor from "@/components/TextEditor";
 
 export default function TestPage() {
   const [reports, setReports] = useState<string[]>([]);
+  const [swapState] = useState(true);
 
   const addReport = () => {
     const newReport: string = `Report ${reports.length + 1}`;
@@ -45,17 +47,29 @@ export default function TestPage() {
                   </div>
                 </div>
                 <div className="flex grow flex-col overflow-hidden border-zinc-700 py-6">
-                  <div>
-                    <p className="mb-4 px-8 text-2xl font-medium text-textPrimary">
-                      {" "}
-                      Recent Reports
-                    </p>
-                  </div>
-                  <div className="flex h-0 h-full w-full flex-wrap justify-around gap-8 overflow-y-auto px-8">
-                    {reports.map((item, index) => (
-                      <GridItem key={index} title={item} />
-                    ))}
-                  </div>
+                  {swapState ? (
+                    <div>
+                      <p className="mb-4 px-8 text-2xl font-medium text-textPrimary">
+                        {" "}
+                        Text Editor
+                      </p>
+                      <div className="bg-white">
+                        <TextEditor></TextEditor>
+                      </div>
+                    </div>
+                  ) : (
+                    <div>
+                      <p className="mb-4 px-8 text-2xl font-medium text-textPrimary">
+                        {" "}
+                        Recent Reports
+                      </p>
+                      <div className="flex h-0 h-full w-full flex-wrap justify-around gap-8 overflow-y-scroll px-8">
+                        {reports.map((item, index) => (
+                          <GridItem key={index} title={item} />
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
