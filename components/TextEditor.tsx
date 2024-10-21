@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import ReactQuill from "react-quill";
 import "react-quill/dist/quill.snow.css";
 import Button from "./Button";
@@ -50,15 +50,27 @@ const TextEditor = () => {
       ["clean"],
     ],
     clipboard: {
-      // toggle to add extra line breaks when pasting HTML:
       matchVisual: false,
     },
   };
 
+  // Convert this to css file
+  useEffect(() => {
+    const toolbar = document.querySelector(".ql-toolbar");
+    if (toolbar) {
+      toolbar.style.position = "-webkit-sticky";
+      toolbar.style.position = "sticky";
+      toolbar.style.top = "0";
+      toolbar.style.zIndex = "10";
+      toolbar.style.backgroundColor = "rgb(255 255 255 / var(--tw-bg-opacity))";
+      toolbar.style.borderBottom = "1px solid #ccc";
+    }
+  }, []);
+
   return (
-    <div>
+    <div className="flex h-full max-w-full flex-col bg-white">
       <ReactQuill
-        className="h-[10rem]"
+        className="h-full max-w-full overflow-y-auto bg-white"
         theme="snow"
         formats={[
           "header",
@@ -81,9 +93,10 @@ const TextEditor = () => {
         onChange={setContent}
         value={content}
       />
-
-      <Button label="save" onClick={handleUpload} />
-      <Button label="delete" onClick={handleUpload} />
+      <div className="flex h-[10vh] items-center justify-end space-x-4 bg-gray-100 p-4">
+        <Button label="Save" onClick={handleUpload} />
+        <Button label="Delete" onClick={handleUpload} />
+      </div>
     </div>
   );
 };
