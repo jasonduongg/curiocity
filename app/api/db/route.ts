@@ -124,22 +124,30 @@ export async function PUT(request: Request) {
     );
 
     console.log("Updated object: ", res);
-  } // else, create new obj
-  else {
-    const Item: document = {
-      id: uuidv4(),
-      name: data?.name || "test",
-      files: [data?.url || ""],
-      text: data?.text || "test",
-    };
-
-    const inputData = AWS.DynamoDB.Converter.marshall(Item);
-    console.log("marshal data: ", inputData);
-
-    const res = await putObject(client, inputData);
-
-    console.log("Put new object: ", res);
   }
+
+  return Response.json({});
+}
+
+export async function POST(request: Request) {
+  console.log("call create dynamodb");
+  const data = await request.json();
+
+  console.log(data);
+
+  const Item: document = {
+    id: uuidv4(),
+    name: data?.name || "test",
+    files: [data?.url || ""],
+    text: data?.text || "test",
+  };
+
+  const inputData = AWS.DynamoDB.Converter.marshall(Item);
+  console.log("marshal data: ", inputData);
+
+  const res = await putObject(client, inputData);
+
+  console.log("Put new object: ", res);
 
   return Response.json({});
 }

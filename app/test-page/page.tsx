@@ -16,8 +16,8 @@ export default function TestPage() {
       fetch("/api/db", {
         method: "PUT",
         body: JSON.stringify({
-          id: "ad42ecbf-120e-455c-bbe1-6c076d625418",
-          name: "test new",
+          id: "ad42ecbf-120e-455c-bbe1-6c076d625418", // Specify ID of existing object
+          name: "test new", // and fields to update
         }),
       });
     }
@@ -32,10 +32,9 @@ export default function TestPage() {
     if (endpoint === "create") {
       // create
       fetch("/api/db", {
-        method: "PUT",
+        method: "POST",
         body: JSON.stringify({
-          name: "test object 3",
-          files: [],
+          name: "test object 5",
           text: "",
         } as newDocument),
       });
@@ -52,7 +51,7 @@ export default function TestPage() {
   };
 
   useEffect(() => {
-    testEndpoint("update");
+    testEndpoint("create");
   }, []);
 
   return (
