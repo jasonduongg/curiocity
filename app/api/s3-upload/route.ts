@@ -23,8 +23,7 @@ export async function POST(req: Request) {
       const signedUrl = await s3.getSignedUrlPromise("putObject", s3Params);
 
       return NextResponse.json({ url: signedUrl }, { status: 200 });
-  }
-  catch(error) {
+  } catch(error) {
     return NextResponse.json({ error: "Failed to create S3 signed URL" }, { status: 500 });
   }
 }
