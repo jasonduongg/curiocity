@@ -11,9 +11,10 @@ const getAllEntries = async () => {
   try {
     const params = {
       TableName: tableName,
-      ProjectionExpression: "id, #name", // Retrieve only `id` and `name`
+      ProjectionExpression: "id, #name, #text", // Retrieve only `id` and `name`
       ExpressionAttributeNames: {
         "#name": "name", // Handle reserved word `name`
+        "#text": "text",
       },
     };
 

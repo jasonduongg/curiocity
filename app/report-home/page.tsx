@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import GridItem from "@/components/GridItem";
 import TextInput from "@/components/TextInput";
 import TableRow from "@/components/TableRow";
@@ -8,14 +8,32 @@ import { FileIcon } from "@radix-ui/react-icons";
 import NavBar from "@/components/NavBar";
 import TextEditor from "@/components/TextEditor";
 
+type newDocument = {
+  id?: string; // Add id to the newDocument type for consistency
+  name: string;
+  files: Array<string>;
+  text: string;
+};
+
 export default function TestPage() {
-  const [reports, setReports] = useState<string[]>([]);
+  const [allDocuments, setAllDocuments] = useState<newDocument[]>([]); // Fixed initial state to an empty array
   const [swapState, setSwapState] = useState(false);
 
-  const addReport = () => {
-    const newReport: string = `Report ${reports.length + 1}`;
-    setReports([...reports, newReport]);
+  const fetchDocuments = () => {
+    fetch("/api/db/getAll", {
+      method: "GET",
+    })
+      .then((r) => r.json())
+      .then((data) => {
+        console.log("All documents response:", data);
+        setAllDocuments(data);
+      })
+      .catch((error) => console.error("Error fetching all documents:", error));
   };
+
+  useEffect(() => {
+    fetchDocuments();
+  }, []);
 
   return (
     <>
@@ -39,10 +57,6 @@ export default function TestPage() {
                 </div>
               </div>
 
-              <div className="flex flex-col rounded-xl border-[1px] border-zinc-700 bg-bgSecondary px-8 py-2 text-sm">
-                <TextInput placeholder="Search for documents..."></TextInput>
-              </div>
-
               <div className="flex h-full max-w-full grow flex-col overflow-hidden rounded-lg border-[2px] border-black bg-bgSecondary">
                 <div className="flex h-full max-w-full grow flex-col overflow-hidden border-zinc-700">
                   {swapState ? (
@@ -52,6 +66,10 @@ export default function TestPage() {
                   ) : (
                     <div className="h-full">
                       <div className="flex flex-col border-b-[1px] border-zinc-700 pb-6">
+                        <div className="flex flex-col rounded-xl border-[1px] border-zinc-700 bg-bgSecondary px-8 py-2 text-sm">
+                          <TextInput placeholder="Search for documents..."></TextInput>
+                        </div>
+
                         <p className="mx-8 my-4 text-2xl font-semibold text-textPrimary">
                           {" "}
                           Create Report
@@ -59,7 +77,7 @@ export default function TestPage() {
 
                         <div
                           className="mx-8 mt-4 grid place-items-center rounded-xl border-[1px] border-textSecondary"
-                          onClick={addReport}
+                          onClick={() => {}}
                         >
                           <p className="text-4xl text-textPrimary">+</p>
                         </div>
@@ -70,9 +88,13 @@ export default function TestPage() {
                         Recent Reports
                       </p>
                       {/* not sure why h-full doesnt work here */}
-                      <div className="grid h-[50vh] w-full grid-cols-3 gap-8 overflow-y-scroll p-8">
-                        {reports.map((item, index) => (
-                          <GridItem key={index} title={item} />
+                      <div className="flex h-[50vh] w-full flex-wrap gap-8 overflow-y-scroll p-8">
+                        {allDocuments.map((item, index) => (
+                          <GridItem
+                            key={index}
+                            title={item.name}
+                            text={item.text}
+                          />
                         ))}
                       </div>
                     </div>

@@ -1,6 +1,8 @@
 "use client";
 import { useState } from "react";
 import AWS from "aws-sdk";
+import TextEditor from "@/components/TextEditor";
+import AuthButton from "@/components/AuthButton";
 
 type newDocument = {
   id?: string; // Add id to the newDocument type for consistency
@@ -12,6 +14,7 @@ type newDocument = {
 export default function TestPage() {
   const [document, setDocument] = useState<newDocument | null>(null);
   const [allDocuments, setAllDocuments] = useState<newDocument[]>([]); // Fixed initial state to an empty array
+  const [term, setTerm] = useState("");
 
   const testEndpoint = (endpoint: string) => {
     if (endpoint === "update") {
@@ -30,7 +33,7 @@ export default function TestPage() {
     }
     if (endpoint === "get") {
       // Get a single document
-      fetch("/api/db?id=ad42ecbf-120e-455c-bbe1-6c076d625418", {
+      fetch(`/api/db?id=${term}`, {
         method: "GET",
       })
         .then((r) => r.json())
@@ -79,7 +82,7 @@ export default function TestPage() {
       fetch("/api/db", {
         method: "DELETE",
         body: JSON.stringify({
-          id: "052ef1f7-8c11-4428-b7d7-5dc1b7c56a59",
+          id: "052ef1f7-8c11-4428-b7d7-5dc1b7c56a59", // Replace with actual ID
         }),
         headers: {
           "Content-Type": "application/json",
@@ -88,10 +91,22 @@ export default function TestPage() {
     }
   };
 
+  const deleteDocument = (id: string) => {
+    fetch("/api/db", {
+      method: "DELETE",
+      body: JSON.stringify({ id }),
+      headers: { "Content-Type": "application/json" },
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        console.log("Document deleted", data);
+        setAllDocuments((prevDocs) => prevDocs.filter((doc) => doc.id !== id)); // Update state
+      })
+      .catch((error) => console.error("Error deleting document:", error));
+  };
+
   return (
     <div className="flex h-screen flex-col items-center justify-center">
-      <p>This is a test page to demonstrate Next.js routing.</p>
-
       {/* Rendering the document if fetched */}
       {document ? (
         <div>
@@ -106,24 +121,39 @@ export default function TestPage() {
       ) : (
         <p>Loading single document...</p>
       )}
-
-      <h2>All Documents</h2>
       {/* Rendering all documents */}
       {allDocuments.length > 0 ? (
         <ul>
           {allDocuments.map((doc, index) => (
             <li key={index}>
-              {doc.id ? `${doc.id}: ` : "No ID"}{" "}
-              {doc.name ? doc.name : "No Name"}
+              {doc.id} {doc.name} {doc.text}
+              <button
+                onClick={() => deleteDocument(doc.id || "")} // Handle delete click
+                className="ml-2 text-red-500"
+              >
+                Delete
+              </button>
             </li>
           ))}
         </ul>
       ) : (
         <p>Loading all documents...</p>
       )}
-
+      <input
+        type="text"
+        value={term}
+        onChange={(e) => setTerm(e.target.value)} // Update title state on input change
+        placeholder="Enter document title"
+        className="mb-4 h-[5vh] w-1/3 bg-gray-200 p-2"
+      />
       <button onClick={() => testEndpoint("get")}>Get 1</button>
       <button onClick={() => testEndpoint("getAll")}>Get All</button>
+
+      <div className="h-[40vh]">
+        <TextEditor></TextEditor>
+      </div>
+
+      <AuthButton></AuthButton>
     </div>
   );
 }
