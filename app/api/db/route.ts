@@ -90,7 +90,6 @@ export async function GET(request: Request) {
   const id = url.searchParams.get("id"); // Retrieves the 'id' query parameter
 
   const item = await getObject(client, id);
-
   return Response.json(item.Item);
 }
 
