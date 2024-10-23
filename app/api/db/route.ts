@@ -104,6 +104,7 @@ export async function PUT(request: Request) {
     const dynamoItem = await getObject(client, data.id);
 
     if (!dynamoItem?.Item) {
+      console.log("here");
       throw new Error("Could not retrieve the item");
     }
 

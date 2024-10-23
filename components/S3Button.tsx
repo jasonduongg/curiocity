@@ -14,7 +14,7 @@ export default function S3Button() {
 
       // Call your API to store the file path in the database
       const response = await fetch("/api/s3-upload", {
-        method: "POST",
+        method: "P",
         headers: {
           "Content-Type": "application/json",
         },
