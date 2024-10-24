@@ -11,23 +11,37 @@ import AWS from "aws-sdk";
 dotenv.config();
 
 const client = new DynamoDBClient({ region: "us-west-1" });
-const tableName = process.env.TABLE_NAME || "";
+const tableName = process.env.DOCUMENT_TABLE || "";
 export const maxDuration = 60;
 export const dynamic = "force-dynamic";
 
-type document = {
+export type Resource = {
   id: string;
+  documentId: string;
   name: string;
-  files: Array<string>;
+  text: string;
+  url: string;
+};
+
+export type Folder = {
+  name: string;
+  resources: Array<string>;
+};
+
+export type Document = {
+  id: string;
+  owner: string;
+  name: string;
+  folders: Record<string, Folder>;
   text: string;
 };
 
 // send json object to dynamodb
-const putObject = async (client: any, inputData: any) => {
+export const putObject = async (client: any, inputData: any, table: string) => {
   const res = await client
     .send(
       new PutItemCommand({
-        TableName: tableName,
+        TableName: table,
         Item: inputData as any,
       }),
     )
@@ -36,18 +50,18 @@ const putObject = async (client: any, inputData: any) => {
     })
     .catch((error: any) => {
       console.log("error", error);
-      throw new Error("Could not retrieve the item");
+      throw new Error("Could not put the item");
     });
 
   return res;
 };
 
 // get json object from dynamodb
-const getObject = async (client: any, id: any) => {
+export const getObject = async (client: any, id: any, table: string) => {
   const res = await client
     .send(
       new GetItemCommand({
-        TableName: tableName,
+        TableName: table,
         Key: {
           id: { S: id },
         },
@@ -62,10 +76,10 @@ const getObject = async (client: any, id: any) => {
   return res;
 };
 
-const deleteObject = async (client: any, id: any) => {
+export const deleteObject = async (client: any, id: any, table: string) => {
   // Define the parameters for the DeleteItemCommand
   const params = {
-    TableName: tableName, // The name of the DynamoDB table
+    TableName: table, // The name of the DynamoDB table
     Key: {
       id: { S: id }, // The key of the item (id in this case is a string, so we use {S: value})
     },
@@ -89,7 +103,7 @@ export async function GET(request: Request) {
   const url = new URL(request.url);
   const id = url.searchParams.get("id"); // Retrieves the 'id' query parameter
 
-  const item = await getObject(client, id);
+  const item = await getObject(client, id, tableName);
   return Response.json(item.Item);
 }
 
@@ -101,7 +115,7 @@ export async function PUT(request: Request) {
 
   // if had id (exiting object), pull from aws and update
   if (data.id) {
-    const dynamoItem = await getObject(client, data.id);
+    const dynamoItem = await getObject(client, data.id, tableName);
 
     if (!dynamoItem?.Item) {
       throw new Error("Could not retrieve the item");
@@ -111,7 +125,10 @@ export async function PUT(request: Request) {
 
     const updatedObj = AWS.DynamoDB.Converter.unmarshall(dynamoItem.Item);
     for (const key in data) {
-      updatedObj[key] = data[key];
+      if (key !== "resources") {
+        // don't overwrite resources
+        updatedObj[key] = data[key];
+      }
     }
 
     console.log("updatedObj", updatedObj);
@@ -120,6 +137,7 @@ export async function PUT(request: Request) {
     const res = await putObject(
       client,
       AWS.DynamoDB.Converter.marshall(updatedObj),
+      tableName,
     );
 
     console.log("Updated object: ", res);
@@ -134,28 +152,33 @@ export async function POST(request: Request) {
 
   console.log(data);
 
-  const Item: document = {
+  const defaultFolder = { name: "General", resources: [] };
+
+  const Item: Document = {
     id: uuidv4(),
+    owner: "",
     name: data?.name || "test",
-    files: [data?.url || ""],
+    folders: { General: defaultFolder },
     text: data?.text || "test",
   };
+
+  console.log(Item);
 
   const inputData = AWS.DynamoDB.Converter.marshall(Item);
   console.log("marshal data: ", inputData);
 
-  const res = await putObject(client, inputData);
+  await putObject(client, inputData, tableName);
 
-  console.log("Put new object: ", res);
+  console.log("Put new object ");
 
-  return Response.json({});
+  return Response.json(Item);
 }
 
 export async function DELETE(request: Request) {
   console.log("call put dynamodb");
   const data = await request.json();
 
-  await deleteObject(client, data.id);
+  await deleteObject(client, data.id, tableName);
 
   return Response.json({ msg: "success" });
 }

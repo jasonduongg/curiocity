@@ -11,13 +11,28 @@ export default function S3Button() {
     const { url } = await uploadToS3(file);
     setImageUrl(url);
 
-    // call db api to add file path to document
-    fetch("/api/db", {
-      method: "PUT",
+    // call db api to create new docum,ent
+    // fetch("/api/db", {
+    //   method: "POST",
+    //   body: JSON.stringify({
+    //     name: "test doc",
+    //     text: "test"
+    //   }),
+    // }).then(r => r.json()).then(res => console.log(res));
+
+    // call to add new resource to 'General'
+    fetch("/api/db/resource", {
+      method: "POST",
       body: JSON.stringify({
+        name: "test resource",
+        documentId: "4b3bbd83-c30b-4223-91af-9f97fd4f868c",
+        text: "test",
         url: url,
+        folderName: "General",
       }),
-    });
+    })
+      .then((r) => r.json())
+      .then((res) => console.log(res));
   };
 
   return (
