@@ -24,8 +24,8 @@ const AddingNotes: React.FC = () => {
   return (
     <div
       style={{
-        padding: "20px",
-        maxWidth: "600px",
+        padding: "2rem",
+        maxWidth: "100%",
         fontFamily: "Arial, sans-serif",
       }}
     >
@@ -33,12 +33,12 @@ const AddingNotes: React.FC = () => {
         onClick={() => setIsModalOpen(true)}
         style={{
           backgroundColor: "#fff",
-          borderRadius: "5px",
-          padding: "10px 20px",
+          borderRadius: "0.5rem",
+          padding: "1rem 2rem",
           color: "#000",
           cursor: "pointer",
           border: "1px solid black",
-          marginBottom: "20px",
+          marginBottom: "2rem",
         }}
       >
         Add note
@@ -67,10 +67,10 @@ const AddingNotes: React.FC = () => {
               transform: "translate(-50%, -50%)",
               backgroundColor: "#1B111F",
               color: "#fff",
-              padding: "20px",
-              borderRadius: "10px",
+              padding: "2rem",
+              borderRadius: "1rem",
+              width: "80%",
               maxWidth: "600px",
-              width: "100%",
               zIndex: 1001,
             }}
           >
@@ -78,11 +78,11 @@ const AddingNotes: React.FC = () => {
               onClick={closeModal}
               style={{
                 position: "absolute",
-                top: "10px",
-                right: "10px",
+                top: "1rem",
+                right: "1rem",
                 backgroundColor: "transparent",
                 border: "none",
-                fontSize: "20px",
+                fontSize: "2rem",
                 color: "#fff",
                 cursor: "pointer",
               }}
@@ -93,9 +93,9 @@ const AddingNotes: React.FC = () => {
             <div
               style={{
                 display: "flex",
-                width: "400px",
+                width: "55%",
                 alignItems: "center",
-                marginBottom: "10px",
+                marginBottom: "1rem",
               }}
             >
               {isEditingTitle ? (
@@ -107,12 +107,13 @@ const AddingNotes: React.FC = () => {
                     backgroundColor: "transparent",
                     border: "none",
                     color: "#fff",
-                    fontSize: "24px",
+                    fontSize: "1.5rem",
                     fontWeight: "700",
                     letterSpacing: "-0.5px",
                     flexGrow: 1,
                     outline: "none",
                   }}
+                  autoFocus
                 />
               ) : (
                 <h2
@@ -120,7 +121,7 @@ const AddingNotes: React.FC = () => {
                   style={{
                     flexGrow: 1,
                     cursor: "pointer",
-                    fontSize: "24px",
+                    fontSize: "1.5rem",
                     fontWeight: "700",
                     letterSpacing: "-0.5px",
                   }}
@@ -129,36 +130,38 @@ const AddingNotes: React.FC = () => {
                 </h2>
               )}
 
-              <button
-                onClick={() => setIsEditingTitle(true)}
-                style={{
-                  background: "none",
-                  border: "none",
-                  cursor: "pointer",
-                  marginLeft: "2px",
-                }}
-              >
-                <Pencil1Icon width={16} height={16} color="#0070f3" />{" "}
-              </button>
+              {!isEditingTitle && (
+                <button
+                  onClick={() => setIsEditingTitle(true)}
+                  style={{
+                    background: "none",
+                    border: "none",
+                    cursor: "pointer",
+                    marginLeft: "0.5rem",
+                  }}
+                >
+                  <Pencil1Icon width={16} height={16} color="#0070f3" />
+                </button>
+              )}
             </div>
 
-            <p style={{ fontSize: "12px", color: "#B4B3B7" }}>
+            <p style={{ fontSize: "0.875rem", color: "#B4B3B7" }}>
               Uploaded: {uploadedAt} | PDF File
             </p>
 
             <div
               style={{
                 borderTop: "1px solid #444",
-                margin: "20px 0",
+                margin: "2rem 0",
               }}
             />
 
             <div
               style={{
                 display: "flex",
-                marginBottom: "80px",
-                width: "400px",
-                marginTop: "20px",
+                marginBottom: "5rem",
+                width: "90%",
+                marginTop: "1rem",
               }}
             >
               {isEditingNotes ? (
@@ -169,54 +172,57 @@ const AddingNotes: React.FC = () => {
                   style={{
                     backgroundColor: "transparent",
                     border: "none",
-                    color: "#fff",
-                    fontSize: "16px",
+                    color: "#B4B3B7",
+                    fontSize: "1rem",
                     fontWeight: "600",
                     letterSpacing: "-0.5px",
                     width: "100%",
-                    minHeight: "100px",
-                    borderRadius: "5px",
+                    minHeight: "6rem",
+                    borderRadius: "0.5rem",
                     outline: "none",
-                    padding: "10px",
+                    padding: "1rem",
                   }}
                 />
               ) : (
-                <p
-                  onClick={() => setIsEditingNotes(true)}
-                  style={{
-                    flexGrow: 1,
-                    cursor: "pointer",
-                    fontSize: "14px",
-                    fontWeight: "600",
-                    letterSpacing: "-0.5px",
-                    color: "#B4B3B7",
-                  }}
-                >
-                  {notes}
-                </p>
+                <div style={{ display: "flex", width: "100%" }}>
+                  <p
+                    onClick={() => setIsEditingNotes(true)}
+                    style={{
+                      flexGrow: 1,
+                      cursor: "pointer",
+                      fontSize: "1rem",
+                      fontWeight: "600",
+                      letterSpacing: "-0.5px",
+                      color: "#B4B3B7",
+                    }}
+                  >
+                    {notes}
+                  </p>
+
+                  {!isEditingNotes && (
+                    <button
+                      onClick={() => setIsEditingNotes(true)}
+                      style={{
+                        background: "none",
+                        border: "none",
+                        cursor: "pointer",
+                        marginLeft: "0.5rem",
+                      }}
+                    >
+                      <Pencil1Icon width={16} height={16} color="#0070f3" />
+                    </button>
+                  )}
+                </div>
               )}
-              {/* Edit Icon */}
-              <button
-                onClick={() => setIsEditingNotes(true)}
-                style={{
-                  background: "none",
-                  border: "none",
-                  cursor: "pointer",
-                  marginLeft: "2px",
-                  fontWeight: "600",
-                }}
-              >
-                <Pencil1Icon width={16} height={16} color="#0070f3" />{" "}
-              </button>
             </div>
 
             <button
               onClick={handleSave}
               style={{
-                fontSize: "12px",
+                fontSize: "0.875rem",
                 backgroundColor: "#0777C9",
-                borderRadius: "20px",
-                padding: "4px 15px",
+                borderRadius: "1rem",
+                padding: "0.2rem 0.8rem",
                 color: "#fff",
                 cursor: "pointer",
                 border: "none",
