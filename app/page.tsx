@@ -1,5 +1,4 @@
 import S3Button from "@/components/S3Button";
-import TextEditor from "@/components/TextEditor";
 import AddNote from "@/components/AddingNotes";
 
 export default function Home() {
@@ -53,8 +52,6 @@ export default function Home() {
             textSecondary{" "}
           </div>
         </div>
-
-        <TextEditor />
       </div>
     </div>
   );
