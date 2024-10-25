@@ -68,7 +68,10 @@ export default function TestPage() {
                 <div className="flex h-full max-w-full grow flex-col overflow-hidden border-zinc-700">
                   {swapState ? (
                     <div className="h-full w-full max-w-full bg-black">
-                      <TextEditor document={currentDocument} />
+                      <TextEditor
+                        document={currentDocument}
+                        swapState={() => {}}
+                      />
                     </div>
                   ) : (
                     <div className="h-full">

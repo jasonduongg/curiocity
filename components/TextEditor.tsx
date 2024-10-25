@@ -14,9 +14,10 @@ type newDocument = {
 
 interface TextEditorProps {
   document?: newDocument; // Accept document as a prop
+  swapState: () => void;
 }
 
-const TextEditor = ({ document }: TextEditorProps) => {
+const TextEditor = ({ document, swapState }: TextEditorProps) => {
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [id, setID] = useState<string | undefined>("");
@@ -79,6 +80,8 @@ const TextEditor = ({ document }: TextEditorProps) => {
         console.log("Document updated", data);
       })
       .catch((error) => console.error("Error updating document:", error));
+
+    swapState();
   };
 
   // Quill modules configuration
