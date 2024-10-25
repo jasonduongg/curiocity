@@ -44,8 +44,24 @@ export async function POST(request: Request) {
     document.Item,
   ) as Document;
 
-  // append resource to the right document folder
+  // Check if the folder exists in the document; if not, initialize it
+  console.log(!newDocument.folders[data.folderName]);
+  console.log(data.folderName);
+  console.log(newDocument.folders[data.folderName]);
+  if (!newDocument.folders[data.folderName]) {
+    newDocument.folders[data.folderName] = {
+      name: data.folderName,
+      resources: [],
+    };
+  }
+
+  // Append the resource to the specified folder's resources
   newDocument.folders[data.folderName].resources.push(resourceId);
+
+  console.log("test");
+  console.log(newDocument.folders[data.folderName].resources);
+
+  // Convert the updated document to DynamoDB format
   const inputDocumentData = AWS.DynamoDB.Converter.marshall(newDocument);
   console.log("updated document w/ resource: ", newDocument);
 

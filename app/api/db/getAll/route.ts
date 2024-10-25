@@ -4,17 +4,18 @@ import { NextResponse } from "next/server";
 
 // Initialize DynamoDB client
 const client = new DynamoDBClient({ region: "us-west-1" });
-const tableName = process.env.TABLE_NAME || "";
+const tableName = process.env.DOCUMENT_TABLE || "";
 
 // Function to get all entries with only `id` and `name`
 const getAllEntries = async () => {
   try {
     const params = {
       TableName: tableName,
-      ProjectionExpression: "id, #name, #text", // Retrieve only `id` and `name`
+      ProjectionExpression: "id, #name, #text, #folders", // Retrieve only `id` and `name`
       ExpressionAttributeNames: {
         "#name": "name", // Handle reserved word `name`
         "#text": "text",
+        "#folders": "folders",
       },
     };
 

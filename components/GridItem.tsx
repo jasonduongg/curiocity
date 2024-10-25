@@ -8,7 +8,7 @@ export default function GridItem({ title, text, onClick }: Props) {
   return (
     <div
       className="flex min-w-[200px] flex-1 flex-wrap justify-start"
-      onClick={onClick}
+      onClick={() => onClick()}
     >
       <div className="flex h-64 w-48 min-w-48 flex-col items-stretch rounded-xl border-[1px] border-textSecondary">
         <div className="grow overflow-y-hidden">

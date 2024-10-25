@@ -3,16 +3,22 @@
 import { useEffect, useState } from "react";
 import GridItem from "@/components/GridItem";
 import TextInput from "@/components/TextInput";
-import TableRow from "@/components/TableRow";
-import { FileIcon } from "@radix-ui/react-icons";
+import TableFolder from "@/components/TableFolder"; // Import TableFolder component
 import NavBar from "@/components/NavBar";
 import TextEditor from "@/components/TextEditor";
 
 type newDocument = {
-  id?: string; // Add id to the newDocument type for consistency
+  id?: string;
   name: string;
   files: Array<string>;
   text: string;
+  folders?: Record<
+    string,
+    {
+      name: string;
+      resources: string[];
+    }
+  >;
 };
 
 export default function TestPage() {
@@ -22,6 +28,7 @@ export default function TestPage() {
     newDocument | undefined
   >(undefined);
 
+  // Fetch documents
   const fetchDocuments = () => {
     fetch("/api/db/getAll", {
       method: "GET",
@@ -38,10 +45,14 @@ export default function TestPage() {
     fetchDocuments();
   }, []);
 
+  const handleBack = () => {
+    setSwapState(false);
+    setCurrentDocument(undefined);
+  };
   const handleGridItemClick = (document: newDocument) => {
     setCurrentDocument(document); // Set the current document
-    console.log(document);
     setSwapState(true); // Swap the state
+    console.log(document);
   };
 
   return (
@@ -57,9 +68,7 @@ export default function TestPage() {
                   Report Home
                 </p>
                 <div className="flex justify-end">
-                  <button
-                    onClick={() => setSwapState((prevState) => !prevState)}
-                  >
+                  <button onClick={() => handleBack()}>
                     <p className="text-white">Swap modes</p>
                   </button>
                 </div>
@@ -112,88 +121,29 @@ export default function TestPage() {
 
             {/* Right Side of Screen */}
             <div className="flex shrink grow basis-1/2 flex-col rounded-xl border-[1px] border-zinc-700 bg-bgSecondary px-8">
-              <div className="flex flex-col border-b-[1px] border-zinc-700 py-3">
-                <TextInput placeholder="Find Resource..." />
-              </div>
-              <div className="mb-2 flex gap-4 border-b-[1px] border-zinc-700 py-3">
-                <div className="">
-                  <p className="w-10 text-sm text-textPrimary">Icon</p>
+              {!swapState ? (
+                <div className="flex flex-col border-b-[1px] border-zinc-700 py-3">
+                  <p>SELECT</p>
                 </div>
-                <div className="grow">
-                  <p className="text-sm text-textPrimary">Title</p>
+              ) : (
+                <div>
+                  <div className="flex flex-col border-b-[1px] border-zinc-700 py-3">
+                    <TextInput placeholder="Find Resource..." />
+                  </div>
+                  <div className="mt-5">
+                    {currentDocument?.folders &&
+                      Object.entries(currentDocument.folders).map(
+                        ([folderName, folderData]) => (
+                          <TableFolder
+                            key={folderName}
+                            folderName={folderName}
+                            folderData={folderData}
+                          />
+                        ),
+                      )}
+                  </div>
                 </div>
-                <div className="w-24">
-                  <p className="text-sm text-textPrimary">Date Added</p>
-                </div>
-                <div className="w-36">
-                  <p className="text-sm text-textPrimary">Last Viewed</p>
-                </div>
-              </div>
-
-              <TableRow
-                icon={FileIcon}
-                iconColor="textPrimary"
-                title="This is a test folder"
-                dateAdded="Feb 16, 24"
-                lastViewed="2/16/24 3:01 PM"
-              />
-              <TableRow
-                icon={FileIcon}
-                iconColor="textPrimary"
-                title="This is a test folder"
-                dateAdded="Feb 16, 24"
-                lastViewed="2/16/24 3:01 PM"
-              />
-              <TableRow
-                icon={FileIcon}
-                iconColor="textPrimary"
-                title="This is a test folder"
-                dateAdded="Feb 16, 24"
-                lastViewed="2/16/24 3:01 PM"
-              />
-              <div className="mt-2 flex flex-col border-b-[1px] border-zinc-700"></div>
-              <TableRow
-                icon={FileIcon}
-                iconColor="fileRed"
-                title="This is a test file"
-                dateAdded="Feb 16, 24"
-                lastViewed="2/16/24 3:01 PM"
-              />
-              <TableRow
-                icon={FileIcon}
-                iconColor="fileRed"
-                title="This is a test file"
-                dateAdded="Feb 16, 24"
-                lastViewed="2/16/24 3:01 PM"
-              />
-              <TableRow
-                icon={FileIcon}
-                iconColor="fileRed"
-                title="This is a test file"
-                dateAdded="Feb 16, 24"
-                lastViewed="2/16/24 3:01 PM"
-              />
-              <TableRow
-                icon={FileIcon}
-                iconColor="fileRed"
-                title="This is a test file"
-                dateAdded="Feb 16, 24"
-                lastViewed="2/16/24 3:01 PM"
-              />
-              <TableRow
-                icon={FileIcon}
-                iconColor="fileRed"
-                title="This is a test file"
-                dateAdded="Feb 16, 24"
-                lastViewed="2/16/24 3:01 PM"
-              />
-              <TableRow
-                icon={FileIcon}
-                iconColor="fileRed"
-                title="This is a test file"
-                dateAdded="Feb 16, 24"
-                lastViewed="2/16/24 3:01 PM"
-              />
+              )}
             </div>
           </div>
         </div>

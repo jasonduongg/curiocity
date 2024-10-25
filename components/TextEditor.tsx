@@ -27,7 +27,6 @@ const TextEditor = ({ document, swapState }: TextEditorProps) => {
       setTitle(document.name);
       setContent(document.text);
       setID(document.id); // Set the ID for the document
-      console.log(document);
     }
   }, [document]);
 
