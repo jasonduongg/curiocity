@@ -1,62 +1,46 @@
-"use client"
-import { useState, useRef } from "react";
+"use client";
+
+import { useState } from "react";
+import { useS3Upload } from "next-s3-upload";
 
 export default function S3Button() {
-  const [imageUrl, setImageUrl] = useState("");
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [imageUrl, setImageUrl] = useState<string>("");
+  const { FileInput, openFileDialog, uploadToS3 } = useS3Upload();
 
-  const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
+  const handleFileChange = async (file: any) => {
+    const { url } = await uploadToS3(file);
+    setImageUrl(url);
 
-    if (!file) return;
+    // call db api to create new docum,ent
+    // fetch("/api/db", {
+    //   method: "POST",
+    //   body: JSON.stringify({
+    //     name: "test doc",
+    //     text: "test"
+    //   }),
+    // }).then(r => r.json()).then(res => console.log(res));
 
-    try {
-
-      const response = await fetch("/api/s3-upload", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          fileName: file.name,
-          fileType: file.type,
-        }),
-      });
-
-      const { url: signedUrl } = await response.json();
-
-      const uploadResponse = await fetch(signedUrl, {
-        method: "PUT",
-        headers: {
-          "Content-Type": file.type,
-        },
-        body: file,
-      });
-
-      if (uploadResponse.ok) {
-        const s3FilePath = signedUrl.split('?')[0];
-        setImageUrl(s3FilePath);
-      } else {
-        console.error("Failed to upload file to S3");
-      }
-    } catch (error) {
-      console.error("Error uploading file:", error);
-    }
+    // call to add new resource to 'General'
+    fetch("/api/db/resource", {
+      method: "POST",
+      body: JSON.stringify({
+        name: "test resource",
+        documentId: "7258ef9d-c229-40fd-bef7-ad4b11efafce",
+        text: "test",
+        url: url,
+        folderName: "General",
+      }),
+    })
+      .then((r) => r.json())
+      .then((res) => console.log(res));
   };
 
   return (
     <div>
-      <input 
-        type="file" 
-        ref={fileInputRef} 
-        style={{ display: "none" }} 
-        onChange={handleFileChange} 
-      />
+      <FileInput onChange={handleFileChange} />
 
       <button
-        onClick={() => {
-          fileInputRef.current?.click();
-        }}
+        onClick={openFileDialog}
         style={{
           backgroundColor: "transparent",
           color: "black",
@@ -67,18 +51,12 @@ export default function S3Button() {
           borderRadius: "4px",
           transition: "background-color 0.3s ease",
         }}
+        aria-label="Upload file"
       >
         Upload file
       </button>
 
-      {imageUrl && (
-        <div>
-          <p>File uploaded successfully!</p>
-          <a href={imageUrl} target="_blank" rel="noopener noreferrer">
-            View Uploaded File
-          </a>
-        </div>
-      )}
+      {imageUrl && <img src={imageUrl} alt="Uploaded file" />}
     </div>
   );
 }
