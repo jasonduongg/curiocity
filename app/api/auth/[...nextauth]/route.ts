@@ -60,6 +60,8 @@ const options: NextAuthOptions = {
 
       return true;
 
+      /* Commenting dynamodb stuff for now until that's set up */
+
       // const params = {
       //   TableName: DYNAMODB_TABLE_NAME,
       //   Key: { email },
