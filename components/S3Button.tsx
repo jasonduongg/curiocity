@@ -25,10 +25,10 @@ export default function S3Button() {
       method: "POST",
       body: JSON.stringify({
         name: "test resource",
-        documentId: "7e4676b7-a610-419c-9755-728b4b75acb9",
+        documentId: "7258ef9d-c229-40fd-bef7-ad4b11efafce",
         text: "test",
         url: url,
-        folderName: "Not The Main Folder",
+        folderName: "General",
       }),
     })
       .then((r) => r.json())
