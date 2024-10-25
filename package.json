@@ -22,7 +22,7 @@
     "dotenv": "^16.4.5",
     "framer-motion": "^11.11.9",
     "next": "14.2.13",
-    "next-auth": "^4.24.8",
+    "next-auth": "^4.24.10",
     "next-s3-upload": "^0.3.4",
     "quill": "^2.0.2",
     "react": "^18",
