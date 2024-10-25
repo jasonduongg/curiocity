@@ -7,26 +7,32 @@ export default function S3Button() {
   const [imageUrl, setImageUrl] = useState<string>("");
   const { FileInput, openFileDialog, uploadToS3 } = useS3Upload();
 
-  const handleFileChange = async (file: File) => {
-    try {
-      const { url } = await uploadToS3(file);
-      setImageUrl(url);
+  const handleFileChange = async (file: any) => {
+    const { url } = await uploadToS3(file);
+    setImageUrl(url);
 
-      // Call your API to store the file path in the database
-      const response = await fetch("/api/s3-upload", {
-        method: "P",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ url }),
-      });
+    // call db api to create new docum,ent
+    // fetch("/api/db", {
+    //   method: "POST",
+    //   body: JSON.stringify({
+    //     name: "test doc",
+    //     text: "test"
+    //   }),
+    // }).then(r => r.json()).then(res => console.log(res));
 
-      if (!response.ok) {
-        console.error("Failed to update the database with the file URL.");
-      }
-    } catch (error) {
-      console.error("Error uploading to S3:", error);
-    }
+    // call to add new resource to 'General'
+    fetch("/api/db/resource", {
+      method: "POST",
+      body: JSON.stringify({
+        name: "test resource",
+        documentId: "4b3bbd83-c30b-4223-91af-9f97fd4f868c",
+        text: "test",
+        url: url,
+        folderName: "General",
+      }),
+    })
+      .then((r) => r.json())
+      .then((res) => console.log(res));
   };
 
   return (
