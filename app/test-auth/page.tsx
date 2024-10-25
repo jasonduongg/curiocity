@@ -3,6 +3,7 @@ import { useState } from "react";
 import AWS from "aws-sdk";
 import TextEditor from "@/components/TextEditor";
 import AuthButton from "@/components/AuthButton";
+import S3Button from "@/components/S3Button";
 
 type newDocument = {
   id?: string; // Add id to the newDocument type for consistency
@@ -154,6 +155,7 @@ export default function TestPage() {
       </div>
 
       <AuthButton></AuthButton>
+      <S3Button></S3Button>
     </div>
   );
 }

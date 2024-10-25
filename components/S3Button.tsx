@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useS3Upload } from "next-s3-upload";
 
 export default function S3Button() {
-  const [imageUrl, setImageUrl] = useState("");
+  const [imageUrl, setImageUrl] = useState<string>("");
   const { FileInput, openFileDialog, uploadToS3 } = useS3Upload();
 
   const handleFileChange = async (file: any) => {
@@ -51,11 +51,12 @@ export default function S3Button() {
           borderRadius: "4px",
           transition: "background-color 0.3s ease",
         }}
+        aria-label="Upload file"
       >
         Upload file
       </button>
 
-      {imageUrl && <img src={imageUrl} />}
+      {imageUrl && <img src={imageUrl} alt="Uploaded file" />}
     </div>
   );
 }
