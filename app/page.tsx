@@ -2,7 +2,7 @@ import S3Button from "@/components/S3Button";
 import TextEditor from "@/components/TextEditor";
 import AddNote from "@/components/AddingNotes";
 import DeleteConfirmationModal from "@/components/DeleteConfirmationModal";
-
+import NewPromptModal from "@/components/newPrompt";
 export default function Home() {
   return (
     <div className="flex h-screen flex-col space-y-4">
@@ -10,6 +10,8 @@ export default function Home() {
       <S3Button />
       <AddNote />
       <DeleteConfirmationModal />
+      <NewPromptModal />
+
       <div className="flex h-screen flex-col items-center justify-center space-y-4">
         <h1 className="text-2xl">Design System </h1>
         <div className="flex">
