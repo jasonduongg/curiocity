@@ -1,4 +1,3 @@
-import S3Button from "@/components/S3Button";
 import AddNote from "@/components/AddingNotes";
 import DeleteConfirmationModal from "@/components/DeleteConfirmationModal";
 import NewPromptModal from "@/components/newPrompt";
@@ -6,12 +5,13 @@ export default function Home() {
   return (
     <div className="flex h-screen flex-col space-y-4">
       <h1 className="text-2xl">Curiocity x WDB</h1>
-      <S3Button />
-      <AddNote />
-      <DeleteConfirmationModal />
-      <NewPromptModal />
-
-      <div className="flex h-screen flex-col items-center justify-center space-y-4">
+      <div className="bg-gray-200">
+        <h2> Components to integrate </h2>
+        <AddNote />
+        <DeleteConfirmationModal />
+        <NewPromptModal />
+      </div>
+      <div className="flex h-screen flex-col items-center justify-center">
         <h1 className="text-2xl">Design System </h1>
         <div className="flex">
           <div className="h-16 w-32 bg-fileRed text-textPrimary"> fileRed </div>
