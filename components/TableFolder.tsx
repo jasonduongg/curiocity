@@ -24,15 +24,15 @@ export default function TableFolder({
   };
 
   return (
-    <div className="mb-4">
+    <div className="mb-2">
       <div
-        className="cursor-pointer rounded-lg border-[2px] border-white px-4 py-2"
+        className="cursor-pointer rounded-lg border-[1px] border-white px-2 py-1"
         onClick={handleFolderClick}
       >
-        <p className="text-lg font-semibold text-textPrimary">{folderName}</p>
+        <p className="text-sm font-semibold text-textPrimary">{folderName}</p>
       </div>
       {isExpanded && (
-        <div className="ml-6 mt-2">
+        <div className="pt-1">
           {folderData.resources.map((resourceId) => (
             <TableRow
               key={resourceId}

@@ -28,7 +28,7 @@ export default function S3Button() {
         documentId: "7258ef9d-c229-40fd-bef7-ad4b11efafce",
         text: "test",
         url: url,
-        folderName: "General",
+        folderName: "3rd Test",
       }),
     })
       .then((r) => r.json())

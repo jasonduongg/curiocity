@@ -15,20 +15,22 @@ export default function TableRow({
   dateAdded,
   lastViewed,
 }: Props) {
+  console.log(dateAdded);
+  console.log(lastViewed);
   return (
-    <div className="flex gap-4 py-3">
-      <div className="flex h-full w-10">
-        {Icon && <Icon className={`h-5 w-5 text-${iconColor}`} />}
+    <div className="flex h-full items-center gap-1 py-[1px]">
+      <div className="h-full w-5">
+        {Icon && <Icon className={`h-full w-full text-${iconColor}`} />}
       </div>
-      <div className="h-full grow">
-        <p className="text-sm text-textPrimary">{title}</p>
+      <div className="h-full grow overflow-hidden">
+        <p className="whitespace-nowrap text-sm text-textPrimary">{title}</p>
       </div>
-      <div className="h-full w-24">
+      {/* <div className="h-full w-1/4">
         <p className="text-sm text-textPrimary">{dateAdded}</p>
       </div>
-      <div className="h-full w-36">
+      <div className="h-full w-1/4">
         <p className="text-sm text-textPrimary">{lastViewed}</p>
-      </div>
+      </div> */}
     </div>
   );
 }

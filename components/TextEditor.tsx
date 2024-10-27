@@ -119,18 +119,18 @@ const TextEditor = ({ document, swapState }: TextEditorProps) => {
   // }, []);
 
   return (
-    <div className="flex h-full max-w-full flex-col bg-white">
+    <div className="flex h-full max-w-full flex-col bg-slate-300">
       {/* Input field for the document title */}
       <input
         type="text"
         value={title}
         onChange={(e) => setTitle(e.target.value)} // Update title state on input change
         placeholder="Enter document title"
-        className="h-[5vh] w-1/3 bg-gray-200 px-2"
+        className="h-[5vh] w-full bg-slate-300 px-2"
       />
       {/* Text editor for the document content */}
       <ReactQuill
-        className="h-full max-w-full overflow-y-auto bg-white"
+        className="scrollbar-hide h-full max-w-full overflow-y-auto bg-slate-300"
         theme="snow"
         formats={[
           "header",
@@ -154,7 +154,7 @@ const TextEditor = ({ document, swapState }: TextEditorProps) => {
         value={content}
       />
       {/* Save button */}
-      <div className="flex h-[10vh] items-center justify-end space-x-4 bg-gray-100 p-4">
+      <div className="flex h-[10vh] items-center justify-end space-x-4 bg-slate-300 p-4">
         <Button label="New Save" onClick={handleUpload} />
         <Button label="Update Save" onClick={handleUpdate} />
       </div>

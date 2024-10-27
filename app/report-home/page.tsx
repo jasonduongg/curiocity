@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import GridItem from "@/components/GridItem";
 import TextInput from "@/components/TextInput";
-import TableFolder from "@/components/TableFolder"; // Import TableFolder component
+import FileList from "@/components/FileList";
 import NavBar from "@/components/NavBar";
 import TextEditor from "@/components/TextEditor";
 
@@ -120,29 +120,13 @@ export default function TestPage() {
             </div>
 
             {/* Right Side of Screen */}
-            <div className="flex shrink grow basis-1/2 flex-col rounded-xl border-[1px] border-zinc-700 bg-bgSecondary px-8">
+            <div className="flex shrink grow basis-1/2 flex-col rounded-xl border-[1px] border-zinc-700 bg-bgSecondary">
               {!swapState ? (
                 <div className="flex flex-col border-b-[1px] border-zinc-700 py-3">
                   <p>SELECT</p>
                 </div>
               ) : (
-                <div>
-                  <div className="flex flex-col border-b-[1px] border-zinc-700 py-3">
-                    <TextInput placeholder="Find Resource..." />
-                  </div>
-                  <div className="mt-5">
-                    {currentDocument?.folders &&
-                      Object.entries(currentDocument.folders).map(
-                        ([folderName, folderData]) => (
-                          <TableFolder
-                            key={folderName}
-                            folderName={folderName}
-                            folderData={folderData}
-                          />
-                        ),
-                      )}
-                  </div>
-                </div>
+                <FileList currentDocument={currentDocument} />
               )}
             </div>
           </div>
