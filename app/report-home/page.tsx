@@ -73,12 +73,12 @@ export default function TestPage() {
                   </button>
                 </div>
               </div>
-              <div className="flex h-full max-w-full grow flex-col overflow-hidden rounded-lg border-[2px] border-black bg-bgSecondary">
+              <div className="flex h-full max-w-full grow flex-col overflow-hidden rounded-lg bg-bgSecondary">
                 <div className="flex h-full max-w-full grow flex-col overflow-hidden border-zinc-700">
                   {swapState ? (
                     <div className="h-full w-full max-w-full bg-black">
                       <TextEditor
-                        document={currentDocument}
+                        currentDocument={currentDocument}
                         swapState={() => {}}
                       />
                     </div>

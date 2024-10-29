@@ -21,11 +21,11 @@ type DocumentProps = {
 
 function FileList({ currentDocument }: DocumentProps) {
   const [searchTerm, setSearchTerm] = useState("");
+  const [resourceUrl, setResourceUrl] = useState<string | null>(null);
+
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(e.target.value);
   };
-
-  const [resourceUrl, setResourceUrl] = useState<string | null>(null);
 
   // Callback to receive the URL from TableRow
   const handleResourceUrl = (url: string) => {
@@ -33,16 +33,28 @@ function FileList({ currentDocument }: DocumentProps) {
     setResourceUrl(url);
   };
 
+  // Determine if the resource is a PDF
+  const isPdf = resourceUrl?.toLowerCase().endsWith(".pdf");
+
   return (
     <div className="flex h-full flex-row justify-center">
       <div className="flex flex-grow overflow-hidden rounded-lg pl-4">
         <div className="flex h-full w-full items-center justify-center border-x-[1px] border-zinc-700">
           {resourceUrl ? (
-            <img
-              src={resourceUrl}
-              alt="Resource"
-              className="max-h-full max-w-full object-contain"
-            />
+            isPdf ? (
+              <iframe
+                src={resourceUrl}
+                title="PDF Viewer"
+                className="h-full w-full"
+                style={{ border: "none" }}
+              />
+            ) : (
+              <img
+                src={resourceUrl}
+                alt="Resource"
+                className="max-h-full max-w-full object-contain"
+              />
+            )
           ) : (
             <p className="text-white">No resource selected</p>
           )}
