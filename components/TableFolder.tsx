@@ -2,19 +2,26 @@ import { useState } from "react";
 import TableRow from "@/components/TableRow";
 import { FileIcon } from "@radix-ui/react-icons";
 
+interface Resource {
+  name: string;
+  id: string;
+}
+
 interface FolderData {
   name: string;
-  resources: string[];
+  resources: Resource[];
 }
 
 interface TableFolderProps {
   folderName: string;
   folderData: FolderData;
+  onResourceUrl: (url: string) => void; // Define the callback prop
 }
 
 export default function TableFolder({
   folderName,
   folderData,
+  onResourceUrl,
 }: TableFolderProps) {
   const [isExpanded, setIsExpanded] = useState(false);
 
@@ -33,14 +40,16 @@ export default function TableFolder({
       </div>
       {isExpanded && (
         <div className="pt-1">
-          {folderData.resources.map((resourceId) => (
+          {folderData.resources.map((resource) => (
             <TableRow
-              key={resourceId}
+              key={resource.id}
               icon={FileIcon}
-              iconColor="textPrimary"
-              title={resourceId}
+              iconColor="white" // Assuming a static color for simplicity
+              title={resource.name}
               dateAdded="Unknown"
               lastViewed="Unknown"
+              id={resource.id}
+              onResourceUrl={onResourceUrl}
             />
           ))}
         </div>

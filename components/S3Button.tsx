@@ -7,25 +7,20 @@ export default function S3Button() {
   const [imageUrl, setImageUrl] = useState<string>("");
   const { FileInput, openFileDialog, uploadToS3 } = useS3Upload();
 
-  const handleFileChange = async (file: any) => {
+  const handleFileChange = async (file: File) => {
+    // Extract the file name
+    const fileName = file.name;
+
+    // Upload file to S3
     const { url } = await uploadToS3(file);
     setImageUrl(url);
 
-    // call db api to create new docum,ent
-    // fetch("/api/db", {
-    //   method: "POST",
-    //   body: JSON.stringify({
-    //     name: "test doc",
-    //     text: "test"
-    //   }),
-    // }).then(r => r.json()).then(res => console.log(res));
-
-    // call to add new resource to 'General'
+    // Call to add a new resource to 'General' with the file name included
     fetch("/api/db/resource", {
       method: "POST",
       body: JSON.stringify({
-        name: "test resource",
-        documentId: "7258ef9d-c229-40fd-bef7-ad4b11efafce",
+        name: fileName, // Use the file name here
+        documentId: "487bc3a8-a253-4e8f-a75a-5241d944be5b",
         text: "test",
         url: url,
         folderName: "3rd Test",

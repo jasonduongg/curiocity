@@ -23,9 +23,14 @@ export type Resource = {
   url: string;
 };
 
+export type ResourceCompressed = {
+  name: string;
+  id: string;
+};
+
 export type Folder = {
   name: string;
-  resources: Array<string>;
+  resources: Array<ResourceCompressed>;
 };
 
 export type Document = {

@@ -3,9 +3,14 @@ import { useState } from "react";
 import TextInput from "@/components/TextInput";
 import TableFolder from "@/components/TableFolder";
 
+interface Resource {
+  name: string;
+  id: string;
+}
+
 type FolderData = {
   name: string;
-  resources: string[];
+  resources: Resource[];
 };
 
 type DocumentProps = {
@@ -16,16 +21,31 @@ type DocumentProps = {
 
 function FileList({ currentDocument }: DocumentProps) {
   const [searchTerm, setSearchTerm] = useState("");
-
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(e.target.value);
+  };
+
+  const [resourceUrl, setResourceUrl] = useState<string | null>(null);
+
+  // Callback to receive the URL from TableRow
+  const handleResourceUrl = (url: string) => {
+    console.log("Received URL from TableRow:", url);
+    setResourceUrl(url);
   };
 
   return (
     <div className="flex h-full flex-row justify-center">
       <div className="flex flex-grow overflow-hidden rounded-lg pl-4">
-        <div className="h-full w-full border-x-[1px] border-zinc-700">
-          {/* Content goes here */}
+        <div className="flex h-full w-full items-center justify-center border-x-[1px] border-zinc-700">
+          {resourceUrl ? (
+            <img
+              src={resourceUrl}
+              alt="Resource"
+              className="max-h-full max-w-full object-contain"
+            />
+          ) : (
+            <p className="text-white">No resource selected</p>
+          )}
         </div>
       </div>
 
@@ -44,8 +64,9 @@ function FileList({ currentDocument }: DocumentProps) {
               ([folderName, folderData]) => (
                 <TableFolder
                   key={folderName}
-                  folderName={folderName}
+                  folderName={folderData.name}
                   folderData={folderData}
+                  onResourceUrl={handleResourceUrl}
                 />
               ),
             )}
