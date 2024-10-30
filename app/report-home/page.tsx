@@ -46,6 +46,7 @@ export default function TestPage() {
 
   const handleBack = () => {
     setSwapState(false);
+    fetchDocuments();
     setCurrentDocument(undefined);
   };
 
@@ -96,12 +97,10 @@ export default function TestPage() {
             <div className="flex h-full max-w-full grow flex-col overflow-hidden rounded-lg bg-bgSecondary">
               <div className="flex h-full max-w-full grow flex-col overflow-hidden border-zinc-700">
                 {swapState ? (
-                  <div className="h-full w-full max-w-full bg-black">
-                    <TextEditor
-                      currentDocument={currentDocument}
-                      swapState={() => {}}
-                    />
-                  </div>
+                  <TextEditor
+                    currentDocument={currentDocument}
+                    swapState={() => {}}
+                  />
                 ) : (
                   <AllDocumentsGrid
                     allDocuments={allDocuments}
