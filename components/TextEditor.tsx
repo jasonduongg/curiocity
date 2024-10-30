@@ -13,77 +13,84 @@ type newDocument = {
 };
 
 interface TextEditorProps {
-  document?: newDocument; // Accept document as a prop
+  currentDocument?: newDocument; // Accept currentDocument as a prop
   swapState: () => void;
 }
 
-const TextEditor = ({ document, swapState }: TextEditorProps) => {
+const TextEditor = ({ currentDocument, swapState }: TextEditorProps) => {
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [id, setID] = useState<string | undefined>("");
 
   useEffect(() => {
-    if (document) {
-      setTitle(document.name);
-      setContent(document.text);
-      setID(document.id); // Set the ID for the document
+    if (currentDocument) {
+      setTitle(currentDocument.name);
+      setContent(currentDocument.text);
+      setID(currentDocument.id); // Set the ID for the document
     }
-  }, [document]);
+  }, [currentDocument]);
 
   const handleUpload = async () => {
-    if (!content || !title) return; // Ensure title and content are provided
+    if (!content || !title) {
+      alert("Please provide both a title and content for the document.");
+      return;
+    }
 
-    // API call to upload the content with title
-    fetch("/api/db", {
-      method: "POST",
-      body: JSON.stringify({
-        name: title, // Use title as the document name
-        text: content,
-        files: [],
-      } as newDocument),
-      headers: {
-        "Content-Type": "application/json",
-      },
-    })
-      .then((res) => res.json())
-      .then((data) => {
-        console.log("Document uploaded", data);
-      })
-      .catch((error) => console.error("Error uploading document:", error));
+    try {
+      const response = await fetch("/api/db", {
+        method: "POST",
+        body: JSON.stringify({
+          name: title,
+          text: content,
+          files: [],
+        } as newDocument),
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+      const data = await response.json();
+      console.log("Document uploaded", data);
+      alert("Document uploaded successfully!");
+    } catch (error) {
+      console.error("Error uploading document:", error);
+      alert("Failed to upload document.");
+    }
   };
 
   const handleUpdate = async () => {
-    if (!content || !title) return; // Ensure title and content are provided
+    if (!content || !title) {
+      alert("Please provide both a title and content for the document.");
+      return;
+    }
 
-    // Ensure the document has an id for updating
     if (!id) {
       console.error("Document ID is missing.");
       return;
     }
 
-    // API call to upload the content with title
-    fetch("/api/db", {
-      method: "PUT",
-      body: JSON.stringify({
-        id: id, // Include the id of the document being updated
-        name: title, // Use title as the document name
-        text: content,
-        files: [], // Retain existing files if not updating
-      }),
-      headers: {
-        "Content-Type": "application/json",
-      },
-    })
-      .then((res) => res.json())
-      .then((data) => {
-        console.log("Document updated", data);
-      })
-      .catch((error) => console.error("Error updating document:", error));
-
-    swapState();
+    try {
+      const response = await fetch("/api/db", {
+        method: "PUT",
+        body: JSON.stringify({
+          id: id,
+          name: title,
+          text: content,
+          files: [],
+        }),
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+      const data = await response.json();
+      console.log("Document updated", data);
+      alert("Document updated successfully!");
+      swapState();
+    } catch (error) {
+      console.error("Error updating document:", error);
+      alert("Failed to update document.");
+    }
   };
 
-  // Quill modules configuration
   const modules = {
     toolbar: [
       [{ header: "1" }, { header: "2" }, { font: [] }],
@@ -103,35 +110,42 @@ const TextEditor = ({ document, swapState }: TextEditorProps) => {
     },
   };
 
-  // Add sticky toolbar styling only on the client side
-  // useEffect(() => {
-  //   if (typeof window !== "undefined") {
-  //     const toolbar = document.querySelector(".ql-toolbar");
-  //     if (toolbar) {
-  //       toolbar.style.position = "-webkit-sticky";
-  //       toolbar.style.position = "sticky";
-  //       toolbar.style.top = "0";
-  //       toolbar.style.zIndex = "10";
-  //       toolbar.style.backgroundColor = "rgb(255, 255, 255, 0.95)";
-  //       toolbar.style.borderBottom = "1px solid #ccc";
-  //     }
-  //   }
-  // }, []);
-
   return (
-    <div className="flex h-full max-w-full flex-col bg-slate-300">
+    <div className="flex h-full max-w-full flex-col bg-black text-white">
       {/* Input field for the document title */}
       <input
         type="text"
         value={title}
-        onChange={(e) => setTitle(e.target.value)} // Update title state on input change
+        onChange={(e) => setTitle(e.target.value)}
         placeholder="Enter document title"
-        className="h-[5vh] w-full bg-slate-300 px-2"
+        className="h-[5vh] w-full rounded-t-xl border-x-[1px] border-t-[1px] border-white bg-bgSecondary px-2 font-bold"
       />
+
+      <style>
+        {`
+          .ql-toolbar {
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            background-color: #000;
+          }
+          .ql-toolbar .ql-stroke {
+            stroke: #fff; /* Icon stroke color */
+          }
+          .ql-toolbar .ql-fill {
+            fill: #fff; /* Icon fill color */
+          }
+          .ql-toolbar .ql-picker,
+          .ql-toolbar .ql-picker-label,
+          .ql-toolbar .ql-picker-options {
+            color: #fff; /* Picker text color */
+          }
+        `}
+      </style>
+
       {/* Text editor for the document content */}
       <ReactQuill
-        className="scrollbar-hide h-full max-w-full overflow-y-auto bg-slate-300"
-        theme="snow"
+        className="scrollbar-hide h-full max-w-full overflow-y-auto bg-bgSecondary text-white"
         formats={[
           "header",
           "font",
@@ -154,9 +168,12 @@ const TextEditor = ({ document, swapState }: TextEditorProps) => {
         value={content}
       />
       {/* Save button */}
-      <div className="flex h-[10vh] items-center justify-end space-x-4 bg-slate-300 p-4">
-        <Button label="New Save" onClick={handleUpload} />
-        <Button label="Update Save" onClick={handleUpdate} />
+      <div className="flex h-[10vh] items-center justify-end space-x-4 rounded-b-xl border-x-[1px] border-b-[1px] border-white bg-bgSecondary p-4">
+        {id ? (
+          <Button label="Update Save" onClick={handleUpdate} />
+        ) : (
+          <Button label="New Save" onClick={handleUpload} />
+        )}
       </div>
     </div>
   );

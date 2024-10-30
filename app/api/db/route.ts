@@ -21,6 +21,7 @@ export type Resource = {
   name: string;
   text: string;
   url: string;
+  dateAdded: string;
 };
 
 export type ResourceCompressed = {

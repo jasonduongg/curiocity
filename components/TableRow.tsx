@@ -1,5 +1,14 @@
 "use client";
 
+type Resource = {
+  id: string;
+  documentId: string;
+  name: string;
+  text: string;
+  url: string;
+  dateAdded: string;
+};
+
 interface Props {
   icon: React.ComponentType<any>;
   iconColor: string;
@@ -7,7 +16,7 @@ interface Props {
   dateAdded: string;
   lastViewed: string;
   id: string; // Add an id prop to uniquely identify the resource
-  onResourceUrl: (url: string) => void; // Define the callback prop
+  onResource: (url: Resource) => void; // Define the callback prop
 }
 
 export default function TableRow({
@@ -17,9 +26,10 @@ export default function TableRow({
   dateAdded,
   lastViewed,
   id,
-  onResourceUrl,
+  onResource,
 }: Props) {
-  console.log(dateAdded, lastViewed);
+  console.log(dateAdded);
+  console.log(lastViewed);
   const handleClick = async () => {
     try {
       const response = await fetch(`/api/db/resource?resourceId=${id}`);
@@ -27,8 +37,8 @@ export default function TableRow({
         throw new Error("Failed to fetch resource");
       }
       const data = await response.json();
-      console.log("Resource URL:", data.url);
-      onResourceUrl(data.url); // Call the callback with the URL
+      console.log("Resource URL:", data);
+      onResource(data); // Call the callback with the URL
     } catch (error) {
       console.error("Error fetching resource URL:", error);
     }
