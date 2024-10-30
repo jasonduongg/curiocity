@@ -24,44 +24,68 @@ type DocumentProps = {
     id: string;
     folders?: Record<string, FolderData>;
   };
-  onResourceUpload: () => void; // New prop to notify of resource uploads
+  onResourceUpload: () => void;
 };
 
 function FileList({ currentDocument, onResourceUpload }: DocumentProps) {
   const [searchTerm, setSearchTerm] = useState("");
   const [currentResource, setCurrentResource] = useState<Resource | null>(null);
+  const [showUploadForm, setShowUploadForm] = useState(false);
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(e.target.value);
   };
 
-  // Callback to receive the resource from TableRow
   const handleResourceAPI = (resource: Resource) => {
     setCurrentResource(resource);
   };
 
+  const openFileUploader = () => {
+    setCurrentResource(null);
+    setShowUploadForm(true);
+  };
+
+  const cancelFileUploader = () => {
+    setCurrentResource(null);
+    setShowUploadForm(false);
+  };
+
   return (
-    <div className="flex h-full flex-row justify-center">
-      <div className="flex flex-grow overflow-hidden rounded-lg pl-4">
-        <div className="flex h-full w-full flex-col items-center justify-center border-x-[1px] border-zinc-700">
-          <ResourceViewer resource={currentResource} />
+    <div className="flex h-full flex-row justify-center overflow-hidden">
+      <div className="flex flex-grow flex-col overflow-hidden rounded-lg pl-4">
+        <div className="flex h-full w-full flex-col overflow-hidden border-zinc-700">
+          {!showUploadForm ? (
+            <div className="flex h-full w-full flex-col">
+              <div className="px-2 py-2">
+                <button
+                  onClick={openFileUploader}
+                  className="w-full rounded-md border-2 border-zinc-700 py-1 text-sm text-white transition duration-300 hover:bg-gray-700"
+                >
+                  Upload New Files
+                </button>
+              </div>
+              <div className="flex-grow overflow-auto">
+                <ResourceViewer resource={currentResource} />
+              </div>
+            </div>
+          ) : (
+            currentDocument?.id && (
+              <S3Button
+                documentId={currentDocument.id}
+                folderName="General"
+                possibleFolders={currentDocument.folders}
+                onResourceUpload={() => {
+                  onResourceUpload();
+                  setShowUploadForm(false);
+                }}
+                cancelCallBack={cancelFileUploader}
+              />
+            )
+          )}
         </div>
       </div>
 
       <div className="w-1/3 items-center p-3">
-        {/* Conditionally render S3Button only if currentDocument and currentDocument.id exist */}
-        {currentDocument?.id && (
-          <div>
-            <S3Button
-              documentId={currentDocument.id}
-              folderName="General"
-              possibleFolders={currentDocument.folders}
-              onResourceUpload={() => {
-                onResourceUpload();
-              }}
-            />
-          </div>
-        )}
         <div className="mb-4 flex flex-col border-b-[1px] border-zinc-700 py-2">
           <TextInput
             placeholder="Find Resource..."
