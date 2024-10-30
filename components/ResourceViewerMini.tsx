@@ -1,10 +1,6 @@
 type Resource = {
-  id: string;
-  documentId: string;
   name: string;
-  text: string;
   url: string;
-  dateAdded: string;
 };
 
 interface ResourceViewerProps {
@@ -27,7 +23,6 @@ export default function ResourceViewer({ resource }: ResourceViewerProps) {
       {" "}
       {/* Wrapper with padding and overflow control */}
       <div className="h-full w-full overflow-hidden p-2">
-        <p className="text-white">{resource.dateAdded}</p>
         {isPdf ? (
           <iframe
             src={resource.url}

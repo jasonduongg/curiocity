@@ -129,13 +129,13 @@ const TextEditor = ({ currentDocument, swapState }: TextEditorProps) => {
   };
 
   return (
-    <div className="flex h-full max-w-full flex-col bg-black text-white">
+    <div className="flex h-full max-w-full flex-col rounded-xl border-[1px] border-zinc-700 text-white">
       <input
         type="text"
         value={title}
         onChange={(e) => setTitle(e.target.value)}
         placeholder="Enter document title"
-        className="h-[5vh] w-full rounded-t-xl border-x-[1px] border-t-[1px] border-white bg-bgSecondary px-2 font-bold"
+        className="text-md h-[5vh] w-full rounded-t-xl bg-bgSecondary px-2 font-bold outline-none"
       />
 
       <style>
@@ -144,7 +144,10 @@ const TextEditor = ({ currentDocument, swapState }: TextEditorProps) => {
             position: sticky;
             top: 0;
             z-index: 10;
-            background-color: #000;
+            background-color: #130E16;
+            border: none !important;
+            border-top: 1px solid #333333 !important; /* Top border */
+            border-bottom: 1px solid #333333 !important; 
           }
           .ql-toolbar .ql-stroke {
             stroke: #fff;
@@ -156,6 +159,12 @@ const TextEditor = ({ currentDocument, swapState }: TextEditorProps) => {
           .ql-toolbar .ql-picker-label,
           .ql-toolbar .ql-picker-options {
             color: #fff;
+          }
+          .ql-container {
+            border: none !important; /* Removes the border around the Quill editor */
+          }
+          .ql-editor {
+            border: none !important; /* Ensures the editor area itself has no border */
           }
         `}
       </style>
@@ -184,7 +193,7 @@ const TextEditor = ({ currentDocument, swapState }: TextEditorProps) => {
         value={content}
       />
 
-      <div className="flex h-[10vh] items-center justify-end space-x-4 rounded-b-xl border-x-[1px] border-b-[1px] border-white bg-bgSecondary p-4">
+      <div className="flex h-[10vh] items-center justify-end space-x-4 rounded-b-xl bg-bgSecondary p-4">
         {isUploading ? (
           <div className="flex items-center">
             <div className="loader mr-2"></div>

@@ -1,6 +1,7 @@
 import { useState, useRef } from "react";
 import { useS3Upload } from "next-s3-upload";
-import { FaCheckCircle } from "react-icons/fa"; // For the green check icon
+import { FaCheckCircle, FaTrash } from "react-icons/fa";
+import ResourceViewerMini from "./ResourceViewerMini";
 
 interface S3ButtonProps {
   documentId: string;
@@ -9,6 +10,12 @@ interface S3ButtonProps {
   onResourceUpload?: () => void;
   cancelCallBack: () => void;
 }
+
+type Resource = {
+  name: string;
+  url: string;
+  dateAdded?: string;
+};
 
 export default function S3Button({
   documentId,
@@ -24,8 +31,9 @@ export default function S3Button({
   const [uploadedFiles, setUploadedFiles] = useState<Record<string, boolean>>(
     {},
   );
-  const { uploadToS3 } = useS3Upload();
+  const [previewResource, setPreviewResource] = useState<Resource | null>(null);
 
+  const { uploadToS3 } = useS3Upload();
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -34,6 +42,25 @@ export default function S3Button({
         ...prevQueue,
         ...Array.from(e.target.files),
       ]);
+    }
+  };
+
+  const handleFileClick = (file: File) => {
+    const fileURL = URL.createObjectURL(file);
+    setPreviewResource({ name: file.name, url: fileURL });
+  };
+
+  const handleDeleteFile = (fileName: string) => {
+    setFileQueue((prevQueue) =>
+      prevQueue.filter((file) => file.name !== fileName),
+    );
+    setUploadedFiles((prev) => {
+      const updated = { ...prev };
+      delete updated[fileName];
+      return updated;
+    });
+    if (previewResource?.name === fileName) {
+      setPreviewResource(null); // Reset the preview if the deleted file was being previewed
     }
   };
 
@@ -51,12 +78,6 @@ export default function S3Button({
       try {
         const { url } = await uploadToS3(file);
 
-        const formatDate = () => {
-          const date = new Date();
-          return `${date.getMonth() + 1}/${date.getDate()}/${date.getFullYear()} at ${date.getHours()}:${date.getMinutes()}`;
-        };
-        const dateAdded = formatDate();
-
         await fetch("/api/db/resource", {
           method: "POST",
           body: JSON.stringify({
@@ -64,21 +85,19 @@ export default function S3Button({
             documentId,
             url,
             folderName: folderToSave,
-            dateAdded,
+            dateAdded: new Date().toISOString(),
           }),
           headers: {
             "Content-Type": "application/json",
           },
         });
 
-        // Update uploadedFiles state to show checkmark for the uploaded file
         setUploadedFiles((prev) => ({ ...prev, [fileName]: true }));
       } catch (error) {
         console.error(`Error uploading ${fileName}:`, error);
       }
     }
 
-    // Trigger callback and clear queue when all files are uploaded
     if (onResourceUpload) onResourceUpload();
     cancelCallBack();
     setFileQueue([]);
@@ -99,11 +118,13 @@ export default function S3Button({
     setFileQueue([]);
     setIsNewFolder(false);
     setNewFolderName("");
+    setPreviewResource(null);
     cancelCallBack();
   };
 
   return (
-    <div className="mt-2">
+    <div className="mt-2 h-full">
+      {/* Folder Selection and File Input */}
       <div className="flex flex-row space-x-2">
         <select
           value={isNewFolder ? "newFolder" : selectedFolder}
@@ -127,6 +148,7 @@ export default function S3Button({
         </button>
       </div>
 
+      {/* New Folder Input */}
       {isNewFolder && (
         <input
           type="text"
@@ -145,35 +167,62 @@ export default function S3Button({
         ref={fileInputRef}
       />
 
-      <div className="mt-2 h-[30vh] overflow-y-scroll rounded-xl border border-zinc-700 p-2">
-        <p className="mb-2 text-sm font-semibold text-white">Selected Files:</p>
-        <ul className="list-disc text-white">
-          {fileQueue.map((file, index) => (
-            <div
-              key={index}
-              className="mb-2 flex w-full items-center overflow-hidden rounded-lg border-[1px] border-zinc-700"
-            >
-              <p className="flex-1 whitespace-nowrap px-2 py-1 text-sm">
-                {file.name}
-              </p>
-              {uploadedFiles[file.name] && (
-                <FaCheckCircle className="ml-2 text-green-500" />
-              )}
+      <div className="h-[80%] bg-red-500">
+        {/* File Queue and Upload Controls */}
+        <div className="mt-2 h-1/2 overflow-y-scroll rounded-xl border border-zinc-700 p-2">
+          <p className="mb-2 text-sm font-semibold text-white">
+            Selected Files:
+          </p>
+          <ul className="list-disc text-white">
+            {fileQueue.map((file, index) => (
+              <div
+                key={index}
+                className="mb-2 flex w-full items-center overflow-hidden rounded-lg border-[1px] border-zinc-700"
+              >
+                <p
+                  className="flex-1 cursor-pointer whitespace-nowrap px-2 py-1 text-sm"
+                  onClick={() => handleFileClick(file)}
+                >
+                  {file.name}
+                </p>
+                {uploadedFiles[file.name] && (
+                  <FaCheckCircle className="ml-2 text-green-500" />
+                )}
+                <button
+                  className="ml-2 text-red-500 hover:text-red-400"
+                  onClick={() => handleDeleteFile(file.name)}
+                  aria-label={`Delete ${file.name}`}
+                >
+                  <FaTrash />
+                </button>
+              </div>
+            ))}
+          </ul>
+        </div>
+
+        {/* Preview Section using ResourceViewer */}
+        <div className="mt-2 h-1/2 overflow-y-scroll rounded-xl border border-zinc-700 p-2">
+          {previewResource && (
+            <div>
+              <h3 className="mb-2 text-sm font-semibold text-white">
+                Preview: {previewResource.name}
+              </h3>
+              <ResourceViewerMini resource={previewResource} />
             </div>
-          ))}
-        </ul>
+          )}
+        </div>
       </div>
 
       <div className="mt-2 flex space-x-2">
         <button
           onClick={handleUploadAll}
-          className="w-full rounded-md border-[1px] border-zinc-700 px-2 py-1 text-sm text-white hover:bg-blue-500"
+          className="w-full rounded-md border-[1px] border-zinc-700 px-2 py-1 text-sm text-white hover:bg-blue-900"
         >
           Upload All Files
         </button>
         <button
           onClick={handleCancelUpload}
-          className="w-full rounded-md border-[1px] border-zinc-700 px-2 py-1 text-sm text-white hover:bg-red-500"
+          className="w-full rounded-md border-[1px] border-zinc-700 px-2 py-1 text-sm text-white hover:bg-red-900"
         >
           Cancel
         </button>
