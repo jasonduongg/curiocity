@@ -13,7 +13,7 @@ type newDocument = {
 };
 
 interface TextEditorProps {
-  currentDocument?: newDocument; // Accept currentDocument as a prop
+  currentDocument?: newDocument;
   swapState: () => void;
 }
 
@@ -21,20 +21,32 @@ const TextEditor = ({ currentDocument, swapState }: TextEditorProps) => {
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [id, setID] = useState<string | undefined>("");
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadComplete, setUploadComplete] = useState(false);
 
   useEffect(() => {
     if (currentDocument) {
       setTitle(currentDocument.name);
       setContent(currentDocument.text);
-      setID(currentDocument.id); // Set the ID for the document
+      setID(currentDocument.id);
     }
   }, [currentDocument]);
+
+  useEffect(() => {
+    if (uploadComplete) {
+      const timeout = setTimeout(() => setUploadComplete(false), 3000);
+      return () => clearTimeout(timeout); // Clean up the timeout on component unmount
+    }
+  }, [uploadComplete]);
 
   const handleUpload = async () => {
     if (!content || !title) {
       alert("Please provide both a title and content for the document.");
       return;
     }
+
+    setIsUploading(true);
+    setUploadComplete(false);
 
     try {
       const response = await fetch("/api/db", {
@@ -50,10 +62,12 @@ const TextEditor = ({ currentDocument, swapState }: TextEditorProps) => {
       });
       const data = await response.json();
       console.log("Document uploaded", data);
-      alert("Document uploaded successfully!");
+      setUploadComplete(true);
     } catch (error) {
       console.error("Error uploading document:", error);
       alert("Failed to upload document.");
+    } finally {
+      setIsUploading(false);
     }
   };
 
@@ -68,11 +82,14 @@ const TextEditor = ({ currentDocument, swapState }: TextEditorProps) => {
       return;
     }
 
+    setIsUploading(true);
+    setUploadComplete(false);
+
     try {
       const response = await fetch("/api/db", {
         method: "PUT",
         body: JSON.stringify({
-          id: id,
+          id,
           name: title,
           text: content,
           files: [],
@@ -83,11 +100,12 @@ const TextEditor = ({ currentDocument, swapState }: TextEditorProps) => {
       });
       const data = await response.json();
       console.log("Document updated", data);
-      alert("Document updated successfully!");
+      setUploadComplete(true);
       swapState();
     } catch (error) {
       console.error("Error updating document:", error);
-      alert("Failed to update document.");
+    } finally {
+      setIsUploading(false);
     }
   };
 
@@ -112,7 +130,6 @@ const TextEditor = ({ currentDocument, swapState }: TextEditorProps) => {
 
   return (
     <div className="flex h-full max-w-full flex-col bg-black text-white">
-      {/* Input field for the document title */}
       <input
         type="text"
         value={title}
@@ -130,20 +147,19 @@ const TextEditor = ({ currentDocument, swapState }: TextEditorProps) => {
             background-color: #000;
           }
           .ql-toolbar .ql-stroke {
-            stroke: #fff; /* Icon stroke color */
+            stroke: #fff;
           }
           .ql-toolbar .ql-fill {
-            fill: #fff; /* Icon fill color */
+            fill: #fff;
           }
           .ql-toolbar .ql-picker,
           .ql-toolbar .ql-picker-label,
           .ql-toolbar .ql-picker-options {
-            color: #fff; /* Picker text color */
+            color: #fff;
           }
         `}
       </style>
 
-      {/* Text editor for the document content */}
       <ReactQuill
         className="scrollbar-hide h-full max-w-full overflow-y-auto bg-bgSecondary text-white"
         formats={[
@@ -167,14 +183,41 @@ const TextEditor = ({ currentDocument, swapState }: TextEditorProps) => {
         onChange={setContent}
         value={content}
       />
-      {/* Save button */}
+
       <div className="flex h-[10vh] items-center justify-end space-x-4 rounded-b-xl border-x-[1px] border-b-[1px] border-white bg-bgSecondary p-4">
-        {id ? (
-          <Button label="Update Save" onClick={handleUpdate} />
+        {isUploading ? (
+          <div className="flex items-center">
+            <div className="loader mr-2"></div>
+            <span>Uploading...</span>
+          </div>
+        ) : uploadComplete ? (
+          <span className="font-bold text-green-500">&#10003; Uploaded!</span>
         ) : (
-          <Button label="New Save" onClick={handleUpload} />
+          <Button
+            label={id ? "Update Save" : "New Save"}
+            onClick={id ? handleUpdate : handleUpload}
+          />
         )}
       </div>
+
+      <style jsx>{`
+        .loader {
+          border: 4px solid #f3f3f3;
+          border-top: 4px solid #3498db;
+          border-radius: 50%;
+          width: 24px;
+          height: 24px;
+          animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+          0% {
+            transform: rotate(0deg);
+          }
+          100% {
+            transform: rotate(360deg);
+          }
+        }
+      `}</style>
     </div>
   );
 };
