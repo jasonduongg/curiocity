@@ -1,11 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import GridItem from "@/components/GridItem";
-import TextInput from "@/components/TextInput";
 import FileList from "@/components/FileList";
 import NavBar from "@/components/NavBar";
 import TextEditor from "@/components/TextEditor";
+import AllDocumentsGrid from "@/components/AllDocumentsGrid";
+import AWS from "aws-sdk";
 
 type newDocument = {
   id?: string;
@@ -28,7 +28,6 @@ export default function TestPage() {
     newDocument | undefined
   >(undefined);
 
-  // Fetch documents
   const fetchDocuments = () => {
     fetch("/api/db/getAll", {
       method: "GET",
@@ -49,89 +48,87 @@ export default function TestPage() {
     setSwapState(false);
     setCurrentDocument(undefined);
   };
+
   const handleGridItemClick = (document: newDocument) => {
-    setCurrentDocument(document); // Set the current document
-    setSwapState(true); // Swap the state
-    console.log(document);
+    setCurrentDocument(document);
+    setSwapState(true);
+  };
+
+  const handleCreateNewReport = () => {
+    // Define the logic for creating a new report here
+    console.log("Creating a new report...");
+  };
+
+  const onResourceUpload = (documentId: string) => {
+    console.log(`Uploaded new resource for document ID: ${documentId}`);
+
+    fetch(`/api/db?id=${documentId}`, {
+      method: "GET",
+    })
+      .then((r) => r.json())
+      .then((data) => {
+        console.log("Raw DynamoDB response:", data);
+
+        // Unmarshall the data to convert DynamoDB types into normal JS objects
+        const unmarshalledData = AWS.DynamoDB.Converter.unmarshall(data);
+        console.log("Unmarshalled data:", unmarshalledData);
+        setCurrentDocument(unmarshalledData);
+      })
+      .catch((error) => console.error("Error fetching document:", error));
   };
 
   return (
-    <>
-      <section className="overscroll-none bg-bgPrimary">
-        <div className="flex h-screen w-full max-w-full flex-col items-start justify-start px-10">
-          <NavBar />
-          <div className="mb-8 mt-4 flex h-full w-full max-w-full gap-4 overflow-hidden bg-bgPrimary">
-            {/* Left Side of Screen */}
-            <div className="max-w-1/2 flex h-full shrink grow basis-1/2 flex-col gap-4">
-              <div className="flex w-full flex-row justify-between">
-                <p className="mx-2 w-40 bg-gradient-to-r from-accentPrimary to-accentSecondary bg-clip-text text-2xl font-bold text-transparent">
-                  Report Home
-                </p>
-                <div className="flex justify-end">
-                  <button onClick={() => handleBack()}>
-                    <p className="text-white">Swap modes</p>
-                  </button>
-                </div>
-              </div>
-              <div className="flex h-full max-w-full grow flex-col overflow-hidden rounded-lg bg-bgSecondary">
-                <div className="flex h-full max-w-full grow flex-col overflow-hidden border-zinc-700">
-                  {swapState ? (
-                    <div className="h-full w-full max-w-full bg-black">
-                      <TextEditor
-                        currentDocument={currentDocument}
-                        swapState={() => {}}
-                      />
-                    </div>
-                  ) : (
-                    <div className="h-full">
-                      <div className="flex flex-col border-b-[1px] border-zinc-700 pb-6">
-                        <div className="flex flex-col rounded-xl border-[1px] border-zinc-700 bg-bgSecondary px-8 py-2 text-sm">
-                          <TextInput placeholder="Search for documents..." />
-                        </div>
-                        <p className="mx-8 my-4 text-2xl font-semibold text-textPrimary">
-                          Create Report
-                        </p>
-                        <div
-                          className="mx-8 mt-4 grid place-items-center rounded-xl border-[1px] border-textSecondary"
-                          onClick={() => {
-                            /* Handle the creation of a new report here */
-                          }}
-                        >
-                          <p className="text-4xl text-textPrimary">+</p>
-                        </div>
-                      </div>
-                      <p className="my-4 px-8 text-2xl font-medium text-textPrimary">
-                        Recent Reports
-                      </p>
-                      <div className="flex h-[50vh] w-full flex-wrap gap-8 overflow-y-scroll p-8">
-                        {allDocuments.map((item, index) => (
-                          <GridItem
-                            key={index}
-                            title={item.name}
-                            text={item.text}
-                            onClick={() => handleGridItemClick(item)} // Pass the click handler
-                          />
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </div>
+    <section className="overscroll-none bg-bgPrimary">
+      <div className="flex h-screen w-full max-w-full flex-col items-start justify-start px-10">
+        <NavBar />
+        <div className="mb-8 mt-4 flex h-full w-full max-w-full gap-4 overflow-hidden bg-bgPrimary">
+          <div className="max-w-1/2 flex h-full shrink grow basis-1/2 flex-col gap-4">
+            <div className="flex w-full flex-row justify-between">
+              <p className="mx-2 w-40 bg-gradient-to-r from-accentPrimary to-accentSecondary bg-clip-text text-2xl font-bold text-transparent">
+                Report Home
+              </p>
+              <div className="flex justify-end">
+                <button onClick={handleBack}>
+                  <p className="text-white">Swap modes</p>
+                </button>
               </div>
             </div>
-
-            {/* Right Side of Screen */}
-            <div className="flex shrink grow basis-1/2 flex-col rounded-xl border-[1px] border-zinc-700 bg-bgSecondary">
-              {!swapState ? (
-                <div className="flex flex-col border-b-[1px] border-zinc-700 py-3">
-                  <p>SELECT</p>
-                </div>
-              ) : (
-                <FileList currentDocument={currentDocument} />
-              )}
+            <div className="flex h-full max-w-full grow flex-col overflow-hidden rounded-lg bg-bgSecondary">
+              <div className="flex h-full max-w-full grow flex-col overflow-hidden border-zinc-700">
+                {swapState ? (
+                  <div className="h-full w-full max-w-full bg-black">
+                    <TextEditor
+                      currentDocument={currentDocument}
+                      swapState={() => {}}
+                    />
+                  </div>
+                ) : (
+                  <AllDocumentsGrid
+                    allDocuments={allDocuments}
+                    onDocumentClick={handleGridItemClick}
+                    onCreateNewReport={handleCreateNewReport}
+                  />
+                )}
+              </div>
             </div>
           </div>
+
+          <div className="flex shrink grow basis-1/2 flex-col rounded-xl border-[1px] border-zinc-700 bg-bgSecondary">
+            {!swapState ? (
+              <div className="flex flex-col border-b-[1px] border-zinc-700 py-3">
+                <p>SELECT</p>
+              </div>
+            ) : (
+              <FileList
+                currentDocument={currentDocument}
+                onResourceUpload={() =>
+                  onResourceUpload(currentDocument?.id || "")
+                }
+              />
+            )}
+          </div>
         </div>
-      </section>
-    </>
+      </div>
+    </section>
   );
 }

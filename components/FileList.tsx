@@ -2,11 +2,17 @@
 import { useState } from "react";
 import TextInput from "@/components/TextInput";
 import TableFolder from "@/components/TableFolder";
+import ResourceViewer from "@/components/ResourceViewer";
+import S3Button from "./S3Button";
 
-interface Resource {
-  name: string;
+type Resource = {
   id: string;
-}
+  documentId: string;
+  name: string;
+  text: string;
+  url: string;
+  dateAdded: string;
+};
 
 type FolderData = {
   name: string;
@@ -15,53 +21,46 @@ type FolderData = {
 
 type DocumentProps = {
   currentDocument?: {
+    id: string;
     folders?: Record<string, FolderData>;
   };
+  onResourceUpload: () => void; // New prop to notify of resource uploads
 };
 
-function FileList({ currentDocument }: DocumentProps) {
+function FileList({ currentDocument, onResourceUpload }: DocumentProps) {
   const [searchTerm, setSearchTerm] = useState("");
-  const [resourceUrl, setResourceUrl] = useState<string | null>(null);
+  const [currentResource, setCurrentResource] = useState<Resource | null>(null);
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(e.target.value);
   };
 
-  // Callback to receive the URL from TableRow
-  const handleResourceUrl = (url: string) => {
-    console.log("Received URL from TableRow:", url);
-    setResourceUrl(url);
+  // Callback to receive the resource from TableRow
+  const handleResourceAPI = (resource: Resource) => {
+    setCurrentResource(resource);
   };
-
-  // Determine if the resource is a PDF
-  const isPdf = resourceUrl?.toLowerCase().endsWith(".pdf");
 
   return (
     <div className="flex h-full flex-row justify-center">
       <div className="flex flex-grow overflow-hidden rounded-lg pl-4">
-        <div className="flex h-full w-full items-center justify-center border-x-[1px] border-zinc-700">
-          {resourceUrl ? (
-            isPdf ? (
-              <iframe
-                src={resourceUrl}
-                title="PDF Viewer"
-                className="h-full w-full"
-                style={{ border: "none" }}
-              />
-            ) : (
-              <img
-                src={resourceUrl}
-                alt="Resource"
-                className="max-h-full max-w-full object-contain"
-              />
-            )
-          ) : (
-            <p className="text-white">No resource selected</p>
-          )}
+        <div className="flex h-full w-full flex-col items-center justify-center border-x-[1px] border-zinc-700">
+          <ResourceViewer resource={currentResource} />
         </div>
       </div>
 
       <div className="w-1/3 items-center p-3 pr-4">
+        {/* Conditionally render S3Button only if currentDocument and currentDocument.id exist */}
+        {currentDocument?.id && (
+          <div>
+            <S3Button
+              documentId={currentDocument.id}
+              folderName="General"
+              onResourceUpload={() => {
+                onResourceUpload();
+              }}
+            />
+          </div>
+        )}
         <div className="mb-4 flex flex-col border-b-[1px] border-zinc-700 py-2">
           <TextInput
             placeholder="Find Resource..."
@@ -70,7 +69,7 @@ function FileList({ currentDocument }: DocumentProps) {
           />
         </div>
 
-        <div className="">
+        <div>
           {currentDocument?.folders &&
             Object.entries(currentDocument.folders).map(
               ([folderName, folderData]) => (
@@ -78,7 +77,7 @@ function FileList({ currentDocument }: DocumentProps) {
                   key={folderName}
                   folderName={folderData.name}
                   folderData={folderData}
-                  onResourceUrl={handleResourceUrl}
+                  onResource={handleResourceAPI}
                 />
               ),
             )}

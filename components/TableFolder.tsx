@@ -2,10 +2,14 @@ import { useState } from "react";
 import TableRow from "@/components/TableRow";
 import { FileIcon } from "@radix-ui/react-icons";
 
-interface Resource {
-  name: string;
+type Resource = {
   id: string;
-}
+  documentId: string;
+  name: string;
+  text: string;
+  url: string;
+  dateAdded: string;
+};
 
 interface FolderData {
   name: string;
@@ -15,13 +19,13 @@ interface FolderData {
 interface TableFolderProps {
   folderName: string;
   folderData: FolderData;
-  onResourceUrl: (url: string) => void; // Define the callback prop
+  onResource: (url: Resource) => void; // Define the callback prop
 }
 
 export default function TableFolder({
   folderName,
   folderData,
-  onResourceUrl,
+  onResource,
 }: TableFolderProps) {
   const [isExpanded, setIsExpanded] = useState(false);
 
@@ -49,7 +53,7 @@ export default function TableFolder({
               dateAdded="Unknown"
               lastViewed="Unknown"
               id={resource.id}
-              onResourceUrl={onResourceUrl}
+              onResource={onResource}
             />
           ))}
         </div>
