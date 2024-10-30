@@ -48,13 +48,14 @@ function FileList({ currentDocument, onResourceUpload }: DocumentProps) {
         </div>
       </div>
 
-      <div className="w-1/3 items-center p-3 pr-4">
+      <div className="w-1/3 items-center p-3">
         {/* Conditionally render S3Button only if currentDocument and currentDocument.id exist */}
         {currentDocument?.id && (
           <div>
             <S3Button
               documentId={currentDocument.id}
               folderName="General"
+              possibleFolders={currentDocument.folders}
               onResourceUpload={() => {
                 onResourceUpload();
               }}
