@@ -55,7 +55,7 @@ export default function S3Button() {
       >
         Upload file
       </button>
-
+      {/*// eslint-disable-next-line @next/next/no-img-element*/}
       {imageUrl && <img src={imageUrl} alt="Uploaded file" />}
     </div>
   );

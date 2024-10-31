@@ -34,10 +34,11 @@ export type Document = {
   name: string;
   folders: Record<string, Folder>;
   text: string;
+  createdAt: string;
 };
 
 // send json object to dynamodb
-export const putObject = async (client: any, inputData: any, table: string) => {
+const putObject = async (client: any, inputData: any, table: string) => {
   const res = await client
     .send(
       new PutItemCommand({
@@ -57,7 +58,7 @@ export const putObject = async (client: any, inputData: any, table: string) => {
 };
 
 // get json object from dynamodb
-export const getObject = async (client: any, id: any, table: string) => {
+const getObject = async (client: any, id: any, table: string) => {
   const res = await client
     .send(
       new GetItemCommand({
@@ -76,7 +77,7 @@ export const getObject = async (client: any, id: any, table: string) => {
   return res;
 };
 
-export const deleteObject = async (client: any, id: any, table: string) => {
+const deleteObject = async (client: any, id: any, table: string) => {
   // Define the parameters for the DeleteItemCommand
   const params = {
     TableName: table, // The name of the DynamoDB table
@@ -161,6 +162,7 @@ export async function POST(request: Request) {
     name: data?.name || "test",
     folders: { General: defaultFolder },
     text: data?.text || "test",
+    createdAt: new Date().toISOString(),
   };
 
   console.log(Item);
