@@ -2,6 +2,7 @@ import { useState, useRef } from "react";
 import { useS3Upload } from "next-s3-upload";
 import { FaCheckCircle, FaTrash } from "react-icons/fa";
 import ResourceViewerMini from "./ResourceViewerMini";
+import FolderDropdown from "./FolderSelectionDropdown";
 
 interface S3ButtonProps {
   documentId: string;
@@ -32,6 +33,7 @@ export default function S3Button({
     {},
   );
   const [previewResource, setPreviewResource] = useState<Resource | null>(null);
+  const [isUploading, setIsUploading] = useState(false); // New state to track uploading status
 
   const { uploadToS3 } = useS3Upload();
   const fileInputRef = useRef<HTMLInputElement | null>(null);
@@ -72,6 +74,13 @@ export default function S3Button({
 
     const folderToSave = isNewFolder ? newFolderName : selectedFolder;
 
+    if (folderToSave.trim() === "") {
+      // Throw here
+      return;
+    }
+
+    setIsUploading(true); // Start upload process
+
     for (const file of fileQueue) {
       const { name: fileName } = file;
 
@@ -97,21 +106,15 @@ export default function S3Button({
         console.error(`Error uploading ${fileName}:`, error);
       }
     }
-
+    setIsUploading(false); // End upload process
     if (onResourceUpload) onResourceUpload();
     cancelCallBack();
     setFileQueue([]);
   };
 
-  const handleFolderChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const selectedValue = e.target.value;
-    if (selectedValue === "newFolder") {
-      setIsNewFolder(true);
-      setSelectedFolder("");
-    } else {
-      setIsNewFolder(false);
-      setSelectedFolder(selectedValue);
-    }
+  const handleFolderChange = (folderName: string) => {
+    setSelectedFolder(folderName);
+    setIsNewFolder(folderName === "Enter New Folder Name");
   };
 
   const handleCancelUpload = () => {
@@ -124,41 +127,36 @@ export default function S3Button({
 
   return (
     <div className="mt-2 h-full">
-      {/* Folder Selection and File Input */}
-      <div className="flex flex-row space-x-2">
-        <select
-          value={isNewFolder ? "newFolder" : selectedFolder}
-          onChange={handleFolderChange}
-          className="w-full whitespace-nowrap rounded-md border-[1px] border-zinc-700 bg-black px-2 py-1 text-sm text-white"
-        >
-          {possibleFolders &&
-            Object.entries(possibleFolders).map(([key, folder]) => (
-              <option key={key} value={folder.name}>
-                {folder.name}
-              </option>
-            ))}
-          <option value="newFolder">+ New Folder</option>
-        </select>
-
-        <button
-          onClick={() => fileInputRef.current?.click()}
-          className="whitespace-nowrap rounded-md border-[1px] border-zinc-700 bg-black px-2 py-1 text-sm text-white hover:bg-gray-700"
-        >
-          Select Files
-        </button>
+      {/* Folder Selection */}
+      <div className="p-2">
+        <p className="mb-1 text-sm text-white">Select Folder:</p>
+        <div className="flex items-center space-x-2">
+          <FolderDropdown
+            possibleFolders={possibleFolders}
+            selectedFolder={selectedFolder}
+            onFolderChange={handleFolderChange}
+          />
+          <button
+            onClick={() => fileInputRef.current?.click()}
+            className="whitespace-nowrap rounded-md border border-zinc-700 bg-transparent px-2 py-1 text-sm text-white hover:bg-gray-700"
+          >
+            Select Files
+          </button>
+        </div>
       </div>
 
       {/* New Folder Input */}
       {isNewFolder && (
-        <input
-          type="text"
-          placeholder="Enter new folder name"
-          value={newFolderName}
-          onChange={(e) => setNewFolderName(e.target.value)}
-          className="mt-2 w-full rounded-lg border border-zinc-700 bg-transparent px-2 py-2 text-sm text-white outline-none focus:border-white"
-        />
+        <div className="px-2">
+          <input
+            type="text"
+            placeholder="..."
+            value={newFolderName}
+            onChange={(e) => setNewFolderName(e.target.value)}
+            className="w-full rounded-lg border border-zinc-700 bg-transparent px-2 py-1 text-sm text-white outline-none focus:border-white"
+          />
+        </div>
       )}
-
       <input
         type="file"
         multiple
@@ -167,65 +165,81 @@ export default function S3Button({
         ref={fileInputRef}
       />
 
-      <div className="h-[80%] bg-red-500">
-        {/* File Queue and Upload Controls */}
-        <div className="mt-2 h-1/2 overflow-y-scroll rounded-xl border border-zinc-700 p-2">
-          <p className="mb-2 text-sm font-semibold text-white">
-            Selected Files:
-          </p>
-          <ul className="list-disc text-white">
-            {fileQueue.map((file, index) => (
-              <div
-                key={index}
-                className="mb-2 flex w-full items-center overflow-hidden rounded-lg border-[1px] border-zinc-700"
-              >
-                <p
-                  className="flex-1 cursor-pointer whitespace-nowrap px-2 py-1 text-sm"
-                  onClick={() => handleFileClick(file)}
+      <div className="flex h-[80%] flex-col">
+        {/* File Queue */}
+        <div className="flex h-2/5 flex-col p-2">
+          <p className="mb-1 text-sm font-bold text-white">Selected Files:</p>
+          <div className="h-full overflow-y-scroll rounded-xl border border-zinc-700 p-2">
+            <ul className="list-disc text-white">
+              {fileQueue.map((file, index) => (
+                <div
+                  key={index}
+                  className="mb-2 flex w-full items-center overflow-hidden rounded-lg border-[1px] border-zinc-700"
                 >
-                  {file.name}
-                </p>
-                {uploadedFiles[file.name] && (
-                  <FaCheckCircle className="ml-2 text-green-500" />
-                )}
-                <button
-                  className="ml-2 text-red-500 hover:text-red-400"
-                  onClick={() => handleDeleteFile(file.name)}
-                  aria-label={`Delete ${file.name}`}
-                >
-                  <FaTrash />
-                </button>
-              </div>
-            ))}
-          </ul>
+                  <p
+                    className="flex-1 cursor-pointer whitespace-nowrap px-2 py-1 text-sm"
+                    onClick={() => handleFileClick(file)}
+                  >
+                    {file.name}
+                  </p>
+                  {isUploading ? (
+                    // Show checkmark as placeholder during upload
+                    uploadedFiles[file.name] ? (
+                      <FaCheckCircle className="mx-2 text-green-500 opacity-100 transition-opacity duration-500" />
+                    ) : (
+                      <div className="ml-2 h-4 w-4" />
+                    )
+                  ) : (
+                    <button
+                      className="mx-2 text-red-500 hover:text-red-400"
+                      onClick={() => handleDeleteFile(file.name)}
+                      aria-label={`Delete ${file.name}`}
+                    >
+                      <FaTrash />
+                    </button>
+                  )}
+                </div>
+              ))}
+            </ul>
+          </div>
         </div>
 
-        {/* Preview Section using ResourceViewer */}
-        <div className="mt-2 h-1/2 overflow-y-scroll rounded-xl border border-zinc-700 p-2">
-          {previewResource && (
-            <div>
-              <h3 className="mb-2 text-sm font-semibold text-white">
-                Preview: {previewResource.name}
-              </h3>
-              <ResourceViewerMini resource={previewResource} />
-            </div>
-          )}
+        {/* Preview Section */}
+        <div className="flex h-3/5 flex-col p-2">
+          <p className="mb-1 text-sm font-bold text-white">
+            Preview: {previewResource?.name}
+          </p>
+          <div className="h-full overflow-y-scroll rounded-xl border border-zinc-700 p-2">
+            {previewResource && (
+              <div>
+                <ResourceViewerMini resource={previewResource} />
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
-      <div className="mt-2 flex space-x-2">
-        <button
-          onClick={handleUploadAll}
-          className="w-full rounded-md border-[1px] border-zinc-700 px-2 py-1 text-sm text-white hover:bg-blue-900"
-        >
-          Upload All Files
-        </button>
-        <button
-          onClick={handleCancelUpload}
-          className="w-full rounded-md border-[1px] border-zinc-700 px-2 py-1 text-sm text-white hover:bg-red-900"
-        >
-          Cancel
-        </button>
+      {/* Upload/Cancel Buttons */}
+      <div className="p-2">
+        <div className="flex space-x-2">
+          <button
+            onClick={handleUploadAll}
+            disabled={!selectedFolder.trim() && !newFolderName.trim()}
+            className={`w-full rounded-md border-[1px] border-zinc-700 px-2 py-1 text-sm text-white ${
+              !selectedFolder.trim() && !newFolderName.trim()
+                ? "cursor-not-allowed bg-gray-600"
+                : "hover:bg-blue-900"
+            }`}
+          >
+            Upload All Files
+          </button>
+          <button
+            onClick={handleCancelUpload}
+            className="w-full rounded-md border-[1px] border-zinc-700 px-2 py-1 text-sm text-white hover:bg-red-900"
+          >
+            Cancel
+          </button>
+        </div>
       </div>
     </div>
   );
