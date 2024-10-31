@@ -51,19 +51,19 @@ function FileList({ currentDocument, onResourceUpload }: DocumentProps) {
         <div className="flex h-full w-full flex-col overflow-hidden border-zinc-700">
           {!showUploadForm ? (
             <div className="flex h-full w-full flex-col">
-              <div className="h-full w-full px-2 pt-4">
-                <div className="h-full w-full flex-grow overflow-auto rounded-lg border-[1px] border-zinc-700">
-                  <ResourceViewer resource={currentResource} />
-                </div>
-              </div>
-
               <div className="px-2 py-4">
                 <button
                   onClick={openFileUploader}
-                  className="w-full rounded-md border-2 border-zinc-700 py-1 text-sm text-white transition duration-300 hover:bg-gray-700"
+                  className="w-full rounded-md border-[1px] border-zinc-700 py-1 text-sm text-white transition duration-300 hover:bg-gray-700"
                 >
                   Upload New Files
                 </button>
+              </div>
+
+              <div className="h-full w-full px-2 pb-4">
+                <div className="h-full w-full flex-grow overflow-auto rounded-lg border-[1px] border-zinc-700">
+                  <ResourceViewer resource={currentResource} />
+                </div>
               </div>
             </div>
           ) : (
