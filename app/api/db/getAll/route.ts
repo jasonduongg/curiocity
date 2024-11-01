@@ -35,7 +35,7 @@ const getAllEntries = async () => {
     const sortedItems = items.sort((a, b) => {
       const dateA = a.dateAdded ? new Date(a.dateAdded).getTime() : -Infinity;
       const dateB = b.dateAdded ? new Date(b.dateAdded).getTime() : -Infinity;
-      return dateA - dateB; // Ascending order
+      return dateB - dateA; // Ascending order
     });
 
     return sortedItems;
