@@ -55,6 +55,7 @@ const TextEditor = ({ currentDocument, swapState }: TextEditorProps) => {
           name: title,
           text: content,
           files: [],
+          dateAdded: new Date().toISOString(),
         } as newDocument),
         headers: {
           "Content-Type": "application/json",

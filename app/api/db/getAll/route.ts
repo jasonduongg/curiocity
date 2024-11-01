@@ -8,14 +8,18 @@ const tableName = process.env.DOCUMENT_TABLE || "";
 
 // Function to get all entries with only `id` and `name`
 const getAllEntries = async () => {
+  if (!tableName)
+    throw new Error("DOCUMENT_TABLE environment variable not set");
+
   try {
     const params = {
       TableName: tableName,
-      ProjectionExpression: "id, #name, #text, #folders", // Retrieve only `id` and `name`
+      ProjectionExpression: "id, #name, #text, #folders, #dateAdded", // Retrieve specific attributes
       ExpressionAttributeNames: {
         "#name": "name", // Handle reserved word `name`
         "#text": "text",
         "#folders": "folders",
+        "#dateAdded": "dateAdded",
       },
     };
 
@@ -27,7 +31,14 @@ const getAllEntries = async () => {
       data.Items?.map((item: any) => AWS.DynamoDB.Converter.unmarshall(item)) ||
       [];
 
-    return items;
+    // Sort items by createdAt date (most past to most present)
+    const sortedItems = items.sort((a, b) => {
+      const dateA = a.dateAdded ? new Date(a.dateAdded).getTime() : -Infinity;
+      const dateB = b.dateAdded ? new Date(b.dateAdded).getTime() : -Infinity;
+      return dateA - dateB; // Ascending order
+    });
+
+    return sortedItems;
   } catch (error) {
     console.error("Error retrieving all entries:", error);
     throw new Error("Could not retrieve entries");
