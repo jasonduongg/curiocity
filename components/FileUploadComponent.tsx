@@ -3,7 +3,15 @@
 import React, { useEffect, useState } from "react";
 import * as pdfjsLib from "pdfjs-dist";
 
-const FileUploadComponent: React.FC = () => {
+interface FileUploadComponentProps {
+  file: File | null;
+  onTextExtracted: (text: string) => void;
+}
+
+const FileUploadComponent: React.FC<FileUploadComponentProps> = ({
+  file,
+  onTextExtracted,
+}) => {
   const [pdfjs, setPdfjs] = useState<typeof pdfjsLib | null>(null);
 
   useEffect(() => {
@@ -20,11 +28,8 @@ const FileUploadComponent: React.FC = () => {
     }
   }, []);
 
-  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const files = event.target.files;
-
-    if (files && files.length > 0 && pdfjs) {
-      const file = files[0];
+  useEffect(() => {
+    if (file && pdfjs) {
       const fileName = file.name;
       const fileExtension = fileName.split(".").pop()?.toLowerCase();
 
@@ -32,7 +37,7 @@ const FileUploadComponent: React.FC = () => {
         const reader = new FileReader();
         reader.onload = () => {
           const text = reader.result as string;
-          console.log(`Extracted text from ${fileName}:\n`, text);
+          onTextExtracted(text);
         };
         reader.readAsText(file);
       } else if (fileExtension === "pdf") {
@@ -51,7 +56,7 @@ const FileUploadComponent: React.FC = () => {
                 .join(" ");
               textContent += pageText + "\n";
             }
-            console.log(`Extracted text from ${fileName}:\n`, textContent);
+            onTextExtracted(textContent);
           } catch (error) {
             console.error("Error parsing PDF:", error);
           }
@@ -60,16 +65,10 @@ const FileUploadComponent: React.FC = () => {
       } else {
         console.error("Unsupported file type");
       }
-    } else {
-      console.error("PDF.js library not loaded yet or no file selected");
     }
-  };
+  }, [file, pdfjs, onTextExtracted]);
 
-  return (
-    <div>
-      <input type="file" accept=".csv,.pdf,.html" onChange={handleFileChange} />
-    </div>
-  );
+  return null; // This component no longer renders anything
 };
 
 export default FileUploadComponent;

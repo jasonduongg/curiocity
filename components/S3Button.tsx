@@ -3,6 +3,7 @@ import { useS3Upload } from "next-s3-upload";
 import { FaCheckCircle, FaTrash } from "react-icons/fa";
 import ResourceViewerMini from "./ResourceViewerMini";
 import FolderDropdown from "./FolderSelectionDropdown";
+import FileUploadComponent from "./FileUploadComponent";
 
 interface S3ButtonProps {
   documentId: string;
@@ -33,8 +34,8 @@ export default function S3Button({
     {},
   );
   const [previewResource, setPreviewResource] = useState<Resource | null>(null);
-  const [isUploading, setIsUploading] = useState(false); // New state to track uploading status
-
+  const [isUploading, setIsUploading] = useState(false);
+  const [currentFile, setCurrentFile] = useState<File | null>(null); // Track current file for extraction
   const { uploadToS3 } = useS3Upload();
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
@@ -47,23 +48,19 @@ export default function S3Button({
     }
   };
 
-  const handleFileClick = (file: File) => {
-    const fileURL = URL.createObjectURL(file);
-    setPreviewResource({ name: file.name, url: fileURL });
-  };
-
-  const handleDeleteFile = (fileName: string) => {
-    setFileQueue((prevQueue) =>
-      prevQueue.filter((file) => file.name !== fileName),
-    );
-    setUploadedFiles((prev) => {
-      const updated = { ...prev };
-      delete updated[fileName];
-      return updated;
-    });
-    if (previewResource?.name === fileName) {
-      setPreviewResource(null); // Reset the preview if the deleted file was being previewed
+  const extractTextFromFile = async (file: File) => {
+    const fileExtension = file.name.split(".").pop()?.toLowerCase();
+    if (
+      fileExtension === "csv" ||
+      fileExtension === "html" ||
+      fileExtension === "pdf"
+    ) {
+      return await new Promise<string>((resolve) => {
+        const handleTextExtracted = (text: string) => resolve(text);
+        setCurrentFile({ file, onTextExtracted: handleTextExtracted });
+      });
     }
+    return ""; // No text extraction for unsupported file types
   };
 
   const handleUploadAll = async () => {
@@ -72,41 +69,34 @@ export default function S3Button({
       return;
     }
 
+    setIsUploading(true);
     const folderToSave = isNewFolder ? newFolderName : selectedFolder;
 
-    if (folderToSave.trim() === "") {
-      // Throw here
-      return;
-    }
-
-    setIsUploading(true); // Start upload process
-
     for (const file of fileQueue) {
-      const { name: fileName } = file;
-
       try {
         const { url } = await uploadToS3(file);
-
         await fetch("/api/db/resource", {
           method: "POST",
           body: JSON.stringify({
-            name: fileName,
+            name: file.name,
             documentId,
             url,
             folderName: folderToSave,
             dateAdded: new Date().toISOString(),
+            text: await extractTextFromFile(file), // Include extracted text only for supported files
           }),
           headers: {
             "Content-Type": "application/json",
           },
         });
 
-        setUploadedFiles((prev) => ({ ...prev, [fileName]: true }));
+        setUploadedFiles((prev) => ({ ...prev, [file.name]: true }));
       } catch (error) {
-        console.error(`Error uploading ${fileName}:`, error);
+        console.error(`Error uploading ${file.name}:`, error);
       }
     }
-    setIsUploading(false); // End upload process
+
+    setIsUploading(false);
     if (onResourceUpload) onResourceUpload();
     cancelCallBack();
     setFileQueue([]);
@@ -150,7 +140,7 @@ export default function S3Button({
         <div className="px-2">
           <input
             type="text"
-            placeholder="..."
+            placeholder="______"
             value={newFolderName}
             onChange={(e) => setNewFolderName(e.target.value)}
             className="w-full rounded-lg border border-zinc-700 bg-transparent px-2 py-1 text-sm text-white outline-none focus:border-white"
@@ -165,6 +155,13 @@ export default function S3Button({
         ref={fileInputRef}
       />
 
+      {currentFile && (
+        <FileUploadComponent
+          file={currentFile.file}
+          onTextExtracted={currentFile.onTextExtracted}
+        />
+      )}
+
       <div className="flex h-[80%] flex-col">
         {/* File Queue */}
         <div className="flex h-2/5 flex-col p-2">
@@ -178,12 +175,16 @@ export default function S3Button({
                 >
                   <p
                     className="flex-1 cursor-pointer whitespace-nowrap px-2 py-1 text-sm"
-                    onClick={() => handleFileClick(file)}
+                    onClick={() =>
+                      setPreviewResource({
+                        name: file.name,
+                        url: URL.createObjectURL(file),
+                      })
+                    }
                   >
                     {file.name}
                   </p>
                   {isUploading ? (
-                    // Show checkmark as placeholder during upload
                     uploadedFiles[file.name] ? (
                       <FaCheckCircle className="mx-2 text-green-500 opacity-100 transition-opacity duration-500" />
                     ) : (
@@ -192,7 +193,11 @@ export default function S3Button({
                   ) : (
                     <button
                       className="mx-2 text-red-500 hover:text-red-400"
-                      onClick={() => handleDeleteFile(file.name)}
+                      onClick={() =>
+                        setFileQueue((prevQueue) =>
+                          prevQueue.filter((f) => f.name !== file.name),
+                        )
+                      }
                       aria-label={`Delete ${file.name}`}
                     >
                       <FaTrash />
@@ -211,9 +216,7 @@ export default function S3Button({
           </p>
           <div className="h-full overflow-y-scroll rounded-xl border border-zinc-700 p-2">
             {previewResource && (
-              <div>
-                <ResourceViewerMini resource={previewResource} />
-              </div>
+              <ResourceViewerMini resource={previewResource} />
             )}
           </div>
         </div>
@@ -224,12 +227,7 @@ export default function S3Button({
         <div className="flex space-x-2">
           <button
             onClick={handleUploadAll}
-            disabled={!selectedFolder.trim() && !newFolderName.trim()}
-            className={`w-full rounded-md border-[1px] border-zinc-700 px-2 py-1 text-sm text-white ${
-              !selectedFolder.trim() && !newFolderName.trim()
-                ? "cursor-not-allowed bg-gray-600"
-                : "hover:bg-blue-900"
-            }`}
+            className="w-full rounded-md border-[1px] border-zinc-700 px-2 py-1 text-sm text-white hover:bg-blue-900"
           >
             Upload All Files
           </button>
