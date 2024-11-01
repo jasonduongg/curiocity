@@ -1,6 +1,7 @@
 import AddNote from "@/components/AddingNotes";
 import DeleteConfirmationModal from "@/components/DeleteConfirmationModal";
 import NewPromptModal from "@/components/newPrompt";
+import FileUploadComponent from "@/components/ParsingButton";
 export default function Home() {
   return (
     <div className="flex h-screen flex-col space-y-4">
@@ -10,6 +11,7 @@ export default function Home() {
         <AddNote />
         <DeleteConfirmationModal />
         <NewPromptModal />
+        <FileUploadComponent />
       </div>
       <div className="flex h-screen flex-col items-center justify-center">
         <h1 className="text-2xl">Design System </h1>
