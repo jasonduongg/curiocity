@@ -40,15 +40,17 @@ export default function AllDocumentGrid({
         </div>
       </div>
 
-      <div className="flex w-full grow flex-wrap gap-8 overflow-y-auto p-8">
+      <div className="flex w-full grow flex-wrap justify-center gap-8 overflow-y-auto p-8">
         {allDocuments.map((item, index) => (
-          <GridItem
-            key={index}
-            title={item.name}
-            text={item.text}
-            dateAdded={item.dateAdded}
-            onClick={() => onDocumentClick(item)}
-          />
+          <div key={index} className="flex-shrink-0 flex-grow-0">
+            <GridItem
+              key={index}
+              title={item.name}
+              text={item.text}
+              dateAdded={item.dateAdded}
+              onClick={() => onDocumentClick(item)}
+            />
+          </div>
         ))}
       </div>
     </div>

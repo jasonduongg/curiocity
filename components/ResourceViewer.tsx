@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Switch } from "@/components/ui/switch";
 
 type Resource = {
   id: string;
@@ -11,15 +12,18 @@ type Resource = {
 
 interface ResourceViewerProps {
   resource: Resource | null;
+  resourceChangeCount: number;
 }
 
-export default function ResourceViewer({ resource }: ResourceViewerProps) {
+export default function ResourceViewer({
+  resource,
+  resourceChangeCount,
+}: ResourceViewerProps) {
   const [csvData, setCsvData] = useState<string[][] | null>(null);
   const [viewMode, setViewMode] = useState<"URL" | "Text">("URL");
 
   useEffect(() => {
     if (resource && resource.url.toLowerCase().endsWith(".csv")) {
-      // Fetch and parse CSV content without a library
       fetch(resource.url)
         .then((response) => response.text())
         .then((text) => {
@@ -32,6 +36,10 @@ export default function ResourceViewer({ resource }: ResourceViewerProps) {
       setCsvData(null);
     }
   }, [resource]);
+
+  useEffect(() => {
+    setViewMode("URL");
+  }, [resourceChangeCount]);
 
   if (!resource) {
     return (
@@ -46,46 +54,41 @@ export default function ResourceViewer({ resource }: ResourceViewerProps) {
   const isImage = /\.(jpeg|jpg|png|gif)$/i.test(resource.url);
   const isCsv = resource.url.toLowerCase().endsWith(".csv");
 
-  const handleToggleViewMode = () => {
-    if (viewMode === "URL") {
-      if (resource.text && resource.text.trim() !== "") {
-        setViewMode("Text");
-      } else {
-        alert("Text content is empty, cannot switch to Text view.");
-      }
-    } else {
+  const handleToggleViewMode = (checked: boolean) => {
+    if (checked && resource.text && resource.text.trim() !== "") {
+      setViewMode("Text");
+    } else if (!checked) {
       setViewMode("URL");
+    } else {
+      alert("Text content is empty, cannot switch to Text view.");
     }
   };
+
+  // Format date to "Nov 1, 2024 11:00PM"
+  const formattedDate = new Intl.DateTimeFormat("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+    hour: "numeric",
+    minute: "numeric",
+    hour12: true,
+  }).format(new Date(resource.dateAdded));
 
   return (
     <div className="h-full w-full overflow-hidden p-2">
       <div className="mb-2 flex items-center justify-between">
-        <p className="text-white">Added on: {resource.dateAdded}</p>
-        <button
-          onClick={handleToggleViewMode}
-          className="relative flex h-8 w-20 items-center rounded-full bg-gray-300 p-1 transition-colors duration-300"
-        >
-          <div
-            className={`absolute h-6 w-6 transform rounded-full bg-white shadow-md transition-transform duration-300 ${
-              viewMode === "URL" ? "translate-x-0" : "translate-x-12"
-            }`}
+        <p className="whitespace-nowrap text-sm text-white">
+          Added on: {formattedDate}
+        </p>
+        <div className="flex items-center space-x-4">
+          <label className="whitespace-nowrap text-sm text-white">
+            View as Text
+          </label>
+          <Switch
+            checked={viewMode === "Text"}
+            onCheckedChange={handleToggleViewMode}
           />
-          <span
-            className={`absolute left-3 text-sm font-medium transition-opacity duration-300 ${
-              viewMode === "URL" ? "opacity-100" : "opacity-0"
-            }`}
-          >
-            URL
-          </span>
-          <span
-            className={`absolute right-3 text-sm font-medium transition-opacity duration-300 ${
-              viewMode === "Text" ? "opacity-100" : "opacity-0"
-            }`}
-          >
-            Text
-          </span>
-        </button>
+        </div>
       </div>
 
       {viewMode === "URL" ? (

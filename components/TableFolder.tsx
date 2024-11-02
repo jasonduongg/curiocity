@@ -1,4 +1,6 @@
-import { useState } from "react";
+// components/TableFolder.tsx
+
+import React, { useState } from "react";
 import TableRow from "@/components/TableRow";
 import { FileIcon } from "@radix-ui/react-icons";
 
@@ -19,23 +21,26 @@ interface FolderData {
 interface TableFolderProps {
   folderName: string;
   folderData: FolderData;
-  onResource: (url: Resource) => void; // Define the callback prop
+  onResource: (url: Resource) => void;
+  currentResource: Resource | null;
+  showUploadForm: boolean; // Add showUploadForm prop
 }
 
 export default function TableFolder({
   folderName,
   folderData,
   onResource,
+  currentResource,
+  showUploadForm,
 }: TableFolderProps) {
   const [isExpanded, setIsExpanded] = useState(false);
 
-  // Toggle folder dropdown
   const handleFolderClick = () => {
     setIsExpanded(!isExpanded);
   };
 
   return (
-    <div className="mb-2 w-full">
+    <div className="mb-2">
       <div
         className="cursor-pointer rounded-lg border-[1px] border-zinc-700 px-2 py-1 transition duration-300 hover:bg-gray-700"
         onClick={handleFolderClick}
@@ -48,11 +53,14 @@ export default function TableFolder({
             <TableRow
               key={resource.id}
               icon={FileIcon}
-              iconColor="white" // Assuming a static color for simplicity
+              iconColor="white"
               title={resource.name}
               dateAdded="Unknown"
               lastViewed="Unknown"
               id={resource.id}
+              isSelected={
+                currentResource?.id === resource.id && !showUploadForm
+              }
               onResource={onResource}
             />
           ))}
