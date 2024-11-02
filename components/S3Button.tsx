@@ -116,7 +116,7 @@ export default function S3Button({
   };
 
   return (
-    <div className="mt-2 h-full">
+    <div className="bg-red mt-2 h-full">
       {/* Folder Selection */}
       <div className="p-2">
         <p className="mb-1 text-sm text-white">Select Folder:</p>

@@ -6,14 +6,16 @@ interface Props {
 
 const TextInput = ({ placeholder }: Props) => {
   return (
-    <div className="flex w-full items-center">
-      <MagnifyingGlassIcon className="h-6 w-6 text-textPrimary"></MagnifyingGlassIcon>
-      <input
-        id="username"
-        type="text"
-        className="ml-4 w-full bg-bgSecondary py-2 text-textPrimary selection:border-0"
-        placeholder={placeholder}
-      />
+    <div className="mb-4 flex flex-col border-b-[1px] border-zinc-700 py-2">
+      <div className="flex flex-row items-center rounded-lg">
+        <MagnifyingGlassIcon className="h-5 w-5 text-textPrimary" />
+        <input
+          id="search"
+          type="text"
+          className="w-full bg-transparent px-2 py-1 text-sm text-textPrimary outline-none focus:outline-none"
+          placeholder={placeholder}
+        />
+      </div>
     </div>
   );
 };

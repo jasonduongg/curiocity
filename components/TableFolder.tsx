@@ -35,7 +35,7 @@ export default function TableFolder({
   };
 
   return (
-    <div className="mb-2">
+    <div className="mb-2 w-full">
       <div
         className="cursor-pointer rounded-lg border-[1px] border-zinc-700 px-2 py-1 transition duration-300 hover:bg-gray-700"
         onClick={handleFolderClick}

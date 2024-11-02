@@ -4,6 +4,12 @@ import AWS from "aws-sdk";
 import TextEditor from "@/components/TextEditor";
 import AuthButton from "@/components/AuthButton";
 
+import {
+  ResizableHandle,
+  ResizablePanel,
+  ResizablePanelGroup,
+} from "@/components/ui/resizable";
+
 type newDocument = {
   id?: string; // Add id to the newDocument type for consistency
   name: string;
@@ -152,6 +158,12 @@ export default function TestPage() {
       <div className="h-[40vh]">
         <TextEditor></TextEditor>
       </div>
+
+      <ResizablePanelGroup direction="horizontal">
+        <ResizablePanel>One</ResizablePanel>
+        <ResizableHandle />
+        <ResizablePanel>Two</ResizablePanel>
+      </ResizablePanelGroup>
 
       <AuthButton></AuthButton>
     </div>
