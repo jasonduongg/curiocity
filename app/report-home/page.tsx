@@ -1,10 +1,12 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useSession } from "next-auth/react";
 import FileList from "@/components/FileList";
 import NavBar from "@/components/NavBar";
 import TextEditor from "@/components/TextEditor";
 import AllDocumentsGrid from "@/components/AllDocumentsGrid";
+import AuthButton from "@/components/AuthButton";
 import AWS from "aws-sdk";
 
 type newDocument = {
@@ -27,6 +29,8 @@ export default function TestPage() {
   const [currentDocument, setCurrentDocument] = useState<
     newDocument | undefined
   >(undefined);
+
+  const { data: session } = useSession();
 
   const fetchDocuments = () => {
     fetch("/api/db/getAll", {
@@ -114,8 +118,12 @@ export default function TestPage() {
 
           <div className="flex shrink grow basis-1/2 flex-col rounded-xl border-[1px] border-zinc-700 bg-bgSecondary">
             {!swapState ? (
-              <div className="flex flex-col border-b-[1px] border-zinc-700 py-3">
+              <div className="flex flex-col border-b-[1px] border-zinc-700 py-3 text-textPrimary">
                 <p>SELECT</p>
+                <div className="flex flex-col">
+                  <p>{`UserID: ${session?.user.id}`}</p>
+                  <AuthButton></AuthButton>
+                </div>
               </div>
             ) : (
               <FileList
