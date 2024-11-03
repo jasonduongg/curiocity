@@ -71,10 +71,9 @@ export default function ResourceViewer({
   const textColor = isDarkMode ? "text-white" : "text-black";
 
   return (
-    <div className="h-full w-full overflow-hidden p-2">
+    <div className="flex h-full w-full flex-col overflow-hidden p-2">
       {/* Fixed mini navigation bar */}
       <div className="mb-2 flex h-12 flex-shrink-0 items-center justify-between rounded-md px-2 py-1">
-        {/* Left Section: Accessibility Options Button */}
         <div>
           {viewMode === "Text" ? (
             <button
@@ -89,8 +88,6 @@ export default function ResourceViewer({
             </p>
           )}
         </div>
-
-        {/* Right Section: View Mode Toggle */}
         <div className="flex items-center space-x-2">
           <label className="whitespace-nowrap text-sm text-white">
             Viewing as {viewMode}
@@ -103,76 +100,77 @@ export default function ResourceViewer({
       </div>
 
       {/* Content Display based on View Mode */}
-      {viewMode === "Text" ? (
-        <div className="h-full w-full overflow-y-scroll">
-          <div
-            className={`rounded-md p-4 ${textBackgroundColor} ${textColor}`}
-            style={{ fontSize: `${textSize}px` }}
-          >
-            <p className="whitespace-normal break-words">{resource.text}</p>
+      <div className="flex-grow overflow-hidden">
+        {viewMode === "Text" ? (
+          <div className="h-full overflow-y-auto">
+            <div
+              className={`rounded-md p-4 pb-16 ${textBackgroundColor} ${textColor}`} // Added `pb-8` for extra bottom padding
+              style={{ fontSize: `${textSize}px`, minHeight: "100%" }}
+            >
+              <p className="whitespace-normal break-words">{resource.text}</p>
+            </div>
           </div>
-        </div>
-      ) : (
-        // URL view rendering (no accessibility background)
-        <>
-          {resource.url.toLowerCase().endsWith(".pdf") ? (
-            <iframe
-              src={resource.url}
-              title="PDF Viewer"
-              className="mb-2 h-full w-full overflow-auto"
-              style={{ border: "none" }}
-            />
-          ) : resource.url.toLowerCase().endsWith(".html") ? (
-            <div className="h-full w-full overflow-auto bg-white">
+        ) : (
+          <>
+            {resource.url.toLowerCase().endsWith(".pdf") ? (
               <iframe
                 src={resource.url}
-                title="HTML Viewer"
-                className="h-full w-full"
+                title="PDF Viewer"
+                className="h-full w-full overflow-auto"
                 style={{ border: "none" }}
               />
-            </div>
-          ) : /\.(jpeg|jpg|png|gif)$/i.test(resource.url) ? (
-            <img
-              src={resource.url}
-              alt="Resource"
-              className="max-h-full max-w-full object-contain"
-            />
-          ) : csvData ? (
-            <div className="overflow-auto">
-              <table className="w-full table-auto border-collapse text-white">
-                <thead>
-                  <tr>
-                    {csvData[0].map((header, index) => (
-                      <th
-                        key={index}
-                        className="border border-gray-600 bg-gray-800 p-2"
-                      >
-                        {header}
-                      </th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {csvData.slice(1).map((row, rowIndex) => (
-                    <tr key={rowIndex}>
-                      {row.map((cell, cellIndex) => (
-                        <td
-                          key={cellIndex}
-                          className="border border-gray-600 p-2"
+            ) : resource.url.toLowerCase().endsWith(".html") ? (
+              <div className="h-full w-full overflow-auto bg-white">
+                <iframe
+                  src={resource.url}
+                  title="HTML Viewer"
+                  className="h-full w-full"
+                  style={{ border: "none" }}
+                />
+              </div>
+            ) : /\.(jpeg|jpg|png|gif)$/i.test(resource.url) ? (
+              <img
+                src={resource.url}
+                alt="Resource"
+                className="max-h-full max-w-full object-contain"
+              />
+            ) : csvData ? (
+              <div className="overflow-auto">
+                <table className="w-full table-auto border-collapse text-white">
+                  <thead>
+                    <tr>
+                      {csvData[0].map((header, index) => (
+                        <th
+                          key={index}
+                          className="border border-gray-600 bg-gray-800 p-2"
                         >
-                          {cell}
-                        </td>
+                          {header}
+                        </th>
                       ))}
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          ) : (
-            <p className="text-white">Unsupported file type</p>
-          )}
-        </>
-      )}
+                  </thead>
+                  <tbody>
+                    {csvData.slice(1).map((row, rowIndex) => (
+                      <tr key={rowIndex}>
+                        {row.map((cell, cellIndex) => (
+                          <td
+                            key={cellIndex}
+                            className="border border-gray-600 p-2"
+                          >
+                            {cell}
+                          </td>
+                        ))}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            ) : (
+              <p className="text-white">Unsupported file type</p>
+            )}
+          </>
+        )}
+      </div>
 
       <AccessibilityOptionsModal
         isOpen={isModalOpen}

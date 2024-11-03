@@ -28,6 +28,7 @@ export default function AccessibilityOptionsModal({
           Accessibility Options
         </h2>
 
+        {/* Text Size Slider */}
         <div className="mb-4">
           <label htmlFor="text-size-slider" className="text-sm text-gray-700">
             Text Size:
@@ -44,30 +45,38 @@ export default function AccessibilityOptionsModal({
           <span className="text-sm text-gray-700">{textSize}px</span>
         </div>
 
+        {/* Theme Selection */}
         <div className="mb-4">
           <label className="text-sm text-gray-700">Theme:</label>
           <div className="mt-2 flex items-center">
-            <button
-              onClick={() => setIsDarkMode(true)}
-              className={`w-1/2 rounded-l-lg px-4 py-2 ${
-                isDarkMode ? "bg-gray-800 text-white" : "bg-gray-200"
-              }`}
-            >
-              Dark
-            </button>
-            <button
-              onClick={() => setIsDarkMode(false)}
-              className={`w-1/2 rounded-r-lg px-4 py-2 ${
-                !isDarkMode
-                  ? "bg-gray-200 text-black"
-                  : "bg-gray-800 text-white"
-              }`}
-            >
-              Light
-            </button>
+            <div className="w-1/2 p-2">
+              <button
+                onClick={() => setIsDarkMode(true)}
+                className={`w-full rounded-md bg-gray-800 px-4 py-2 text-white ${
+                  isDarkMode
+                    ? "border-4 border-blue-500"
+                    : "border border-gray-700"
+                }`}
+              >
+                Dark
+              </button>
+            </div>
+            <div className="w-1/2 p-2">
+              <button
+                onClick={() => setIsDarkMode(false)}
+                className={`w-full rounded-md bg-gray-200 px-4 py-2 text-black ${
+                  !isDarkMode
+                    ? "border-4 border-blue-500"
+                    : "border border-gray-700"
+                }`}
+              >
+                Light
+              </button>
+            </div>
           </div>
         </div>
 
+        {/* Close Button */}
         <div className="flex justify-end space-x-2">
           <button
             onClick={onClose}
