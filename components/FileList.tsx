@@ -129,7 +129,7 @@ function FileList({ currentDocument, onResourceUpload }: DocumentProps) {
         <ResizablePanel defaultSize={35}>
           <div className="flex h-full w-full flex-col items-center p-3">
             <TextInput placeholder="Search Resource" />
-            <div className="h-full w-full">
+            <div className="h-full w-full px-2">
               {currentDocument.folders &&
                 Object.entries(currentDocument.folders).map(
                   ([folderName, folderData]) => (

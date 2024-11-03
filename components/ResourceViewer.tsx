@@ -1,5 +1,8 @@
+// components/ResourceViewer.tsx
+
 import { useEffect, useState } from "react";
 import { Switch } from "@/components/ui/switch";
+import AccessibilityOptionsModal from "@/components/AccessibilityOptionsModal";
 
 type Resource = {
   id: string;
@@ -21,6 +24,9 @@ export default function ResourceViewer({
 }: ResourceViewerProps) {
   const [csvData, setCsvData] = useState<string[][] | null>(null);
   const [viewMode, setViewMode] = useState<"URL" | "Text">("URL");
+  const [textSize, setTextSize] = useState(14); // Initial text size
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isDarkMode, setIsDarkMode] = useState(true);
 
   useEffect(() => {
     if (resource && resource.url.toLowerCase().endsWith(".csv")) {
@@ -49,40 +55,45 @@ export default function ResourceViewer({
     );
   }
 
-  const isPdf = resource.url.toLowerCase().endsWith(".pdf");
-  const isHtml = resource.url.toLowerCase().endsWith(".html");
-  const isImage = /\.(jpeg|jpg|png|gif)$/i.test(resource.url);
-  const isCsv = resource.url.toLowerCase().endsWith(".csv");
-
   const handleToggleViewMode = (checked: boolean) => {
-    if (checked && resource.text && resource.text.trim() !== "") {
-      setViewMode("Text");
-    } else if (!checked) {
-      setViewMode("URL");
-    } else {
-      alert("Text content is empty, cannot switch to Text view.");
-    }
+    setViewMode(checked ? "Text" : "URL");
   };
 
-  // Format date to "Nov 1, 2024 11:00PM"
-  const formattedDate = new Intl.DateTimeFormat("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-    hour: "numeric",
-    minute: "numeric",
-    hour12: true,
-  }).format(new Date(resource.dateAdded));
+  const openModal = () => {
+    if (viewMode === "Text") {
+      setIsModalOpen(true);
+    }
+  };
+  const closeModal = () => setIsModalOpen(false);
+
+  // Conditionally apply background and text color based on viewMode
+  const textBackgroundColor = isDarkMode ? "bg-gray-900" : "bg-white";
+  const textColor = isDarkMode ? "text-white" : "text-black";
 
   return (
     <div className="h-full w-full overflow-hidden p-2">
-      <div className="mb-2 flex items-center justify-between">
-        <p className="whitespace-nowrap text-sm text-white">
-          Added on: {formattedDate}
-        </p>
-        <div className="flex items-center space-x-4">
+      {/* Fixed mini navigation bar */}
+      <div className="mb-2 flex h-12 flex-shrink-0 items-center justify-between rounded-md px-2 py-1">
+        {/* Left Section: Accessibility Options Button */}
+        <div>
+          {viewMode === "Text" ? (
+            <button
+              onClick={openModal}
+              className="whitespace-nowrap rounded-md border-[1px] border-zinc-700 px-2 py-1 text-sm text-white"
+            >
+              Accessibility Options
+            </button>
+          ) : (
+            <p className="whitespace-nowrap text-sm font-bold text-white">
+              {resource.name}
+            </p>
+          )}
+        </div>
+
+        {/* Right Section: View Mode Toggle */}
+        <div className="flex items-center space-x-2">
           <label className="whitespace-nowrap text-sm text-white">
-            View as Text
+            Viewing as {viewMode}
           </label>
           <Switch
             checked={viewMode === "Text"}
@@ -91,16 +102,27 @@ export default function ResourceViewer({
         </div>
       </div>
 
-      {viewMode === "URL" ? (
+      {/* Content Display based on View Mode */}
+      {viewMode === "Text" ? (
+        <div className="h-full w-full overflow-y-scroll">
+          <div
+            className={`rounded-md p-4 ${textBackgroundColor} ${textColor}`}
+            style={{ fontSize: `${textSize}px` }}
+          >
+            <p className="whitespace-normal break-words">{resource.text}</p>
+          </div>
+        </div>
+      ) : (
+        // URL view rendering (no accessibility background)
         <>
-          {isPdf ? (
+          {resource.url.toLowerCase().endsWith(".pdf") ? (
             <iframe
               src={resource.url}
               title="PDF Viewer"
               className="mb-2 h-full w-full overflow-auto"
               style={{ border: "none" }}
             />
-          ) : isHtml ? (
+          ) : resource.url.toLowerCase().endsWith(".html") ? (
             <div className="h-full w-full overflow-auto bg-white">
               <iframe
                 src={resource.url}
@@ -109,13 +131,13 @@ export default function ResourceViewer({
                 style={{ border: "none" }}
               />
             </div>
-          ) : isImage ? (
+          ) : /\.(jpeg|jpg|png|gif)$/i.test(resource.url) ? (
             <img
               src={resource.url}
               alt="Resource"
               className="max-h-full max-w-full object-contain"
             />
-          ) : isCsv && csvData ? (
+          ) : csvData ? (
             <div className="overflow-auto">
               <table className="w-full table-auto border-collapse text-white">
                 <thead>
@@ -150,15 +172,16 @@ export default function ResourceViewer({
             <p className="text-white">Unsupported file type</p>
           )}
         </>
-      ) : (
-        <div className="h-full w-full overflow-y-scroll">
-          <div className="rounded-md bg-gray-800 p-4 text-white">
-            <p className="whitespace-normal text-wrap break-words">
-              {resource.text}
-            </p>
-          </div>
-        </div>
       )}
+
+      <AccessibilityOptionsModal
+        isOpen={isModalOpen}
+        onClose={closeModal}
+        textSize={textSize}
+        setTextSize={setTextSize}
+        isDarkMode={isDarkMode}
+        setIsDarkMode={setIsDarkMode}
+      />
     </div>
   );
 }

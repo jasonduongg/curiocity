@@ -46,7 +46,7 @@ export default function TableRow({
 
   return (
     <div
-      className={`flex h-full cursor-pointer items-center gap-2 border py-[1px] ${
+      className={`flex h-full cursor-pointer items-center gap-2 rounded-lg border px-2 py-1 ${
         isSelected ? "border-blue-500" : "border-transparent"
       }`}
       onClick={handleClick}
