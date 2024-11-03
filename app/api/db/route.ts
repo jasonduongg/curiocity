@@ -14,6 +14,7 @@ const client = new DynamoDBClient({ region: "us-west-1" });
 const tableName = process.env.DOCUMENT_TABLE || "";
 export const maxDuration = 60;
 export const dynamic = "force-dynamic";
+const resourceTable = process.env.RESOURCE_TABLE || "";
 
 export type Resource = {
   id: string;
@@ -91,6 +92,16 @@ export const deleteObject = async (client: any, id: any, table: string) => {
   };
 
   try {
+    // if is document obj, delete all resources as well
+    if (table === tableName) {
+      const obj = await getObject(client, id, table);
+      for (const folder in obj.folders) {
+        for (const resource in obj.folders[folder].resources) {
+          await deleteObject(client, resource, resourceTable);
+        }
+      }
+    }
+
     // Send the DeleteItemCommand to DynamoDB
     const command = new DeleteItemCommand(params);
     const data = await client.send(command);
@@ -181,8 +192,8 @@ export async function POST(request: Request) {
 }
 
 export async function DELETE(request: Request) {
-  console.log("call put dynamodb");
   const data = await request.json();
+  console.log("call delete dynamodb: ", data.id);
 
   await deleteObject(client, data.id, tableName);
 

@@ -1,7 +1,12 @@
 "use client";
+import { TrashIcon } from "@radix-ui/react-icons";
 import React, { useState } from "react";
 
-const DeleteConfirmationModal: React.FC = () => {
+type DeleteProps = {
+  documentId: string;
+};
+
+const DeleteConfirmationModal: React.FC<DeleteProps> = ({ documentId }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   const handleOpenModal = () => {
@@ -13,14 +18,27 @@ const DeleteConfirmationModal: React.FC = () => {
   };
 
   const handleDelete = () => {
-    console.log("File deleted");
+    console.log("File deleted: ", documentId);
+    // delete api call
+    fetch("/api/db", {
+      method: "DELETE",
+      body: JSON.stringify({
+        id: documentId,
+      }),
+    })
+      .then((r) => r.json())
+      .then((res) => {
+        console.log(res);
+        window.location.reload();
+      });
+
     handleCloseModal();
   };
 
   return (
     <div>
-      <button
-        onClick={handleOpenModal}
+      {/* <button
+        
         style={{
           padding: "0.5rem 1rem",
           backgroundColor: "#0070f3",
@@ -31,7 +49,13 @@ const DeleteConfirmationModal: React.FC = () => {
         }}
       >
         Delete File
-      </button>
+      </button> */}
+      <div
+        className="grid h-10 w-10 cursor-pointer place-items-center rounded-lg border-2 border-fileRed"
+        onClick={handleOpenModal}
+      >
+        <TrashIcon className="h-6 w-6 text-fileRed"></TrashIcon>
+      </div>
 
       {/* Modal */}
       {isModalOpen && (

@@ -59,7 +59,7 @@ export default function TestPage() {
     <>
       <section className="overscroll-none bg-bgPrimary">
         <div className="flex h-screen w-full max-w-full flex-col items-start justify-start px-10">
-          <NavBar />
+          <NavBar documentId={currentDocument?.id || ""} />
           <div className="mb-8 mt-4 flex h-full w-full max-w-full gap-4 overflow-hidden bg-bgPrimary">
             {/* Left Side of Screen */}
             <div className="max-w-1/2 flex h-full shrink grow basis-1/2 flex-col gap-4">
