@@ -42,6 +42,8 @@ const options: NextAuthOptions = {
       ],
   callbacks: {
     async signIn({ user, profile }) {
+      console.log("signIn callback triggered"); // Check if callback is triggered
+      console.log(user, profile);
       if (DISABLE_AUTH) return true; // Bypass auth if disabled
 
       const email = user.email?.toLowerCase();
@@ -52,15 +54,58 @@ const options: NextAuthOptions = {
         return false;
       }
 
+      // Prepare user data to send to the backend
+      const userData = {
+        userId: profile.sub,
+        name: profile.name,
+        email: profile.email,
+        lastLoggedIn: new Date().toISOString(),
+      };
+      console.log(userData);
+
+      if (userData.userId && userData.name && userData.email) {
+        try {
+          // Use fetch to call the backend API route
+          const response = await fetch(`http://localhost:3000/api/user`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ userData }),
+          });
+
+          if (!response.ok) {
+            console.error(
+              "Failed to save user to DynamoDB:",
+              response.statusText,
+            );
+            return false;
+          }
+
+          console.log("User successfully saved or updated in DynamoDB");
+          return true; // Continue sign-in if the API call succeeds
+        } catch (error) {
+          console.error("Failed to save user to DynamoDB:", error);
+          return false; // Prevent sign-in if the API call fails
+        }
+      }
+
+      // // return false; // Prevent sign-in if essential data is missing
       return true;
     },
-    async session({ session }) {
+    async session({ session, token }) {
       if (DISABLE_AUTH) return session; // Bypass session if auth is disabled
 
       const email = session.user?.email?.toLowerCase();
       if (!email) return session;
 
+      // Attach user ID to the session
+      session.user.id = token.sub;
+
       return session;
+    },
+    async redirect({ baseUrl }) {
+      return `${baseUrl}/report-home`;
     },
   },
   secret: DISABLE_AUTH ? undefined : NEXTAUTH_SECRET,
