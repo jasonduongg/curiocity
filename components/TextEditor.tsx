@@ -3,7 +3,6 @@
 import React, { useState, useEffect } from "react";
 import ReactQuill from "react-quill";
 import "react-quill/dist/quill.snow.css";
-import Button from "./Button";
 
 type newDocument = {
   id?: string;
@@ -55,6 +54,7 @@ const TextEditor = ({ currentDocument, swapState }: TextEditorProps) => {
           name: title,
           text: content,
           files: [],
+          dateAdded: new Date().toISOString(),
         } as newDocument),
         headers: {
           "Content-Type": "application/json",
@@ -202,10 +202,21 @@ const TextEditor = ({ currentDocument, swapState }: TextEditorProps) => {
         ) : uploadComplete ? (
           <span className="font-bold text-green-500">&#10003; Uploaded!</span>
         ) : (
-          <Button
-            label={id ? "Update Save" : "New Save"}
-            onClick={id ? handleUpdate : handleUpload}
-          />
+          <div className="flex w-full flex-grow space-x-2 p-2">
+            <button
+              onClick={() => swapState()}
+              className="w-1/2 whitespace-nowrap rounded-md border border-zinc-700 bg-transparent px-2 py-1 text-sm text-white hover:bg-gray-700"
+            >
+              Back
+            </button>
+
+            <button
+              onClick={id ? handleUpdate : handleUpload}
+              className="w-1/2 whitespace-nowrap rounded-md border border-zinc-700 bg-transparent px-2 py-1 text-sm text-white hover:bg-gray-700"
+            >
+              Save
+            </button>
+          </div>
         )}
       </div>
 

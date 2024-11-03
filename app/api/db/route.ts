@@ -29,17 +29,18 @@ export type ResourceCompressed = {
   id: string;
 };
 
-export type Folder = {
-  name: string;
-  resources: Array<ResourceCompressed>;
-};
-
 export type Document = {
   id: string;
   owner: string;
   name: string;
   folders: Record<string, Folder>;
   text: string;
+  dateAdded: string;
+};
+
+export type Folder = {
+  name: string;
+  resources: Array<ResourceCompressed>;
 };
 
 // send json object to dynamodb
@@ -167,6 +168,7 @@ export async function POST(request: Request) {
     name: data?.name || "test",
     folders: { General: defaultFolder },
     text: data?.text || "test",
+    dateAdded: data?.dateAdded,
   };
 
   console.log(Item);

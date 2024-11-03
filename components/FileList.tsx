@@ -1,9 +1,14 @@
-// components/FileList.tsx
 import { useState } from "react";
 import TableFolder from "@/components/TableFolder";
 import ResourceViewer from "@/components/ResourceViewer";
 import S3Button from "./S3Button";
-import { MagnifyingGlassIcon } from "@radix-ui/react-icons";
+import TextInput from "./TextInput";
+import ConfirmCancelModal from "@/components/ConfirmCancelModal";
+import {
+  ResizableHandle,
+  ResizablePanel,
+  ResizablePanelGroup,
+} from "@/components/ui/resizable";
 
 type Resource = {
   id: string;
@@ -29,10 +34,32 @@ type DocumentProps = {
 
 function FileList({ currentDocument, onResourceUpload }: DocumentProps) {
   const [currentResource, setCurrentResource] = useState<Resource | null>(null);
+  const [resourceChangeCount, setResourceChangeCount] = useState(0);
   const [showUploadForm, setShowUploadForm] = useState(false);
+  const [showConfirmCancelModal, setShowConfirmCancelModal] = useState(false);
+  const [pendingResource, setPendingResource] = useState<Resource | null>(null);
 
   const handleResourceAPI = (resource: Resource) => {
-    setCurrentResource(resource);
+    if (showUploadForm) {
+      setPendingResource(resource);
+      setShowConfirmCancelModal(true);
+    } else {
+      setCurrentResource(resource);
+      setResourceChangeCount((prevCount) => prevCount + 1); // Increment counter
+    }
+  };
+
+  const confirmLeaveUploadForm = () => {
+    setShowUploadForm(false);
+    setShowConfirmCancelModal(false);
+    setCurrentResource(pendingResource);
+    setPendingResource(null);
+    setResourceChangeCount((prevCount) => prevCount + 1); // Increment counter
+  };
+
+  const cancelLeaveUploadForm = () => {
+    setShowConfirmCancelModal(false);
+    setPendingResource(null);
   };
 
   const openFileUploader = () => {
@@ -45,69 +72,89 @@ function FileList({ currentDocument, onResourceUpload }: DocumentProps) {
     setShowUploadForm(false);
   };
 
+  if (!currentDocument) {
+    return (
+      <div className="flex h-full items-center justify-center text-gray-500">
+        <p>No document is selected</p>
+      </div>
+    );
+  }
+
   return (
-    <div className="flex h-full flex-row justify-center overflow-hidden">
-      <div className="flex flex-grow flex-col overflow-hidden rounded-lg pl-4">
-        <div className="flex h-full w-full flex-col overflow-hidden border-zinc-700">
-          {!showUploadForm ? (
-            <div className="flex h-full w-full flex-col">
+    <>
+      <ResizablePanelGroup direction="horizontal">
+        <ResizablePanel defaultSize={65}>
+          <div className="flex h-full flex-col overflow-hidden rounded-lg px-4">
+            <div className="flex h-full w-full flex-col overflow-hidden border-zinc-700">
               <div className="px-2 py-4">
                 <button
                   onClick={openFileUploader}
-                  className="w-full rounded-md border-2 border-zinc-700 py-1 text-sm text-white transition duration-300 hover:bg-gray-700"
+                  className="w-full rounded-md border-[1px] border-zinc-700 py-1 text-sm text-white transition duration-300 hover:bg-gray-700"
                 >
                   Upload New Files
                 </button>
               </div>
-              <div className="m-2 mt-0 flex-grow overflow-auto rounded-lg border-[1px] border-zinc-700">
-                <ResourceViewer resource={currentResource} />
-              </div>
+
+              {!showUploadForm && !currentResource ? (
+                <div className="flex h-full w-full items-center justify-center text-gray-500">
+                  <p>No resources selected</p>
+                </div>
+              ) : !showUploadForm && currentResource ? (
+                <div className="h-full w-full px-2 pb-4">
+                  <div className="h-full w-full flex-grow overflow-auto rounded-lg border-[1px] border-zinc-700">
+                    <ResourceViewer
+                      resource={currentResource}
+                      resourceChangeCount={resourceChangeCount}
+                    />
+                  </div>
+                </div>
+              ) : (
+                currentDocument.id && (
+                  <S3Button
+                    documentId={currentDocument.id}
+                    folderName="General"
+                    possibleFolders={currentDocument.folders}
+                    onResourceUpload={() => {
+                      onResourceUpload();
+                      setShowUploadForm(false);
+                    }}
+                    cancelCallBack={cancelFileUploader}
+                  />
+                )
+              )}
             </div>
-          ) : (
-            currentDocument?.id && (
-              <S3Button
-                documentId={currentDocument.id}
-                folderName="General"
-                possibleFolders={currentDocument.folders}
-                onResourceUpload={() => {
-                  onResourceUpload();
-                  setShowUploadForm(false);
-                }}
-                cancelCallBack={cancelFileUploader}
-              />
-            )
-          )}
-        </div>
-      </div>
-
-      <div className="w-1/3 items-center p-3">
-        <div className="mb-4 flex flex-col border-b-[1px] border-zinc-700 py-2">
-          <div className="flex flex-row items-center rounded-lg">
-            <MagnifyingGlassIcon className="h-5 w-5 text-textPrimary" />
-            <input
-              id="username"
-              type="text"
-              className="w-full bg-bgSecondary px-2 py-1 text-sm text-textPrimary outline-none focus:outline-none"
-              placeholder="Search Resource"
-            />
           </div>
-        </div>
-
-        <div>
-          {currentDocument?.folders &&
-            Object.entries(currentDocument.folders).map(
-              ([folderName, folderData]) => (
-                <TableFolder
-                  key={folderName}
-                  folderName={folderData.name}
-                  folderData={folderData}
-                  onResource={handleResourceAPI}
-                />
-              ),
-            )}
-        </div>
-      </div>
-    </div>
+        </ResizablePanel>
+        <ResizableHandle withHandle />
+        <ResizablePanel defaultSize={35}>
+          <div className="flex h-full w-full flex-col items-center p-3">
+            <TextInput placeholder="Search Resource" />
+            <div className="h-full w-full px-2">
+              {currentDocument.folders &&
+                Object.entries(currentDocument.folders).map(
+                  ([folderName, folderData]) => (
+                    <TableFolder
+                      key={folderName}
+                      folderName={folderData.name}
+                      folderData={folderData}
+                      onResource={handleResourceAPI}
+                      currentResource={currentResource}
+                      showUploadForm={showUploadForm}
+                    />
+                  ),
+                )}
+            </div>
+          </div>
+        </ResizablePanel>
+      </ResizablePanelGroup>
+      {showConfirmCancelModal && (
+        <ConfirmCancelModal
+          onConfirm={confirmLeaveUploadForm}
+          onCancel={cancelLeaveUploadForm}
+          message="Are you sure you want to leave the uploading form? Unsaved changes will be lost."
+        />
+      )}
+    </>
   );
 }
 

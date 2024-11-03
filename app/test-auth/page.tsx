@@ -3,7 +3,12 @@ import { useState } from "react";
 import AWS from "aws-sdk";
 import TextEditor from "@/components/TextEditor";
 import AuthButton from "@/components/AuthButton";
-import S3Button from "@/components/S3Button";
+
+import {
+  ResizableHandle,
+  ResizablePanel,
+  ResizablePanelGroup,
+} from "@/components/ui/resizable";
 
 type newDocument = {
   id?: string; // Add id to the newDocument type for consistency
@@ -154,8 +159,13 @@ export default function TestPage() {
         <TextEditor></TextEditor>
       </div>
 
+      <ResizablePanelGroup direction="horizontal">
+        <ResizablePanel>One</ResizablePanel>
+        <ResizableHandle />
+        <ResizablePanel>Two</ResizablePanel>
+      </ResizablePanelGroup>
+
       <AuthButton></AuthButton>
-      <S3Button></S3Button>
     </div>
   );
 }
