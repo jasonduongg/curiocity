@@ -1,11 +1,6 @@
 {
   "compilerOptions": {
-    "lib": [
-      "dom",
-      "dom.iterable",
-      "esnext",
-      "es6"
-    ],
+    "lib": ["dom", "dom.iterable", "esnext", "es6"],
     "allowJs": true,
     "skipLibCheck": true,
     "strict": true,
@@ -13,14 +8,11 @@
     "esModuleInterop": true,
     "module": "commonjs",
     "moduleResolution": "node", // changed
-    "typeRoots": [
-      "./types",
-      "./node_modules/@types"
-    ],
+    "typeRoots": ["./types", "./node_modules/@types"],
     "resolveJsonModule": true,
     "allowSyntheticDefaultImports": true,
     "isolatedModules": true,
-    "jsx": "preserve",
+    "jsx": "react-jsx",
     "incremental": true,
     "target": "es6",
     "plugins": [
@@ -29,26 +21,10 @@
       }
     ],
     "paths": {
-      "@/*": [
-        "./*"
-      ]
+      "@/*": ["./*"]
     }
   },
-  "types": [
-    "jest",
-    "node",
-    "@testing-library/jest-dom"
-  ],
-  "include": [
-    "next-env.d.ts",
-    "**/*.ts",
-    "**/*.tsx",
-    ".next/types/**/*.ts",
-    "components/TextEditor.tsx",
-    "src",
-    "setupTests.ts"
-  ],
-  "exclude": [
-    "node_modules"
-  ]
+  "types": ["jest", "node", "@testing-library/jest-dom"],
+  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts", "components/TextEditor.tsx", "src", "setupTests.ts"],
+  "exclude": ["node_modules"]
 }
