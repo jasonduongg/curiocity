@@ -101,6 +101,7 @@ const options: NextAuthOptions = {
 
       // Attach user ID to the session
       session.user.id = token.sub;
+      session.user.lastLoggedIn = new Date().toISOString();
 
       return session;
     },

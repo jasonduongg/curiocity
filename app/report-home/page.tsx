@@ -122,6 +122,7 @@ export default function TestPage() {
                 <p>SELECT</p>
                 <div className="flex flex-col">
                   <p>{`UserID: ${session?.user.id}`}</p>
+                  <p>{`(Example user data): Last Logged In: ${session?.user.lastLoggedIn}`}</p>
                   <AuthButton></AuthButton>
                 </div>
               </div>
