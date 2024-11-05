@@ -1,4 +1,5 @@
 import React from "react";
+import { Resource } from "@/types/types";
 
 interface Props {
   icon: React.ComponentType<any>;
@@ -10,15 +11,6 @@ interface Props {
   isSelected: boolean;
   onResource: (url: Resource) => void;
 }
-
-type Resource = {
-  id: string;
-  documentId: string;
-  name: string;
-  text: string;
-  url: string;
-  dateAdded: string;
-};
 
 export default function TableRow({
   icon: Icon,

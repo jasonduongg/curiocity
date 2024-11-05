@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 import Image from "next/image";
-import logoIconSmall from "../assets/logo.png";
+
+import logoIconSmall from "@/assets/logo.png";
 import { AvatarIcon, GearIcon, TrashIcon } from "@radix-ui/react-icons";
 
 export default function NavBar() {

@@ -4,7 +4,8 @@ import GoogleProvider from "next-auth/providers/google";
 const GOOGLE_ID = process.env.GOOGLE_ID;
 const GOOGLE_SECRET = process.env.GOOGLE_SECRET;
 const NEXTAUTH_SECRET = process.env.NEXTAUTH_SECRET;
-const DISABLE_AUTH = process.env.DISABLE_AUTH === "true";
+// const DISABLE_AUTH = process.env.DISABLE_AUTH === "true";
+const DISABLE_AUTH = false;
 
 if (!DISABLE_AUTH && (!GOOGLE_ID || !GOOGLE_SECRET)) {
   throw new Error(

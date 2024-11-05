@@ -1,12 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useSession } from "next-auth/react";
-import FileList from "@/components/FileList";
-import NavBar from "@/components/NavBar";
-import TextEditor from "@/components/TextEditor";
-import AllDocumentsGrid from "@/components/AllDocumentsGrid";
-import AuthButton from "@/components/AuthButton";
+import FileList from "@/components/ResourceComponents/FileList";
+import NavBar from "@/components/GeneralComponents/NavBar";
+import TextEditor from "@/components/DocumentComponents/TextEditor";
+import AllDocumentsGrid from "@/components/DocumentComponents/AllDocumentsGrid";
 import AWS from "aws-sdk";
 
 import {
@@ -36,8 +34,6 @@ export default function TestPage() {
     newDocument | undefined
   >(undefined);
   const [fileListKey, setFileListKey] = useState(0); // Key for FileList to reset its state
-
-  const { data: session } = useSession();
 
   const fetchDocuments = () => {
     fetch("/api/db/getAll", {

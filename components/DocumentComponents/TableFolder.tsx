@@ -1,17 +1,9 @@
 // components/TableFolder.tsx
 
 import React, { useState } from "react";
-import TableRow from "@/components/TableRow";
+import TableRow from "@/components/DocumentComponents/TableRow";
 import { FileIcon } from "@radix-ui/react-icons";
-
-type Resource = {
-  id: string;
-  documentId: string;
-  name: string;
-  text: string;
-  url: string;
-  dateAdded: string;
-};
+import { Resource } from "@/types/types";
 
 interface FolderData {
   name: string;

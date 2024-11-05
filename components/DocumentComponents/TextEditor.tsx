@@ -3,13 +3,7 @@
 import React, { useState, useEffect } from "react";
 import ReactQuill from "react-quill";
 import "react-quill/dist/quill.snow.css";
-
-type newDocument = {
-  id?: string;
-  name: string;
-  files: Array<string>;
-  text: string;
-};
+import { Document } from "@/types/types";
 
 interface TextEditorProps {
   currentDocument?: newDocument;
@@ -55,7 +49,7 @@ const TextEditor = ({ currentDocument, swapState }: TextEditorProps) => {
           text: content,
           files: [],
           dateAdded: new Date().toISOString(),
-        } as newDocument),
+        } as Document),
         headers: {
           "Content-Type": "application/json",
         },

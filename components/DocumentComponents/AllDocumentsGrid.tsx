@@ -1,14 +1,7 @@
 // components/AllDocumentGrid.tsx
-import GridItem from "@/components/GridItem";
-import TextInput from "@/components/TextInput";
-
-type Document = {
-  id?: string;
-  name: string;
-  files: Array<string>;
-  text: string;
-  dateAdded: string;
-};
+import GridItem from "@/components/DocumentComponents/GridItem";
+import TextInput from "@/components/GeneralComponents/TextInput";
+import { Document } from "@/types/types";
 
 interface AllDocumentGridProps {
   allDocuments: Document[];

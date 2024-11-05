@@ -1,6 +1,6 @@
-import AddNote from "@/components/AddingNotes";
-import DeleteConfirmationModal from "@/components/DeleteConfirmationModal";
-import NewPromptModal from "@/components/newPrompt";
+import AddNote from "@/components/ResourceComponents/AddingNotes";
+import DeleteConfirmationModal from "@/components/ModalComponents/DeleteConfirmationModal";
+import NewPromptModal from "@/components/DocumentComponents/newPrompt";
 export default function Home() {
   return (
     <div className="flex h-screen flex-col space-y-4">

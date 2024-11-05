@@ -1,23 +1,16 @@
 import { useState } from "react";
-import TableFolder from "@/components/TableFolder";
-import ResourceViewer from "@/components/ResourceViewer";
+import TableFolder from "@/components/DocumentComponents/TableFolder";
+import ResourceViewer from "@/components/ResourceComponents/ResourceViewer";
 import S3Button from "./S3Button";
-import TextInput from "./TextInput";
-import ConfirmCancelModal from "@/components/ConfirmCancelModal";
+import TextInput from "@/components/GeneralComponents/TextInput";
+import ConfirmCancelModal from "@/components/ModalComponents/ConfirmCancelModal";
 import {
   ResizableHandle,
   ResizablePanel,
   ResizablePanelGroup,
 } from "@/components/ui/resizable";
 
-type Resource = {
-  id: string;
-  documentId: string;
-  name: string;
-  text: string;
-  url: string;
-  dateAdded: string;
-};
+import { Resource } from "@/types/types";
 
 type FolderData = {
   name: string;

@@ -2,18 +2,10 @@
 
 import { useEffect, useState } from "react";
 import { Switch } from "@/components/ui/switch";
-import AccessibilityOptionsModal from "@/components/AccessibilityOptionsModal";
+import AccessibilityOptionsModal from "@/components/ModalComponents/AccessibilityOptionsModal";
+import { Resource } from "@/types/types";
 
-type Resource = {
-  id: string;
-  documentId: string;
-  name: string;
-  text: string;
-  url: string;
-  dateAdded: string;
-};
-
-interface ResourceViewerProps {
+export interface ResourceViewerProps {
   resource: Resource | null;
   resourceChangeCount: number;
 }

@@ -4,6 +4,7 @@ import { FaCheckCircle, FaTrash } from "react-icons/fa";
 import ResourceViewerMini from "./ResourceViewerMini";
 import FolderDropdown from "./FolderSelectionDropdown";
 import FileUploadComponent from "./FileUploadComponent";
+import { Resource } from "@/types/types";
 
 interface S3ButtonProps {
   documentId: string;
@@ -12,12 +13,6 @@ interface S3ButtonProps {
   onResourceUpload?: () => void;
   cancelCallBack: () => void;
 }
-
-type Resource = {
-  name: string;
-  url: string;
-  dateAdded?: string;
-};
 
 export default function S3Button({
   documentId,
