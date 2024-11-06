@@ -1,3 +1,7 @@
+function stripHtmlTags(text: string) {
+  return text.replace(/<\/?[^>]+(>|$)/g, "");
+}
+
 interface Props {
   title: string;
   text: string;
@@ -22,7 +26,7 @@ export default function GridItem({ title, text, dateAdded, onClick }: Props) {
     >
       <div className="flex h-64 w-48 min-w-48 flex-col items-stretch rounded-xl border-[1px] border-textSecondary">
         <div className="grow overflow-y-hidden p-2">
-          <p className="text-xs text-white">{text}</p>
+          <p className="text-xs text-white">{stripHtmlTags(text)}</p>
         </div>
         <div className="flex h-16 flex-col rounded-xl border-[1px] border-textPrimary bg-bgPrimary p-2">
           <p className="text-sm text-textPrimary">{title}</p>
