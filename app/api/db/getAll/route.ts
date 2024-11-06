@@ -29,7 +29,10 @@ const getAllEntries = async (previewLength: number) => {
           id: unmarshalledItem.id,
           name: unmarshalledItem.name,
           text: unmarshalledItem.text
-            ? unmarshalledItem.text.substring(0, previewLength)
+            ? unmarshalledItem.text.substring(
+                0,
+                Math.min(previewLength, unmarshalledItem.text.length),
+              )
             : "",
         };
       }) || [];
@@ -43,7 +46,7 @@ const getAllEntries = async (previewLength: number) => {
 
 export async function GET() {
   try {
-    const previewLength = 200;
+    const previewLength = 10;
     const items = await getAllEntries(previewLength);
     return NextResponse.json(items);
   } catch (error) {
