@@ -36,6 +36,7 @@ export type Document = {
   folders: Record<string, Folder>;
   text: string;
   dateAdded: string;
+  lastOpened?: string;
 };
 
 export type Folder = {

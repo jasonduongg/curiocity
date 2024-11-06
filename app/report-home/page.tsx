@@ -53,6 +53,19 @@ export default function TestPage() {
   const handleGridItemClick = (document: newDocument) => {
     setCurrentDocument(document);
     setSwapState(true);
+
+    //updated nov 5st by richa
+    fetch("/api/db/update-last-opened", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id: document.id }),
+    })
+    .then((r) => r.json())
+    .then((data) => {
+      console.log("Updated lastOpened:", data);
+    })
+    .catch((error) => console.error("Error updating lastOpened:", error));
+
   };
 
   const handleCreateNewReport = () => {
