@@ -31,7 +31,7 @@ export default function TestPage() {
   >(undefined);
 
   const fetchDocuments = () => {
-    fetch("/api/db/getAll", {
+    fetch("/api/db/sortLastOpened", {
       method: "GET",
     })
       .then((r) => r.json())
