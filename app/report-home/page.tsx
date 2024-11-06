@@ -19,6 +19,8 @@ type newDocument = {
       resources: string[];
     }
   >;
+  lastOpened?: string;
+  dateAdded?: string;
 };
 
 export default function TestPage() {
@@ -60,12 +62,11 @@ export default function TestPage() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ id: document.id }),
     })
-    .then((r) => r.json())
-    .then((data) => {
-      console.log("Updated lastOpened:", data);
-    })
-    .catch((error) => console.error("Error updating lastOpened:", error));
-
+      .then((r) => r.json())
+      .then((data) => {
+        console.log("Updated lastOpened:", data);
+      })
+      .catch((error) => console.error("Error updating lastOpened:", error));
   };
 
   const handleCreateNewReport = () => {

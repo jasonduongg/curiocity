@@ -8,6 +8,7 @@ type Document = {
   files: Array<string>;
   text: string;
   dateAdded: string;
+  lastOpened?: string;
 };
 
 interface AllDocumentGridProps {
@@ -47,6 +48,7 @@ export default function AllDocumentGrid({
             title={item.name}
             text={item.text}
             dateAdded={item.dateAdded}
+            lastOpened={item.lastOpened}
             onClick={() => onDocumentClick(item)}
           />
         ))}
