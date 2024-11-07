@@ -68,6 +68,8 @@ export default function TestPage() {
     const newDoc = {
       name,
       text: "",
+      dateAdded: new Date().toISOString(),
+      lastOpened: new Date().toISOString(),
       folders: {},
     };
 

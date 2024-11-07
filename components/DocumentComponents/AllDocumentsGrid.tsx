@@ -19,8 +19,8 @@ export default function AllDocumentGrid({
 
   const filteredDocuments = allDocuments.filter(
     (doc) =>
-      doc.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      doc.text.toLowerCase().includes(searchQuery.toLowerCase()),
+      doc.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      doc.text?.toLowerCase().includes(searchQuery.toLowerCase()),
   );
 
   return (
@@ -46,7 +46,7 @@ export default function AllDocumentGrid({
         </div>
       </div>
 
-      <div className="flex w-full grow flex-wrap justify-center gap-8 overflow-y-auto p-8">
+      <div className="justify-left flex w-full grow flex-wrap gap-8 overflow-y-auto p-8">
         {filteredDocuments.map((item, index) => (
           <div key={index} className="flex-shrink-0 flex-grow-0">
             <GridItem

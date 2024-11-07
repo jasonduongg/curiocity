@@ -176,7 +176,7 @@ export async function POST(request: Request) {
     name: data.name,
     folders: { General: defaultFolder },
     text: data?.text || "",
-    dateAdded: data?.dateAdded,
+    dateAdded: data.dateAdded,
     ownerID: data?.ownerID || "jason",
     lastOpened: data?.lastOpened || "now",
   };
