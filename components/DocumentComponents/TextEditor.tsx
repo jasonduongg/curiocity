@@ -95,7 +95,6 @@ const TextEditor = ({ currentDocument, swapState }: TextEditorProps) => {
       const data = await response.json();
       console.log("Document updated", data);
       setUploadComplete(true);
-      swapState();
     } catch (error) {
       console.error("Error updating document:", error);
     } finally {

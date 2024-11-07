@@ -33,7 +33,7 @@ export default function AllDocumentGrid({
         </div>
       </div>
 
-      <div className="flex w-full grow flex-wrap justify-center gap-8 overflow-y-auto p-8">
+      <div className="justify-left flex w-full grow flex-wrap gap-8 overflow-y-auto p-8">
         {allDocuments.map((item, index) => (
           <div key={index} className="flex-shrink-0 flex-grow-0">
             <GridItem

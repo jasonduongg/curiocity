@@ -14,12 +14,15 @@ const getAllEntries = async () => {
   try {
     const params = {
       TableName: tableName,
-      ProjectionExpression: "id, #name, #text, #folders, #dateAdded", // Retrieve specific attributes
+      ProjectionExpression:
+        "id, #name, #text, #folders, #dateAdded, #lastOpened, #ownerID", // Retrieve specific attributes
       ExpressionAttributeNames: {
         "#name": "name", // Handle reserved word `name`
         "#text": "text",
         "#folders": "folders",
         "#dateAdded": "dateAdded",
+        "#lastOpened": "lastOpened",
+        "#ownerID": "ownerID",
       },
     };
 

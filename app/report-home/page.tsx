@@ -5,6 +5,7 @@ import FileList from "@/components/ResourceComponents/FileList";
 import NavBar from "@/components/GeneralComponents/NavBar";
 import TextEditor from "@/components/DocumentComponents/TextEditor";
 import AllDocumentsGrid from "@/components/DocumentComponents/AllDocumentsGrid";
+import NameYourReport from "@/components/DocumentComponents/newPrompt"; // Import the NameYourReport component
 import AWS from "aws-sdk";
 
 import {
@@ -34,6 +35,7 @@ export default function TestPage() {
     newDocument | undefined
   >(undefined);
   const [fileListKey, setFileListKey] = useState(0); // Key for FileList to reset its state
+  const [isModalOpen, setIsModalOpen] = useState(false); // State to control modal visibility
 
   const fetchDocuments = () => {
     fetch("/api/db/getAll", {
@@ -64,7 +66,30 @@ export default function TestPage() {
   };
 
   const handleCreateNewReport = () => {
-    console.log("Creating a new report...");
+    setIsModalOpen(true); // Open the modal to enter a new report name
+  };
+
+  const createDocument = (name: string) => {
+    const newDoc = {
+      name,
+      text: "",
+      files: [],
+      dateAdded: new Date().toISOString(),
+    };
+
+    // API call to create a new document in the database
+    fetch("/api/db", {
+      method: "POST",
+      body: JSON.stringify(newDoc),
+      headers: { "Content-Type": "application/json" },
+    })
+      .then((response) => response.json())
+      .then((data) => {
+        setCurrentDocument({ ...newDoc, id: data.id });
+        setSwapState(true); // Open the document in TextEditor
+        fetchDocuments(); // Refresh document list
+      })
+      .catch((error) => console.error("Error creating document:", error));
   };
 
   const onResourceUpload = (documentId: string) => {
@@ -134,6 +159,18 @@ export default function TestPage() {
           </ResizablePanel>
         </ResizablePanelGroup>
       </div>
+
+      {/* Render the NameYourReport component as a modal */}
+      {isModalOpen && (
+        <NameYourReport
+          onSave={(name) => {
+            setNewDocName(name);
+            createDocument(name); // Create a new document with the provided name
+            setIsModalOpen(false); // Close the modal
+          }}
+          onCancel={() => setIsModalOpen(false)} // Close the modal without saving
+        />
+      )}
     </section>
   );
 }

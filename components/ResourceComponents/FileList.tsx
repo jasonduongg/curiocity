@@ -1,5 +1,5 @@
 import { useState } from "react";
-import TableFolder from "@/components/DocumentComponents/TableFolder";
+import TableFolder from "@/components/ResourceComponents/TableFolder";
 import ResourceViewer from "@/components/ResourceComponents/ResourceViewer";
 import S3Button from "./S3Button";
 import TextInput from "@/components/GeneralComponents/TextInput";
@@ -10,7 +10,7 @@ import {
   ResizablePanelGroup,
 } from "@/components/ui/resizable";
 
-import { Resource } from "@/types/types";
+import { Resource, ResourceMeta } from "@/types/types";
 
 type FolderData = {
   name: string;
@@ -27,17 +27,23 @@ type DocumentProps = {
 
 function FileList({ currentDocument, onResourceUpload }: DocumentProps) {
   const [currentResource, setCurrentResource] = useState<Resource | null>(null);
+  const [currentResourceMeta, setCurrentResourceMeta] =
+    useState<ResourceMeta | null>(null);
   const [resourceChangeCount, setResourceChangeCount] = useState(0);
   const [showUploadForm, setShowUploadForm] = useState(false);
   const [showConfirmCancelModal, setShowConfirmCancelModal] = useState(false);
   const [pendingResource, setPendingResource] = useState<Resource | null>(null);
 
-  const handleResourceAPI = (resource: Resource) => {
+  const handleResourceAPI = (
+    resource: Resource,
+    resourceMeta: ResourceMeta,
+  ) => {
     if (showUploadForm) {
       setPendingResource(resource);
       setShowConfirmCancelModal(true);
     } else {
       setCurrentResource(resource);
+      setCurrentResourceMeta(resourceMeta);
       setResourceChangeCount((prevCount) => prevCount + 1); // Increment counter
     }
   };
@@ -97,6 +103,7 @@ function FileList({ currentDocument, onResourceUpload }: DocumentProps) {
                   <div className="h-full w-full flex-grow overflow-auto rounded-lg border-[1px] border-zinc-700">
                     <ResourceViewer
                       resource={currentResource}
+                      resourceMeta={currentResourceMeta}
                       resourceChangeCount={resourceChangeCount}
                     />
                   </div>

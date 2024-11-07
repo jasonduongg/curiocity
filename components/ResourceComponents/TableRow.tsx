@@ -9,7 +9,7 @@ interface Props {
   lastViewed: string;
   id: string;
   isSelected: boolean;
-  onResource: (url: Resource) => void;
+  onResource: (url: Resource, meta: any) => void;
 }
 
 export default function TableRow({
@@ -23,16 +23,33 @@ export default function TableRow({
   onResource,
 }: Props) {
   console.log(dateAdded, lastViewed);
+
   const handleClick = async () => {
     try {
-      const response = await fetch(`/api/db/resource?resourceId=${id}`);
-      if (!response.ok) {
+      // Step 1: Fetch resourceMeta data using resourceId
+      const resourceMetaResponse = await fetch(
+        `/api/db/resourcemeta?resourceId=${id}`,
+      );
+      if (!resourceMetaResponse.ok) {
+        throw new Error("Failed to fetch resourceMeta");
+      }
+      const resourceMetaData = await resourceMetaResponse.json();
+      console.log("Fetched resourceMeta:", resourceMetaData);
+
+      // Step 2: Use the hash from resourceMeta to fetch the actual resource
+      const resourceResponse = await fetch(
+        `/api/db/resource?hash=${resourceMetaData.hash}`,
+      );
+      if (!resourceResponse.ok) {
         throw new Error("Failed to fetch resource");
       }
-      const data: Resource = await response.json();
-      onResource(data);
+      const resourceData: Resource = await resourceResponse.json();
+      console.log("Fetched resource:", resourceData);
+
+      // Step 3: Pass both resourceData and resourceMetaData to onResource
+      onResource(resourceData, resourceMetaData);
     } catch (error) {
-      console.error("Error fetching resource URL:", error);
+      console.error("Error fetching resource data:", error);
     }
   };
 
