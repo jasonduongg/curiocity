@@ -1,14 +1,15 @@
+// components/GridItem.tsx
 interface Props {
   title: string;
   text: string;
   dateAdded: string;
-  onClick: () => void; // Add onClick as a prop
+  onClick: () => void;
 }
 
 export default function GridItem({ title, text, dateAdded, onClick }: Props) {
   const formattedDate = new Date(dateAdded).toLocaleString("en-US", {
     year: "numeric",
-    month: "short", // 3-letter month
+    month: "short",
     day: "2-digit",
     hour: "2-digit",
     minute: "2-digit",
@@ -17,17 +18,15 @@ export default function GridItem({ title, text, dateAdded, onClick }: Props) {
 
   return (
     <div
-      className="flex min-w-[200px] flex-1 flex-wrap justify-start"
-      onClick={() => onClick()}
+      className="flex h-64 w-full max-w-full cursor-pointer flex-col justify-between rounded-lg bg-zinc-800 p-4 shadow-md hover:bg-red-300"
+      onClick={onClick}
     >
-      <div className="flex h-64 w-48 min-w-48 flex-col items-stretch rounded-xl border-[1px] border-textSecondary">
-        <div className="grow overflow-y-hidden p-2">
-          <p className="text-xs text-white">{text}</p>
-        </div>
-        <div className="flex h-16 flex-col rounded-xl border-[1px] border-textPrimary bg-bgPrimary p-2">
-          <p className="text-sm text-textPrimary">{title}</p>
-          <p className="text-sm text-textPrimary">{formattedDate}</p>
-        </div>
+      <div className="flex-grow overflow-hidden p-2">
+        <p className="text-xs text-white">{text}</p>
+      </div>
+      <div className="mt-2 rounded-lg border-textSecondary bg-bgPrimary p-2">
+        <p className="text-sm font-semibold text-textPrimary">{title}</p>
+        <p className="text-xs text-textSecondary">{formattedDate}</p>
       </div>
     </div>
   );
