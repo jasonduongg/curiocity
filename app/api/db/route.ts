@@ -17,30 +17,39 @@ export const dynamic = "force-dynamic";
 
 export type Resource = {
   id: string;
-  documentId: string;
-  name: string;
-  text: string;
+  markdown: string;
   url: string;
-  dateAdded: string;
 };
 
-export type ResourceCompressed = {
-  name: string;
+export type ResourceMetaCompressed = {
   id: string;
+  name: string;
+};
+
+export type ResourceMeta = {
+  id: string;
+  hash: string;
+  name: string;
+  dateAdded: string;
+  lastOpened: string;
+  notes: string;
+  summary: string;
+  tags: Array<string>;
 };
 
 export type Document = {
   id: string;
-  owner: string;
+  ownerID: string;
   name: string;
   folders: Record<string, Folder>;
   text: string;
   dateAdded: string;
+  lastOpened: string;
 };
 
 export type Folder = {
   name: string;
-  resources: Array<ResourceCompressed>;
+  resources: Array<ResourceMetaCompressed>;
 };
 
 // send json object to dynamodb
@@ -164,11 +173,12 @@ export async function POST(request: Request) {
 
   const Item: Document = {
     id: uuidv4(),
-    owner: "",
-    name: data?.name || "test",
+    name: data.name,
     folders: { General: defaultFolder },
-    text: data?.text || "test",
+    text: data?.text || "",
     dateAdded: data?.dateAdded,
+    ownerID: data?.ownerID || "jason",
+    lastOpened: data?.lastOpened || "now",
   };
 
   console.log(Item);

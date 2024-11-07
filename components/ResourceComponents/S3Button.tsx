@@ -69,16 +69,27 @@ export default function S3Button({
 
     for (const file of fileQueue) {
       try {
+        // Convert file to base64
+        const fileBase64 = await new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.readAsDataURL(file);
+          reader.onload = () => resolve(reader.result.split(",")[1]); // Get base64 part of the Data URL
+          reader.onerror = (error) => reject(error);
+        });
+
         const { url } = await uploadToS3(file);
-        await fetch("/api/db/resource", {
+
+        await fetch("/api/db/resourcemeta", {
           method: "POST",
           body: JSON.stringify({
-            name: file.name,
+            file: fileBase64, // Send as base64 string
             documentId,
-            url,
+            name: file.name,
             folderName: folderToSave,
+            url,
             dateAdded: new Date().toISOString(),
-            text: await extractTextFromFile(file), // Include extracted text only for supported files
+            lastOpened: new Date().toISOString(),
+            text: await extractTextFromFile(file), // Include extracted text if supported
           }),
           headers: {
             "Content-Type": "application/json",
