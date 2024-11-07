@@ -19,6 +19,7 @@ export type User = {
   id: string;
   name: string;
   email: string;
+  image: string;
   accountCreated: string;
   lastLoggedIn: string;
 };
@@ -51,18 +52,24 @@ export const putUser = async (
 // GET user object from DynamoDB by ID
 export const getUser = async (
   client: DynamoDBClient,
-  id: string,
+  email: string,
   table: string,
 ) => {
+  if (typeof email !== "string") {
+    console.error("Invalid data type for email:", typeof email);
+    throw new Error("Email must be a string");
+  }
+
   try {
     const data = await client.send(
       new GetItemCommand({
         TableName: table,
         Key: {
-          id: { S: id },
+          email: { S: email }, // Correct key and type
         },
       }),
     );
+    console.log("DynamoDB response data:", data);
     return data.Item
       ? (AWS.DynamoDB.Converter.unmarshall(data.Item) as User)
       : null;
@@ -139,14 +146,12 @@ export async function POST(request: Request) {
   }
 
   try {
-    // Check if the user already exists
-    // const existingUser = await getUser(client, userId, tableName);
-
     const newUser: User = {
       id: userId,
       name: data.userData.name || "Anonymous",
       email: data.userData.email,
-      accountCreated: new Date().toISOString(), // Use existing date or current date
+      image: data.userData.image || "",
+      accountCreated: new Date().toISOString(),
       lastLoggedIn: data.userData.lastLoggedIn || new Date().toISOString(),
     };
 
@@ -168,11 +173,13 @@ export async function PUT(request: Request) {
   console.log("Updating user in DynamoDB");
   const data = await request.json();
 
-  if (!data.id) {
-    return new Response("User ID is required", { status: 400 });
+  if (!data.email) {
+    return new Response("User email is required", { status: 400 });
   }
 
-  const existingUser = await getUser(client, data.id, tableName);
+  console.log("Retrieving user with email:", data.email);
+  const existingUser = await getUser(client, data.email, tableName);
+
   if (!existingUser) {
     return new Response("User not found", { status: 404 });
   }

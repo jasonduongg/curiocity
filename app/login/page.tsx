@@ -55,7 +55,9 @@ export default function Login() {
             {/* Placeholder button for google auth. This button is not in the figma but unsure on login button  */}
             <div className="flex cursor-pointer justify-center">
               <div
-                onClick={() => signIn("google")} // Add onClick event for Google login
+                onClick={() =>
+                  signIn("google", { callbackUrl: "/report-home" })
+                } // Add onClick event for Google login
                 className="grid h-[40px] w-[320px] place-items-center rounded-lg py-2.5 text-center text-white transition"
                 style={{ backgroundColor: "rgba(100, 81, 110, 0.6)" }}
               >

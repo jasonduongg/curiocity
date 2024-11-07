@@ -42,7 +42,7 @@ const options: NextAuthOptions = {
       ],
   callbacks: {
     async signIn({ user, profile }) {
-      console.log("signIn callback triggered"); // Check if callback is triggered
+      console.log("signIn callback triggered");
       console.log(user, profile);
       if (DISABLE_AUTH) return true; // Bypass auth if disabled
 
@@ -59,14 +59,49 @@ const options: NextAuthOptions = {
         userId: profile.sub,
         name: profile.name,
         email: profile.email,
+        image: user.image,
         lastLoggedIn: new Date().toISOString(),
       };
-      console.log(userData);
+      console.log("Prepared user data:", userData);
 
-      if (userData.userId && userData.name && userData.email) {
-        try {
-          // Use fetch to call the backend API route
-          const response = await fetch(`http://localhost:3000/api/user`, {
+      try {
+        // Check if the user already exists in the database
+        const checkResponse = await fetch(
+          `http://localhost:3000/api/user?id=${email}`,
+          {
+            method: "GET",
+            headers: {
+              "Content-Type": "application/json",
+            },
+          },
+        );
+
+        if (checkResponse.ok) {
+          // User exists, update lastLoggedIn
+          const updateResponse = await fetch(`http://localhost:3000/api/user`, {
+            method: "PUT",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              email: userData.email,
+              lastLoggedIn: userData.lastLoggedIn,
+            }),
+          });
+
+          if (!updateResponse.ok) {
+            console.error(
+              "Failed to update user's lastLoggedIn field:",
+              updateResponse.statusText,
+            );
+            return false;
+          }
+
+          console.log("User's lastLoggedIn field successfully updated");
+          return true; // Continue sign-in if the update succeeds
+        } else if (checkResponse.status === 404) {
+          // User does not exist, create a new user
+          const createResponse = await fetch(`http://localhost:3000/api/user`, {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
@@ -74,40 +109,71 @@ const options: NextAuthOptions = {
             body: JSON.stringify({ userData }),
           });
 
-          if (!response.ok) {
+          if (!createResponse.ok) {
             console.error(
-              "Failed to save user to DynamoDB:",
-              response.statusText,
+              "Failed to create a new user:",
+              createResponse.statusText,
             );
             return false;
           }
 
-          console.log("User successfully saved or updated in DynamoDB");
-          return true; // Continue sign-in if the API call succeeds
-        } catch (error) {
-          console.error("Failed to save user to DynamoDB:", error);
-          return false; // Prevent sign-in if the API call fails
+          console.log("New user successfully created");
+          return true; // Continue sign-in if the creation succeeds
+        } else {
+          console.error(
+            "Unexpected error while checking user existence:",
+            checkResponse.statusText,
+          );
+          return false;
         }
+      } catch (error) {
+        console.error("Error during user sign-in process:", error);
+        return false; // Prevent sign-in if any step fails
       }
-
-      // // return false; // Prevent sign-in if essential data is missing
-      return true;
     },
-    async session({ session, token }) {
+    async session({ session }) {
       if (DISABLE_AUTH) return session; // Bypass session if auth is disabled
 
       const email = session.user?.email?.toLowerCase();
       if (!email) return session;
 
-      // Attach user ID to the session
-      session.user.id = token.sub;
-      session.user.lastLoggedIn = new Date().toISOString();
+      try {
+        // Fetch user data from your API
+        const response = await fetch(
+          `http://localhost:3000/api/user?id=${email}`,
+          {
+            method: "GET",
+            headers: {
+              "Content-Type": "application/json",
+            },
+          },
+        );
+
+        if (!response.ok) {
+          console.error("Failed to fetch user data:", response.statusText);
+          return session; // Return the original session if the API call fails
+        }
+
+        const userData = await response.json();
+
+        // Attach user data from the API to the session
+        session.user.id = userData.id;
+        session.user.name = userData.name;
+        session.user.email = userData.email;
+        session.user.image = userData.image;
+        session.user.lastLoggedIn = userData.lastLoggedIn;
+
+        console.log("Fetched user data attached to session:", userData);
+      } catch (error) {
+        console.error("Error fetching user data from API:", error);
+      }
 
       return session;
     },
-    async redirect({ baseUrl }) {
-      return `${baseUrl}/report-home`;
-    },
+  },
+  pages: {
+    signIn: "/report-home", // Redirect to report-hoem after login
+    signOut: "/login", // Redirect to login after logout
   },
   secret: DISABLE_AUTH ? undefined : NEXTAUTH_SECRET,
 };
