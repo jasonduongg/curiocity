@@ -7,22 +7,17 @@ const client = new DynamoDBClient({ region: "us-west-1" });
 const tableName = process.env.DOCUMENT_TABLE || "";
 
 // Function to get all entries with only `id` and `name`
-const getAllEntries = async () => {
+const getAllEntries = async (previewLength: number) => {
   if (!tableName)
     throw new Error("DOCUMENT_TABLE environment variable not set");
-
+  
   try {
     const params = {
       TableName: tableName,
-      ProjectionExpression:
-        "id, #name, #text, #folders, #dateAdded, #lastOpened, #ownerID", // Retrieve specific attributes
+      ProjectionExpression: "id, #name, #text", // Retrieve only `id` and `name`
       ExpressionAttributeNames: {
         "#name": "name", // Handle reserved word `name`
         "#text": "text",
-        "#folders": "folders",
-        "#dateAdded": "dateAdded",
-        "#lastOpened": "lastOpened",
-        "#ownerID": "ownerID",
       },
     };
 
@@ -31,8 +26,19 @@ const getAllEntries = async () => {
 
     // Unmarshall the data
     const items =
-      data.Items?.map((item: any) => AWS.DynamoDB.Converter.unmarshall(item)) ||
-      [];
+      data.Items?.map((item: any) => {
+        const unmarshalledItem = AWS.DynamoDB.Converter.unmarshall(item);
+        return {
+          id: unmarshalledItem.id,
+          name: unmarshalledItem.name,
+          text: unmarshalledItem.text
+            ? unmarshalledItem.text.substring(
+                0,
+                Math.min(previewLength, unmarshalledItem.text.length),
+              )
+            : "",
+        };
+      }) || [];
 
     // Sort items by createdAt date (most past to most present)
     const sortedItems = items.sort((a, b) => {
@@ -50,7 +56,8 @@ const getAllEntries = async () => {
 
 export async function GET() {
   try {
-    const items = await getAllEntries();
+    const previewLength = 10;
+    const items = await getAllEntries(previewLength);
     return NextResponse.json(items);
   } catch (error) {
     console.log(error);
