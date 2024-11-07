@@ -1,5 +1,4 @@
 "use client";
-
 import { useEffect, useState } from "react";
 import FileList from "@/components/ResourceComponents/FileList";
 import NavBar from "@/components/GeneralComponents/NavBar";
@@ -164,7 +163,6 @@ export default function TestPage() {
       {isModalOpen && (
         <NameYourReport
           onSave={(name) => {
-            setNewDocName(name);
             createDocument(name); // Create a new document with the provided name
             setIsModalOpen(false); // Close the modal
           }}
