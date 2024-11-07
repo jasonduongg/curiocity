@@ -2,6 +2,7 @@
 import GridItem from "@/components/DocumentComponents/GridItem";
 import TextInput from "@/components/GeneralComponents/TextInput";
 import { Document } from "@/types/types";
+import { useState } from "react";
 
 interface AllDocumentGridProps {
   allDocuments: Document[];
@@ -14,11 +15,23 @@ export default function AllDocumentGrid({
   onDocumentClick,
   onCreateNewReport,
 }: AllDocumentGridProps) {
+  const [searchQuery, setSearchQuery] = useState("");
+
+  const filteredDocuments = allDocuments.filter(
+    (doc) =>
+      doc.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      doc.text.toLowerCase().includes(searchQuery.toLowerCase()),
+  );
+
   return (
     <div className="flex h-full flex-col">
       <div className="flex h-1/4 w-full flex-col justify-center">
         <div className="w-full px-10 pt-3">
-          <TextInput placeholder="Search for documents..." />
+          <TextInput
+            placeholder="Search for documents..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
         </div>
 
         <div className="w-full px-8 py-4">
@@ -33,8 +46,8 @@ export default function AllDocumentGrid({
         </div>
       </div>
 
-      <div className="justify-left flex w-full grow flex-wrap gap-8 overflow-y-auto p-8">
-        {allDocuments.map((item, index) => (
+      <div className="flex w-full grow flex-wrap justify-center gap-8 overflow-y-auto p-8">
+        {filteredDocuments.map((item, index) => (
           <div key={index} className="flex-shrink-0 flex-grow-0">
             <GridItem
               key={index}
