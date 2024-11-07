@@ -13,33 +13,29 @@ import {
   ResizablePanelGroup,
 } from "@/components/ui/resizable";
 
-type newDocument = {
+type FolderData = {
+  name: string;
+  resources: string[];
+};
+
+type NewDocument = {
   id?: string;
   name: string;
-  files: Array<string>;
-  text: string;
-  folders?: Record<
-    string,
-    {
-      name: string;
-      resources: string[];
-    }
-  >;
+  text?: string;
+  folders: Record<string, FolderData>;
 };
 
 export default function TestPage() {
-  const [allDocuments, setAllDocuments] = useState<newDocument[]>([]);
+  const [allDocuments, setAllDocuments] = useState<NewDocument[]>([]);
   const [swapState, setSwapState] = useState(false);
   const [currentDocument, setCurrentDocument] = useState<
-    newDocument | undefined
+    NewDocument | undefined
   >(undefined);
   const [fileListKey, setFileListKey] = useState(0); // Key for FileList to reset its state
   const [isModalOpen, setIsModalOpen] = useState(false); // State to control modal visibility
 
   const fetchDocuments = () => {
-    fetch("/api/db/getAll", {
-      method: "GET",
-    })
+    fetch("/api/db/getAll", { method: "GET" })
       .then((r) => r.json())
       .then((data) => {
         console.log("All documents response:", data);
@@ -59,7 +55,7 @@ export default function TestPage() {
     setFileListKey((prevKey) => prevKey + 1); // Increment key to reset FileList
   };
 
-  const handleGridItemClick = (document: newDocument) => {
+  const handleGridItemClick = (document: NewDocument) => {
     setCurrentDocument(document);
     setSwapState(true);
   };
@@ -72,8 +68,7 @@ export default function TestPage() {
     const newDoc = {
       name,
       text: "",
-      files: [],
-      dateAdded: new Date().toISOString(),
+      folders: {},
     };
 
     // API call to create a new document in the database
@@ -84,7 +79,8 @@ export default function TestPage() {
     })
       .then((response) => response.json())
       .then((data) => {
-        setCurrentDocument({ ...newDoc, id: data.id });
+        const createdDoc = { ...newDoc, id: data.id };
+        setCurrentDocument(createdDoc);
         setSwapState(true); // Open the document in TextEditor
         fetchDocuments(); // Refresh document list
       })
@@ -94,9 +90,7 @@ export default function TestPage() {
   const onResourceUpload = (documentId: string) => {
     console.log(`Uploaded new resource for document ID: ${documentId}`);
 
-    fetch(`/api/db?id=${documentId}`, {
-      method: "GET",
-    })
+    fetch(`/api/db?id=${documentId}`, { method: "GET" })
       .then((r) => r.json())
       .then((data) => {
         console.log("Raw DynamoDB response:", data);

@@ -33,7 +33,7 @@ function FileList({ currentDocument, onResourceUpload }: DocumentProps) {
   const [showUploadForm, setShowUploadForm] = useState(false);
   const [showConfirmCancelModal, setShowConfirmCancelModal] = useState(false);
   const [pendingResource, setPendingResource] = useState<Resource | null>(null);
-
+  console.log(currentDocument);
   const handleResourceAPI = (
     resource: Resource,
     resourceMeta: ResourceMeta,

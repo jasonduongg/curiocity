@@ -216,7 +216,7 @@ export default function S3Button({
         </div>
 
         {/* Preview Section */}
-        <div className="flex h-3/5 flex-col p-2">
+        <div className="flex grow flex-col p-2">
           <p className="mb-1 text-sm font-bold text-white">
             Preview: {previewResource?.name}
           </p>

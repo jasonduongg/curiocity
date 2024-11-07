@@ -10,14 +10,15 @@ const tableName = process.env.DOCUMENT_TABLE || "";
 const getAllEntries = async (previewLength: number) => {
   if (!tableName)
     throw new Error("DOCUMENT_TABLE environment variable not set");
-  
+
   try {
     const params = {
       TableName: tableName,
-      ProjectionExpression: "id, #name, #text", // Retrieve only `id` and `name`
+      ProjectionExpression: "id, #name, #text, #folders", // Retrieve only `id` and `name`
       ExpressionAttributeNames: {
         "#name": "name", // Handle reserved word `name`
         "#text": "text",
+        "#folders": "folders",
       },
     };
 
