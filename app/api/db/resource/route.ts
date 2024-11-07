@@ -1,77 +1,46 @@
 import dotenv from "dotenv";
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
-import { v4 as uuidv4 } from "uuid";
 import AWS from "aws-sdk";
-import { Resource, putObject, getObject, Document } from "../route";
+import { Resource, getObject } from "../route";
 
 dotenv.config();
 
 const client = new DynamoDBClient({ region: "us-west-1" });
 const resourceTable = process.env.RESOURCE_TABLE || "";
-const documentTable = process.env.DOCUMENT_TABLE || "";
 
-export async function POST(request: Request) {
-  console.log("call POST: resource");
-  const data = await request.json();
+export async function GET(request: Request) {
+  try {
+    const { searchParams } = new URL(request.url);
+    const hash = searchParams.get("hash");
 
-  console.log(data);
+    if (!hash) {
+      console.error("Error: Missing hash in GET request");
+      return new Response(JSON.stringify({ err: "Missing hash" }), {
+        status: 400,
+      });
+    }
 
-  if (
-    !data.documentId ||
-    !data.name ||
-    !data.url ||
-    !data.text ||
-    !data.folderName
-  ) {
-    return Response.json({ err: "missing fields" });
+    // Retrieve the resource from resourceTable
+    const resource = await getObject(client, hash, resourceTable);
+
+    if (!resource.Item) {
+      console.error("Error: Resource not found with hash:", hash);
+      return new Response(JSON.stringify({ err: "Resource not found" }), {
+        status: 404,
+      });
+    }
+
+    // Convert DynamoDB item to JSON format
+    const resourceData = AWS.DynamoDB.Converter.unmarshall(
+      resource.Item,
+    ) as Resource;
+    console.log("Retrieved resource:", resourceData);
+
+    return new Response(JSON.stringify(resourceData), { status: 200 });
+  } catch (error) {
+    console.error("Error in GET request for resource:", error);
+    return new Response(JSON.stringify({ err: "Internal server error" }), {
+      status: 500,
+    });
   }
-
-  const resourceId = uuidv4();
-
-  const Item: Resource = {
-    id: resourceId,
-    documentId: data.documentId,
-    url: data.url,
-    name: data.name,
-    text: data.text,
-  };
-
-  const inputResourceData = AWS.DynamoDB.Converter.marshall(Item);
-
-  const document = await getObject(client, data.documentId, documentTable);
-
-  const newDocument = AWS.DynamoDB.Converter.unmarshall(
-    document.Item,
-  ) as Document;
-
-  // Check if the folder exists in the document; if not, initialize it
-  console.log(!newDocument.folders[data.folderName]);
-  console.log(data.folderName);
-  console.log(newDocument.folders[data.folderName]);
-  if (!newDocument.folders[data.folderName]) {
-    newDocument.folders[data.folderName] = {
-      name: data.folderName,
-      resources: [],
-    };
-  }
-
-  // Append the resource to the specified folder's resources
-  newDocument.folders[data.folderName].resources.push(resourceId);
-
-  console.log("test");
-  console.log(newDocument.folders[data.folderName].resources);
-
-  // Convert the updated document to DynamoDB format
-  const inputDocumentData = AWS.DynamoDB.Converter.marshall(newDocument);
-  console.log("updated document w/ resource: ", newDocument);
-
-  // push resource
-  const res = await putObject(client, inputResourceData, resourceTable);
-
-  // update document
-  await putObject(client, inputDocumentData, documentTable);
-
-  console.log("Put new object: ", res);
-
-  return Response.json(newDocument);
 }

@@ -8,6 +8,9 @@ const tableName = process.env.DOCUMENT_TABLE || "";
 
 // Function to get all entries with only `id` and `name`
 const getAllEntries = async (previewLength: number) => {
+  if (!tableName)
+    throw new Error("DOCUMENT_TABLE environment variable not set");
+  
   try {
     const params = {
       TableName: tableName,
@@ -37,7 +40,14 @@ const getAllEntries = async (previewLength: number) => {
         };
       }) || [];
 
-    return items;
+    // Sort items by createdAt date (most past to most present)
+    const sortedItems = items.sort((a, b) => {
+      const dateA = a.dateAdded ? new Date(a.dateAdded).getTime() : -Infinity;
+      const dateB = b.dateAdded ? new Date(b.dateAdded).getTime() : -Infinity;
+      return dateB - dateA; // Ascending order
+    });
+
+    return sortedItems;
   } catch (error) {
     console.error("Error retrieving all entries:", error);
     throw new Error("Could not retrieve entries");
