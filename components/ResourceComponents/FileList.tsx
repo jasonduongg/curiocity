@@ -1,5 +1,5 @@
 import { useState } from "react";
-import TableFolder from "@/components/DocumentComponents/TableFolder";
+import TableFolder from "@/components/ResourceComponents/TableFolder";
 import ResourceViewer from "@/components/ResourceComponents/ResourceViewer";
 import S3Button from "./S3Button";
 import TextInput from "@/components/GeneralComponents/TextInput";
@@ -9,8 +9,7 @@ import {
   ResizablePanel,
   ResizablePanelGroup,
 } from "@/components/ui/resizable";
-
-import { Resource } from "@/types/types";
+import { Resource, ResourceMeta } from "@/types/types";
 
 type FolderData = {
   name: string;
@@ -27,18 +26,24 @@ type DocumentProps = {
 
 function FileList({ currentDocument, onResourceUpload }: DocumentProps) {
   const [currentResource, setCurrentResource] = useState<Resource | null>(null);
+  const [currentResourceMeta, setCurrentResourceMeta] =
+    useState<ResourceMeta | null>(null);
   const [resourceChangeCount, setResourceChangeCount] = useState(0);
   const [showUploadForm, setShowUploadForm] = useState(false);
   const [showConfirmCancelModal, setShowConfirmCancelModal] = useState(false);
   const [pendingResource, setPendingResource] = useState<Resource | null>(null);
 
-  const handleResourceAPI = (resource: Resource) => {
+  const handleResourceAPI = (
+    resource: Resource,
+    resourceMeta: ResourceMeta,
+  ) => {
     if (showUploadForm) {
       setPendingResource(resource);
       setShowConfirmCancelModal(true);
     } else {
       setCurrentResource(resource);
-      setResourceChangeCount((prevCount) => prevCount + 1); // Increment counter
+      setCurrentResourceMeta(resourceMeta);
+      setResourceChangeCount((prevCount) => prevCount + 1);
     }
   };
 
@@ -47,7 +52,7 @@ function FileList({ currentDocument, onResourceUpload }: DocumentProps) {
     setShowConfirmCancelModal(false);
     setCurrentResource(pendingResource);
     setPendingResource(null);
-    setResourceChangeCount((prevCount) => prevCount + 1); // Increment counter
+    setResourceChangeCount((prevCount) => prevCount + 1);
   };
 
   const cancelLeaveUploadForm = () => {
@@ -79,14 +84,16 @@ function FileList({ currentDocument, onResourceUpload }: DocumentProps) {
         <ResizablePanel defaultSize={65}>
           <div className="flex h-full flex-col overflow-hidden rounded-lg px-4">
             <div className="flex h-full w-full flex-col overflow-hidden border-zinc-700">
-              <div className="px-2 py-4">
-                <button
-                  onClick={openFileUploader}
-                  className="w-full rounded-md border-[1px] border-zinc-700 py-1 text-sm text-white transition duration-300 hover:bg-gray-700"
-                >
-                  Upload New Files
-                </button>
-              </div>
+              {!showUploadForm && (
+                <div className="px-2 py-4">
+                  <button
+                    onClick={openFileUploader}
+                    className="w-full rounded-md border-[1px] border-zinc-700 py-1 text-sm text-white transition duration-300 hover:bg-gray-700"
+                  >
+                    Upload New Files
+                  </button>
+                </div>
+              )}
 
               {!showUploadForm && !currentResource ? (
                 <div className="flex h-full w-full items-center justify-center text-gray-500">
@@ -97,6 +104,7 @@ function FileList({ currentDocument, onResourceUpload }: DocumentProps) {
                   <div className="h-full w-full flex-grow overflow-auto rounded-lg border-[1px] border-zinc-700">
                     <ResourceViewer
                       resource={currentResource}
+                      resourceMeta={currentResourceMeta}
                       resourceChangeCount={resourceChangeCount}
                     />
                   </div>

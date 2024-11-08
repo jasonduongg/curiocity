@@ -1,6 +1,5 @@
 import AddNote from "@/components/ResourceComponents/AddingNotes";
 import DeleteConfirmationModal from "@/components/ModalComponents/DeleteConfirmationModal";
-import NewPromptModal from "@/components/DocumentComponents/newPrompt";
 export default function Home() {
   return (
     <div className="flex h-screen flex-col space-y-4">
@@ -9,7 +8,6 @@ export default function Home() {
         <h2> Components to integrate </h2>
         <AddNote />
         <DeleteConfirmationModal />
-        <NewPromptModal />
       </div>
       <div className="flex h-screen flex-col items-center justify-center">
         <h1 className="text-2xl">Design System </h1>

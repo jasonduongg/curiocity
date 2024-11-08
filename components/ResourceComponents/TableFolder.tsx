@@ -1,7 +1,7 @@
 // components/TableFolder.tsx
 
 import React, { useState } from "react";
-import TableRow from "@/components/DocumentComponents/TableRow";
+import TableRow from "@/components/ResourceComponents/TableRow";
 import { FileIcon } from "@radix-ui/react-icons";
 import { Resource } from "@/types/types";
 
@@ -13,7 +13,7 @@ interface FolderData {
 interface TableFolderProps {
   folderName: string;
   folderData: FolderData;
-  onResource: (url: Resource) => void;
+  onResource: (resource: Resource) => void;
   currentResource: Resource | null;
   showUploadForm: boolean; // Add showUploadForm prop
 }
@@ -47,8 +47,8 @@ export default function TableFolder({
               icon={FileIcon}
               iconColor="white"
               title={resource.name}
-              dateAdded="Unknown"
-              lastViewed="Unknown"
+              dateAdded={resource.dateAdded || "Unknown"}
+              lastViewed={resource.lastViewed || "Unknown"}
               id={resource.id}
               isSelected={
                 currentResource?.id === resource.id && !showUploadForm

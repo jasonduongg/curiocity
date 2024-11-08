@@ -1,6 +1,6 @@
 import { useState, useRef } from "react";
 import { useS3Upload } from "next-s3-upload";
-import { FaCheckCircle, FaTrash } from "react-icons/fa";
+import { FaCheckCircle, FaTrash, FaArrowLeft } from "react-icons/fa";
 import ResourceViewerMini from "./ResourceViewerMini";
 import FolderDropdown from "./FolderSelectionDropdown";
 import FileUploadComponent from "./FileUploadComponent";
@@ -30,7 +30,7 @@ export default function S3Button({
   );
   const [previewResource, setPreviewResource] = useState<Resource | null>(null);
   const [isUploading, setIsUploading] = useState(false);
-  const [currentFile, setCurrentFile] = useState<File | null>(null); // Track current file for extraction
+  const [currentFile, setCurrentFile] = useState<File | null>(null);
   const { uploadToS3 } = useS3Upload();
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
@@ -45,17 +45,13 @@ export default function S3Button({
 
   const extractTextFromFile = async (file: File) => {
     const fileExtension = file.name.split(".").pop()?.toLowerCase();
-    if (
-      fileExtension === "csv" ||
-      fileExtension === "html" ||
-      fileExtension === "pdf"
-    ) {
-      return await new Promise<string>((resolve) => {
+    if (["csv", "html", "pdf"].includes(fileExtension)) {
+      return new Promise<string>((resolve) => {
         const handleTextExtracted = (text: string) => resolve(text);
         setCurrentFile({ file, onTextExtracted: handleTextExtracted });
       });
     }
-    return ""; // No text extraction for unsupported file types
+    return "";
   };
 
   const handleUploadAll = async () => {
@@ -69,16 +65,27 @@ export default function S3Button({
 
     for (const file of fileQueue) {
       try {
+        const fileBase64 = await new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.readAsDataURL(file);
+          reader.onload = () =>
+            resolve(reader.result!.toString().split(",")[1]);
+          reader.onerror = (error) => reject(error);
+        });
+
         const { url } = await uploadToS3(file);
-        await fetch("/api/db/resource", {
+
+        await fetch("/api/db/resourcemeta", {
           method: "POST",
           body: JSON.stringify({
-            name: file.name,
+            file: fileBase64,
             documentId,
-            url,
+            name: file.name,
             folderName: folderToSave,
+            url,
             dateAdded: new Date().toISOString(),
-            text: await extractTextFromFile(file), // Include extracted text only for supported files
+            lastOpened: new Date().toISOString(),
+            text: await extractTextFromFile(file),
           }),
           headers: {
             "Content-Type": "application/json",
@@ -111,37 +118,40 @@ export default function S3Button({
   };
 
   return (
-    <div className="bg-red mt-2 h-full">
-      {/* Folder Selection */}
-      <div className="p-2">
-        <p className="mb-1 text-sm text-white">Select Folder:</p>
-        <div className="flex items-center space-x-2">
+    <div className="mt-2 flex h-full flex-col">
+      <div className="flex items-center space-x-2 p-2">
+        <p className="text-sm text-white">Select Folder:</p>
+        {!isNewFolder ? (
           <FolderDropdown
             possibleFolders={possibleFolders}
             selectedFolder={selectedFolder}
             onFolderChange={handleFolderChange}
           />
-          <button
-            onClick={() => fileInputRef.current?.click()}
-            className="whitespace-nowrap rounded-md border border-zinc-700 bg-transparent px-2 py-1 text-sm text-white hover:bg-gray-700"
-          >
-            Select Files
-          </button>
-        </div>
+        ) : (
+          <>
+            <button
+              onClick={() => setIsNewFolder(false)}
+              className="rounded-md p-1 text-white hover:bg-gray-700"
+            >
+              <FaArrowLeft />
+            </button>
+            <input
+              type="text"
+              placeholder="Enter new folder name"
+              value={newFolderName}
+              onChange={(e) => setNewFolderName(e.target.value)}
+              className="w-full rounded-lg border border-zinc-700 bg-transparent px-2 py-1 text-sm text-white outline-none focus:border-white"
+            />
+          </>
+        )}
+        <button
+          onClick={() => fileInputRef.current?.click()}
+          className="whitespace-nowrap rounded-md border border-zinc-700 bg-transparent px-2 py-1 text-sm text-white hover:bg-gray-700"
+        >
+          Select Files
+        </button>
       </div>
 
-      {/* New Folder Input */}
-      {isNewFolder && (
-        <div className="px-2">
-          <input
-            type="text"
-            placeholder="______"
-            value={newFolderName}
-            onChange={(e) => setNewFolderName(e.target.value)}
-            className="w-full rounded-lg border border-zinc-700 bg-transparent px-2 py-1 text-sm text-white outline-none focus:border-white"
-          />
-        </div>
-      )}
       <input
         type="file"
         multiple
@@ -157,16 +167,16 @@ export default function S3Button({
         />
       )}
 
-      <div className="flex h-[80%] flex-col">
-        {/* File Queue */}
-        <div className="flex h-2/5 flex-col p-2">
-          <p className="mb-1 text-sm font-bold text-white">Selected Files:</p>
-          <div className="h-full overflow-y-scroll rounded-xl border border-zinc-700 p-2">
+      <div className="h-[30%] flex-grow overflow-y-auto">
+        <div className="flex h-full items-center justify-center overflow-y-auto rounded-xl border border-zinc-700 p-2">
+          {fileQueue.length === 0 ? (
+            <p className="text-gray-400">No files selected</p>
+          ) : (
             <ul className="list-disc text-white">
               {fileQueue.map((file, index) => (
                 <div
                   key={index}
-                  className="mb-2 flex w-full items-center overflow-hidden rounded-lg border-[1px] border-zinc-700"
+                  className="mb-2 flex items-center rounded-lg border-[1px] border-zinc-700"
                 >
                   <p
                     className="flex-1 cursor-pointer whitespace-nowrap px-2 py-1 text-sm"
@@ -181,7 +191,7 @@ export default function S3Button({
                   </p>
                   {isUploading ? (
                     uploadedFiles[file.name] ? (
-                      <FaCheckCircle className="mx-2 text-green-500 opacity-100 transition-opacity duration-500" />
+                      <FaCheckCircle className="mx-2 text-green-500" />
                     ) : (
                       <div className="ml-2 h-4 w-4" />
                     )
@@ -201,38 +211,33 @@ export default function S3Button({
                 </div>
               ))}
             </ul>
-          </div>
-        </div>
-
-        {/* Preview Section */}
-        <div className="flex h-3/5 flex-col p-2">
-          <p className="mb-1 text-sm font-bold text-white">
-            Preview: {previewResource?.name}
-          </p>
-          <div className="h-full overflow-y-scroll rounded-xl border border-zinc-700 p-2">
-            {previewResource && (
-              <ResourceViewerMini resource={previewResource} />
-            )}
-          </div>
+          )}
         </div>
       </div>
 
-      {/* Upload/Cancel Buttons */}
-      <div className="p-2">
-        <div className="flex space-x-2">
-          <button
-            onClick={handleUploadAll}
-            className="w-full rounded-md border-[1px] border-zinc-700 px-2 py-1 text-sm text-white hover:bg-blue-900"
-          >
-            Upload All Files
-          </button>
-          <button
-            onClick={handleCancelUpload}
-            className="w-full rounded-md border-[1px] border-zinc-700 px-2 py-1 text-sm text-white hover:bg-red-900"
-          >
-            Cancel
-          </button>
+      <div className="mt-2 h-[30%] flex-grow overflow-y-auto">
+        <div className="flex h-full items-center justify-center overflow-y-auto rounded-xl border border-zinc-700 p-2">
+          {previewResource ? (
+            <ResourceViewerMini resource={previewResource} className="w-full" />
+          ) : (
+            <p className="text-gray-400">No preview available</p>
+          )}
         </div>
+      </div>
+
+      <div className="flex space-x-2 py-2">
+        <button
+          onClick={handleUploadAll}
+          className="w-full rounded-md border-[1px] border-zinc-700 px-2 py-1 text-sm text-white hover:bg-blue-900"
+        >
+          Upload All Files
+        </button>
+        <button
+          onClick={handleCancelUpload}
+          className="w-full rounded-md border-[1px] border-zinc-700 px-2 py-1 text-sm text-white hover:bg-red-900"
+        >
+          Cancel
+        </button>
       </div>
     </div>
   );

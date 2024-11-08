@@ -1,3 +1,4 @@
+
 function stripHtmlTags(text: string) {
   return text.replace(/<\/?[^>]+(>|$)/g, "");
 }
@@ -6,13 +7,13 @@ interface Props {
   title: string;
   text: string;
   dateAdded: string;
-  onClick: () => void; // Add onClick as a prop
+  onClick: () => void;
 }
 
 export default function GridItem({ title, text, dateAdded, onClick }: Props) {
   const formattedDate = new Date(dateAdded).toLocaleString("en-US", {
     year: "numeric",
-    month: "short", // 3-letter month
+    month: "short",
     day: "2-digit",
     hour: "2-digit",
     minute: "2-digit",
@@ -21,8 +22,8 @@ export default function GridItem({ title, text, dateAdded, onClick }: Props) {
 
   return (
     <div
-      className="flex min-w-[200px] flex-1 flex-wrap justify-start"
-      onClick={() => onClick()}
+      className="flex h-64 w-full max-w-full cursor-pointer flex-col justify-between rounded-lg bg-zinc-800 p-4 shadow-md hover:bg-red-300"
+      onClick={onClick}
     >
       <div className="flex h-64 w-48 min-w-48 flex-col items-stretch rounded-xl border-[1px] border-textSecondary">
         <div className="grow overflow-y-hidden p-2">
