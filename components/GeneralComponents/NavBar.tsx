@@ -2,15 +2,23 @@
 
 import { useState } from "react";
 import Image from "next/image";
-
+import { signOut, useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
 import logoIconSmall from "@/assets/logo.png";
 import { AvatarIcon, GearIcon, TrashIcon } from "@radix-ui/react-icons";
 
 export default function NavBar() {
   const [isHidden, setIsHidden] = useState(false);
+  const { data: session } = useSession(); // Access session data
+  const router = useRouter();
 
   const toggleNavBar = () => {
     setIsHidden(!isHidden);
+  };
+
+  const handleSignOut = async () => {
+    await signOut({ redirect: false });
+    router.push("/login");
   };
 
   if (isHidden) {
@@ -46,15 +54,34 @@ export default function NavBar() {
         </div>
 
         <div className="flex h-full items-center gap-4">
+          {/* Display user information if logged in */}
+          {session && session.user && (
+            <div className="flex items-center space-x-2">
+              <p className="text-sm text-textPrimary">{session.user.name}</p>
+              {session.user.image && (
+                <div className="relative h-8 w-8">
+                  <Image
+                    src={session.user.image}
+                    alt="User Avatar"
+                    layout="fill"
+                    className="rounded-full"
+                  />
+                </div>
+              )}
+            </div>
+          )}
           <div className="grid h-10 w-10 place-items-center rounded-lg border-2 border-fileBlue">
             <AvatarIcon className="h-6 w-6 text-fileBlue" />
           </div>
           <div className="grid h-10 w-10 place-items-center rounded-lg border-2 border-fileBlue">
             <GearIcon className="h-6 w-6 text-fileBlue" />
           </div>
-          <div className="grid h-10 w-10 place-items-center rounded-lg border-2 border-fileRed">
+          <button
+            onClick={handleSignOut}
+            className="grid h-10 w-10 place-items-center rounded-lg border-2 border-fileRed"
+          >
             <TrashIcon className="h-6 w-6 text-fileRed" />
-          </div>
+          </button>
         </div>
       </div>
     </div>

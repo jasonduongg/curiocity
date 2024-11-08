@@ -1,9 +1,12 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import ReactQuill from "react-quill";
+import dynamic from "next/dynamic";
 import "react-quill/dist/quill.snow.css";
 import { Document } from "@/types/types";
+
+// Dynamically import ReactQuill with SSR disabled
+const ReactQuill = dynamic(() => import("react-quill"), { ssr: false });
 
 interface TextEditorProps {
   currentDocument?: Document;
@@ -28,7 +31,7 @@ const TextEditor = ({ currentDocument, swapState }: TextEditorProps) => {
   useEffect(() => {
     if (uploadComplete) {
       const timeout = setTimeout(() => setUploadComplete(false), 3000);
-      return () => clearTimeout(timeout); // Clean up the timeout on component unmount
+      return () => clearTimeout(timeout);
     }
   }, [uploadComplete]);
 
@@ -139,7 +142,7 @@ const TextEditor = ({ currentDocument, swapState }: TextEditorProps) => {
             z-index: 10;
             background-color: #130E16;
             border: none !important;
-            border-top: 1px solid #333333 !important; /* Top border */
+            border-top: 1px solid #333333 !important;
             border-bottom: 1px solid #333333 !important; 
           }
           .ql-toolbar .ql-stroke {
@@ -154,10 +157,10 @@ const TextEditor = ({ currentDocument, swapState }: TextEditorProps) => {
             color: #fff;
           }
           .ql-container {
-            border: none !important; /* Removes the border around the Quill editor */
+            border: none !important;
           }
           .ql-editor {
-            border: none !important; /* Ensures the editor area itself has no border */
+            border: none !important;
           }
         `}
       </style>

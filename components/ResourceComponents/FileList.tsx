@@ -9,7 +9,6 @@ import {
   ResizablePanel,
   ResizablePanelGroup,
 } from "@/components/ui/resizable";
-
 import { Resource, ResourceMeta } from "@/types/types";
 
 type FolderData = {
@@ -33,7 +32,7 @@ function FileList({ currentDocument, onResourceUpload }: DocumentProps) {
   const [showUploadForm, setShowUploadForm] = useState(false);
   const [showConfirmCancelModal, setShowConfirmCancelModal] = useState(false);
   const [pendingResource, setPendingResource] = useState<Resource | null>(null);
-  console.log(currentDocument);
+
   const handleResourceAPI = (
     resource: Resource,
     resourceMeta: ResourceMeta,
@@ -44,7 +43,7 @@ function FileList({ currentDocument, onResourceUpload }: DocumentProps) {
     } else {
       setCurrentResource(resource);
       setCurrentResourceMeta(resourceMeta);
-      setResourceChangeCount((prevCount) => prevCount + 1); // Increment counter
+      setResourceChangeCount((prevCount) => prevCount + 1);
     }
   };
 
@@ -53,7 +52,7 @@ function FileList({ currentDocument, onResourceUpload }: DocumentProps) {
     setShowConfirmCancelModal(false);
     setCurrentResource(pendingResource);
     setPendingResource(null);
-    setResourceChangeCount((prevCount) => prevCount + 1); // Increment counter
+    setResourceChangeCount((prevCount) => prevCount + 1);
   };
 
   const cancelLeaveUploadForm = () => {
@@ -85,14 +84,16 @@ function FileList({ currentDocument, onResourceUpload }: DocumentProps) {
         <ResizablePanel defaultSize={65}>
           <div className="flex h-full flex-col overflow-hidden rounded-lg px-4">
             <div className="flex h-full w-full flex-col overflow-hidden border-zinc-700">
-              <div className="px-2 py-4">
-                <button
-                  onClick={openFileUploader}
-                  className="w-full rounded-md border-[1px] border-zinc-700 py-1 text-sm text-white transition duration-300 hover:bg-gray-700"
-                >
-                  Upload New Files
-                </button>
-              </div>
+              {!showUploadForm && (
+                <div className="px-2 py-4">
+                  <button
+                    onClick={openFileUploader}
+                    className="w-full rounded-md border-[1px] border-zinc-700 py-1 text-sm text-white transition duration-300 hover:bg-gray-700"
+                  >
+                    Upload New Files
+                  </button>
+                </div>
+              )}
 
               {!showUploadForm && !currentResource ? (
                 <div className="flex h-full w-full items-center justify-center text-gray-500">
