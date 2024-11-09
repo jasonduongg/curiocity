@@ -2,6 +2,8 @@
 
 import React, { useEffect, useState } from "react";
 import * as pdfjsLib from "pdfjs-dist";
+import Papa from "papaparse";
+import TurndownService from "turndown";
 
 const FileUploadComponent: React.FC = () => {
   const [pdfjs, setPdfjs] = useState<typeof pdfjsLib | null>(null);
@@ -28,11 +30,40 @@ const FileUploadComponent: React.FC = () => {
       const fileName = file.name;
       const fileExtension = fileName.split(".").pop()?.toLowerCase();
 
-      if (fileExtension === "csv" || fileExtension === "html") {
+      if (fileExtension === "csv") {
         const reader = new FileReader();
         reader.onload = () => {
           const text = reader.result as string;
-          console.log(`Extracted text from ${fileName}:\n`, text);
+          const results = Papa.parse(text, { header: false });
+          const data = results.data;
+          let markdown = "";
+          if (Array.isArray(data) && data.length > 0) {
+            const header = data[0];
+            const separator = header.map(() => "---");
+            markdown += `| ${header.join(" | ")} |\n`;
+            markdown += `| ${separator.join(" | ")} |\n`;
+            for (let i = 1; i < data.length; i++) {
+              const row = data[i];
+              markdown += `| ${row.join(" | ")} |\n`;
+            }
+          }
+          console.log(markdown);
+        };
+        reader.readAsText(file);
+      } else if (fileExtension === "html") {
+        const reader = new FileReader();
+        reader.onload = () => {
+          const html = reader.result as string;
+          const turndownService = new TurndownService();
+          turndownService.addRule("image", {
+            filter: "img",
+            replacement: function (content, node) {
+              const src = node.getAttribute("src");
+              return `![Image](${src})`;
+            },
+          });
+          const markdown = turndownService.turndown(html);
+          console.log(markdown);
         };
         reader.readAsText(file);
       } else if (fileExtension === "pdf") {
@@ -42,16 +73,16 @@ const FileUploadComponent: React.FC = () => {
             const typedarray = new Uint8Array(reader.result as ArrayBuffer);
             const loadingTask = pdfjs.getDocument({ data: typedarray });
             const pdf = await loadingTask.promise;
-            let textContent = "";
+            let markdown = "";
             for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
               const page = await pdf.getPage(pageNum);
               const textContentObj = await page.getTextContent();
               const pageText = textContentObj.items
                 .map((item: any) => ("str" in item ? item.str : ""))
                 .join(" ");
-              textContent += pageText + "\n";
+              markdown += `# Page ${pageNum}\n\n${pageText}\n\n`;
             }
-            console.log(`Extracted text from ${fileName}:\n`, textContent);
+            console.log(markdown);
           } catch (error) {
             console.error("Error parsing PDF:", error);
           }
