@@ -8,7 +8,7 @@ interface MiniTextEditorProps {
   saveNotes: (resourceId: string, notes: string) => Promise<void>; // save notes func: takes in resourceId and notes, returns nothing
 }
 
-//function compoenent w/ props
+//function component w/ props
 const MiniTextEditor: React.FC<MiniTextEditorProps> = ({
   resourceId,
   fetchNotes,
@@ -18,15 +18,17 @@ const MiniTextEditor: React.FC<MiniTextEditorProps> = ({
   const [showEditor, setShowEditor] = useState(false); //editor visibility boolean
   const [notes, setNotes] = useState(""); //notes content string
   const [isSaving, setIsSaving] = useState(false); //boolean for saving
+  const [hasLoadedNotes, setHasLoadedNotes] = useState(false); // tracks if notes have been loaded initially
 
-  // Fetch notes when the editor is opened
+  // Fetch notes when the component mounts
   useEffect(() => {
-    if (showEditor) {
-      fetchNotes(resourceId)
-        .then((fetchedNotes) => setNotes(fetchedNotes))
-        .catch((error) => console.error("Error fetching notes:", error));
-    }
-  }, [showEditor, resourceId, fetchNotes]);
+    fetchNotes(resourceId)
+      .then((fetchedNotes) => {
+        setNotes(fetchedNotes);
+        setHasLoadedNotes(true); // Indicate that notes have been loaded
+      })
+      .catch((error) => console.error("Error fetching notes:", error));
+  }, [resourceId, fetchNotes]);
 
   // Toggle the editor visibility boolean
   const toggleEditor = () => {
@@ -51,6 +53,13 @@ const MiniTextEditor: React.FC<MiniTextEditorProps> = ({
       <button onClick={toggleEditor} className="toggle-editor-button">
         {showEditor ? "Close Notes" : "Add/Edit Notes"}
       </button>
+
+      {/* Display notes content if it exists and has been loaded */}
+      {hasLoadedNotes && notes && !showEditor && (
+        <div className="existing-notes">
+          <p>{notes}</p>
+        </div>
+      )}
 
       {showEditor && (
         <div className="editor-content">
@@ -85,6 +94,15 @@ const MiniTextEditor: React.FC<MiniTextEditorProps> = ({
           background-color: #130e16;
           color: white;
           padding: 1rem;
+        }
+
+        .existing-notes {
+          width: 100%;
+          margin-bottom: 0.5rem;
+          padding: 0.5rem;
+          border-radius: 0.5rem;
+          color: white;
+          font-size: 0.9rem;
         }
 
         .toggle-editor-button {

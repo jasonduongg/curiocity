@@ -1,33 +1,67 @@
-// src/pages/index.tsx or the main page of your app
 "use client";
-import React from "react";
+import React, { useState } from "react";
 import MiniTextEditor from "@/components/ResourceComponents/MiniTextEditor";
 
-// Mock functions to simulate database fetch and save
+// In-memory storage to simulate a database for notes
+const notesDatabase: { [key: string]: string } = {};
+
+// Mock function to fetch notes for a given resource ID
 const mockFetchNotes = async (resourceId: string) => {
-  console.log(`Fetching notes for resource: ${resourceId}`);
-  // Simulate an initial note for testing purposes
-  return "These are the existing notes for this resource.";
+  return notesDatabase[resourceId] || ""; // Return saved notes or an empty string if no notes exist
 };
 
+// Mock function to save notes for a given resource ID
 const mockSaveNotes = async (resourceId: string, notes: string) => {
-  console.log(`Saving notes for resource: ${resourceId}`);
-  console.log("Saved notes:", notes);
-  // Simulate saving without actually interacting with a database
+  notesDatabase[resourceId] = notes; // Save notes to the in-memory database
+  console.log(`Saved notes for ${resourceId}:`, notes);
   return;
 };
 
 export default function HomePage() {
+  const [uploadedFiles, setUploadedFiles] = useState<
+    { id: string; name: string }[]
+  >([]);
+  const [openEditorFileId, setOpenEditorFileId] = useState<string | null>(null);
+
+  // Handle file upload
+  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      const newFile = { id: `file-${Date.now()}`, name: file.name };
+      setUploadedFiles([...uploadedFiles, newFile]);
+    }
+  };
+
+  // Toggle notes editor for a specific file
+  const toggleEditor = (fileId: string) => {
+    setOpenEditorFileId((prev) => (prev === fileId ? null : fileId));
+  };
+
   return (
     <div>
-      <h1>Main Page</h1>
+      {/* File Upload Button */}
+      <input type="file" onChange={handleFileUpload} />
 
-      {/* Render MiniTextEditor with a sample resourceId */}
-      <MiniTextEditor
-        resourceId="sample-resource-id-1" // Provide a unique ID for testing
-        fetchNotes={mockFetchNotes}
-        saveNotes={mockSaveNotes}
-      />
+      {/* List of Uploaded Files */}
+      <div>
+        {uploadedFiles.map((file) => (
+          <div key={file.id}>
+            <span>{file.name}</span>
+            <button onClick={() => toggleEditor(file.id)}>
+              Add/Edit Notes
+            </button>
+
+            {/* MiniTextEditor for each file that opens when the button is clicked */}
+            {openEditorFileId === file.id && (
+              <MiniTextEditor
+                resourceId={file.id}
+                fetchNotes={mockFetchNotes}
+                saveNotes={mockSaveNotes}
+              />
+            )}
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
