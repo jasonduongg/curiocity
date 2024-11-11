@@ -2,7 +2,7 @@
 
 import React from "react";
 import { render, fireEvent, waitFor } from "@testing-library/react";
-import TextEditor from "../TextEditor";
+import TextEditor from "../DocumentComponents/TextEditor";
 import "@testing-library/jest-dom";
 
 // Mock the Button component to prevent testing it

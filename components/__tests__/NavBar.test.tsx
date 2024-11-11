@@ -1,5 +1,5 @@
 import { render, screen } from "@testing-library/react";
-import NavBar from "../NavBar"; // Adjust the path if necessary
+import NavBar from "@components/GeneralComponents/NavBar"; // Adjust the path if necessary
 import "@testing-library/jest-dom/extend-expect";
 
 // Mock the Image component from 'next/image' since Next.js's Image component might cause issues in Jest

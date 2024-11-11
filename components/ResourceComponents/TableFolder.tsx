@@ -1,11 +1,9 @@
-import { useState } from "react";
-import TableRow from "@/components/TableRow";
-import { FileIcon } from "@radix-ui/react-icons";
+// components/TableFolder.tsx
 
-interface Resource {
-  name: string;
-  id: string;
-}
+import React, { useState } from "react";
+import TableRow from "@/components/ResourceComponents/TableRow";
+import { FileIcon } from "@radix-ui/react-icons";
+import { Resource } from "@/types/types";
 
 interface FolderData {
   name: string;
@@ -15,17 +13,20 @@ interface FolderData {
 interface TableFolderProps {
   folderName: string;
   folderData: FolderData;
-  onResourceUrl: (url: string) => void; // Define the callback prop
+  onResource: (resource: Resource) => void;
+  currentResource: Resource | null;
+  showUploadForm: boolean; // Add showUploadForm prop
 }
 
 export default function TableFolder({
   folderName,
   folderData,
-  onResourceUrl,
+  onResource,
+  currentResource,
+  showUploadForm,
 }: TableFolderProps) {
   const [isExpanded, setIsExpanded] = useState(false);
 
-  // Toggle folder dropdown
   const handleFolderClick = () => {
     setIsExpanded(!isExpanded);
   };
@@ -33,7 +34,7 @@ export default function TableFolder({
   return (
     <div className="mb-2">
       <div
-        className="cursor-pointer rounded-lg border-[1px] border-white px-2 py-1"
+        className="cursor-pointer rounded-lg border-[1px] border-zinc-700 px-2 py-1 transition duration-300 hover:bg-gray-700"
         onClick={handleFolderClick}
       >
         <p className="text-sm font-semibold text-textPrimary">{folderName}</p>
@@ -44,12 +45,15 @@ export default function TableFolder({
             <TableRow
               key={resource.id}
               icon={FileIcon}
-              iconColor="white" // Assuming a static color for simplicity
+              iconColor="white"
               title={resource.name}
-              dateAdded="Unknown"
-              lastViewed="Unknown"
+              dateAdded={resource.dateAdded || "Unknown"}
+              lastViewed={resource.lastViewed || "Unknown"}
               id={resource.id}
-              onResourceUrl={onResourceUrl}
+              isSelected={
+                currentResource?.id === resource.id && !showUploadForm
+              }
+              onResource={onResource}
             />
           ))}
         </div>

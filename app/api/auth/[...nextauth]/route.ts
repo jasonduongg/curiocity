@@ -4,66 +4,90 @@ import GoogleProvider from "next-auth/providers/google";
 const GOOGLE_ID = process.env.GOOGLE_ID;
 const GOOGLE_SECRET = process.env.GOOGLE_SECRET;
 const NEXTAUTH_SECRET = process.env.NEXTAUTH_SECRET;
-const DISABLE_AUTH = process.env.DISABLE_AUTH === "true";
 
-if (!DISABLE_AUTH && (!GOOGLE_ID || !GOOGLE_SECRET)) {
+if (!GOOGLE_ID || !GOOGLE_SECRET) {
   throw new Error(
     "Missing GOOGLE_ID or GOOGLE_SECRET in environment variables",
   );
 }
 
-if (!DISABLE_AUTH && !NEXTAUTH_SECRET) {
+if (!NEXTAUTH_SECRET) {
   throw new Error("Missing NEXTAUTH_SECRET in environment variables");
 }
 
 const options: NextAuthOptions = {
-  providers: DISABLE_AUTH
-    ? [] // No providers if auth is disabled
-    : [
-        GoogleProvider({
-          clientId: GOOGLE_ID!,
-          clientSecret: GOOGLE_SECRET!,
-          authorization: {
-            params: {
-              scope: "openid email profile",
-            },
-          },
-          profile(profile) {
-            return {
-              id: profile.sub,
-              name: profile.name || "",
-              email: profile.email || "",
-              image: profile.picture || "",
-              given_name: profile.given_name || "",
-              family_name: profile.family_name || "",
-            };
-          },
-        }),
-      ],
+  providers: [
+    GoogleProvider({
+      clientId: GOOGLE_ID,
+      clientSecret: GOOGLE_SECRET,
+      authorization: {
+        params: {
+          scope: "openid email profile",
+        },
+      },
+      profile(profile) {
+        return {
+          id: profile.sub,
+          name: profile.name || "",
+          email: profile.email || "",
+          image: profile.picture || "",
+          given_name: profile.given_name || "",
+          family_name: profile.family_name || "",
+        };
+      },
+    }),
+  ],
   callbacks: {
     async signIn({ user, profile }) {
-      if (DISABLE_AUTH) return true; // Bypass auth if disabled
-
+      console.log("signIn callback triggered");
       const email = user.email?.toLowerCase();
-      if (!email) return false;
+      if (!email || !profile) return false;
 
-      if (!profile) {
-        console.error("Profile is undefined during sign-in.");
+      const userData = {
+        userId: profile.sub,
+        name: profile.name,
+        email: profile.email,
+        lastLoggedIn: new Date().toISOString(),
+      };
+      console.log(userData);
+
+      try {
+        const response = await fetch(`http://localhost:3000/api/user`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ userData }),
+        });
+
+        if (!response.ok) {
+          console.error(
+            "Failed to save user to DynamoDB:",
+            response.statusText,
+          );
+          return false;
+        }
+
+        console.log("User successfully saved or updated in DynamoDB");
+        return true;
+      } catch (error) {
+        console.error("Failed to save user to DynamoDB:", error);
         return false;
       }
-
-      return true;
     },
-    async session({ session }) {
-      if (DISABLE_AUTH) return session; // Bypass session if auth is disabled
-
+    async session({ session, token }) {
       const email = session.user?.email?.toLowerCase();
-      if (!email) return session;
-
+      if (email) {
+        session.user.id = token.sub;
+        session.user.lastLoggedIn = new Date().toISOString();
+      }
       return session;
     },
+    async redirect({ baseUrl }) {
+      return `${baseUrl}/report-home`;
+    },
   },
-  secret: DISABLE_AUTH ? undefined : NEXTAUTH_SECRET,
+  secret: NEXTAUTH_SECRET,
 };
 
 const handler = NextAuth(options);
