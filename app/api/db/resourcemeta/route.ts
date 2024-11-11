@@ -10,17 +10,18 @@ import {
   putObject,
   getObject,
   Document,
+  deleteObject,
 } from "../route";
 
 dotenv.config();
 
 const client = new DynamoDBClient({ region: "us-west-1" });
 const documentTable = process.env.DOCUMENT_TABLE || "";
-const resourceMetaTable = process.env.RESOURCEMETA_TABLE || "";
-const resourceTable = process.env.RESOURCE_TABLE || "";
+export const resourceMetaTable = process.env.RESOURCEMETA_TABLE || "";
+export const resourceTable = process.env.RESOURCE_TABLE || "";
 
 // Function to generate MD5 hash of a file
-const generateFileHash = (fileBuffer) => {
+const generateFileHash = (fileBuffer: any) => {
   const hash = crypto.createHash("md5");
   hash.update(fileBuffer);
   return hash.digest("hex");
@@ -174,6 +175,22 @@ export async function GET(request: Request) {
     return new Response(JSON.stringify(resourceMetaData), { status: 200 });
   } catch (error) {
     console.error("Error in GET request for resourceMeta:", error);
+    return new Response(JSON.stringify({ err: "Internal server error" }), {
+      status: 500,
+    });
+  }
+}
+
+export async function DELETE(request: Request) {
+  try {
+    const data = await request.json();
+    console.log("call delete resourceMeta: ", data.id);
+
+    await deleteObject(client, data.id, resourceMetaTable);
+
+    return Response.json({ msg: "success" });
+  } catch (error) {
+    console.error("Error in DELETE request for resourceMeta:", error);
     return new Response(JSON.stringify({ err: "Internal server error" }), {
       status: 500,
     });

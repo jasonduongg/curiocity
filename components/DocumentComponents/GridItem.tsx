@@ -1,4 +1,3 @@
-
 function stripHtmlTags(text: string) {
   return text.replace(/<\/?[^>]+(>|$)/g, "");
 }

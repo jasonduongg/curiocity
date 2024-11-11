@@ -12,14 +12,14 @@ jest.mock("next/image", () => ({
 
 describe("NavBar Component", () => {
   test("renders the logo image with the correct alt text", () => {
-    render(<NavBar />);
+    render(<NavBar documentId="" />);
 
     const logo = screen.getByAltText("Logo");
     expect(logo).toBeInTheDocument();
   });
 
   test("renders the APEX brand text", () => {
-    render(<NavBar />);
+    render(<NavBar documentId="" />);
 
     const brandText = screen.getByText(/APEX/i);
     expect(brandText).toBeInTheDocument();
@@ -27,7 +27,7 @@ describe("NavBar Component", () => {
   });
 
   test("renders the version number text", () => {
-    render(<NavBar />);
+    render(<NavBar documentId="" />);
 
     const versionText = screen.getByText(/v 0.1/i);
     expect(versionText).toBeInTheDocument();
@@ -35,7 +35,7 @@ describe("NavBar Component", () => {
   });
 
   test("renders the Avatar icon", () => {
-    render(<NavBar />);
+    render(<NavBar documentId="" />);
 
     const avatarIcon = screen.getByRole("img", { name: /avataricon/i });
     expect(avatarIcon).toBeInTheDocument();
@@ -43,7 +43,7 @@ describe("NavBar Component", () => {
   });
 
   test("renders the Gear icon", () => {
-    render(<NavBar />);
+    render(<NavBar documentId="" />);
 
     const gearIcon = screen.getByRole("img", { name: /gearicon/i });
     expect(gearIcon).toBeInTheDocument();
@@ -51,7 +51,7 @@ describe("NavBar Component", () => {
   });
 
   test("renders the Trash icon", () => {
-    render(<NavBar />);
+    render(<NavBar documentId="" />);
 
     const trashIcon = screen.getByRole("img", { name: /trashicon/i });
     expect(trashIcon).toBeInTheDocument();

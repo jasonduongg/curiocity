@@ -7,6 +7,7 @@ import {
 } from "@aws-sdk/client-dynamodb";
 import { v4 as uuidv4 } from "uuid";
 import AWS from "aws-sdk";
+import { resourceMetaTable } from "./resourcemeta/route";
 
 dotenv.config();
 
@@ -102,6 +103,16 @@ export const deleteObject = async (client: any, id: any, table: string) => {
   };
 
   try {
+    // if is document obj, recursively delete all resource metadata as well
+    if (table === tableName) {
+      const obj = await getObject(client, id, table);
+      for (const folder in obj.folders) {
+        for (const resource in obj.folders[folder].resources) {
+          await deleteObject(client, resource, resourceMetaTable);
+        }
+      }
+    }
+
     // Send the DeleteItemCommand to DynamoDB
     const command = new DeleteItemCommand(params);
     const data = await client.send(command);
@@ -194,8 +205,8 @@ export async function POST(request: Request) {
 }
 
 export async function DELETE(request: Request) {
-  console.log("call put dynamodb");
   const data = await request.json();
+  console.log("call delete dynamodb: ", data.id);
 
   await deleteObject(client, data.id, tableName);
 
