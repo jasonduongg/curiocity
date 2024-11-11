@@ -28,7 +28,7 @@ const DeleteConfirmationModal: React.FC<DeleteProps> = ({ documentId }) => {
     })
       .then((r) => r.json())
       .then((res) => {
-        console.log(res);
+        console.log(res, documentId);
         window.location.reload();
       });
 

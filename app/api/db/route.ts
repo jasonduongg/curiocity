@@ -7,6 +7,7 @@ import {
 } from "@aws-sdk/client-dynamodb";
 import { v4 as uuidv4 } from "uuid";
 import AWS from "aws-sdk";
+import { resourceMetaTable } from "./resourcemeta/route";
 
 dotenv.config();
 
@@ -14,7 +15,6 @@ const client = new DynamoDBClient({ region: "us-west-1" });
 const tableName = process.env.DOCUMENT_TABLE || "";
 export const maxDuration = 60;
 export const dynamic = "force-dynamic";
-const resourceTable = process.env.RESOURCE_TABLE || "";
 
 export type Resource = {
   id: string;
@@ -103,12 +103,12 @@ export const deleteObject = async (client: any, id: any, table: string) => {
   };
 
   try {
-    // if is document obj, delete all resources as well
+    // if is document obj, recursively delete all resource metadata as well
     if (table === tableName) {
       const obj = await getObject(client, id, table);
       for (const folder in obj.folders) {
         for (const resource in obj.folders[folder].resources) {
-          await deleteObject(client, resource, resourceTable);
+          await deleteObject(client, resource, resourceMetaTable);
         }
       }
     }
