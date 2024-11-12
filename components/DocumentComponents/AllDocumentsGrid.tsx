@@ -8,12 +8,14 @@ interface AllDocumentGridProps {
   allDocuments: Document[];
   onDocumentClick: (document: Document) => void;
   onCreateNewReport: () => void;
+  refreshState: () => void;
 }
 
 export default function AllDocumentGrid({
   allDocuments,
   onDocumentClick,
   onCreateNewReport,
+  refreshState,
 }: AllDocumentGridProps) {
   const [searchQuery, setSearchQuery] = useState("");
 
@@ -50,10 +52,12 @@ export default function AllDocumentGrid({
         {filteredDocuments.map((item, index) => (
           <GridItem
             key={index}
+            documentId={item.id}
             title={item.name}
             text={item.text}
             dateAdded={item.dateAdded}
             onClick={() => onDocumentClick(item)}
+            refreshState={() => refreshState()}
           />
         ))}
       </div>

@@ -137,6 +137,7 @@ export default function TestPage() {
                         <AllDocumentsGrid
                           allDocuments={allDocuments}
                           onDocumentClick={handleGridItemClick}
+                          refreshState={handleBack}
                           onCreateNewReport={handleCreateNewReport}
                         />
                       </div>

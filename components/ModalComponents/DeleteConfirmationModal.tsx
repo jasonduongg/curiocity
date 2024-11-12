@@ -4,9 +4,13 @@ import React, { useState } from "react";
 
 type DeleteProps = {
   documentId: string;
+  refreshState: () => void; // Add refreshState prop type
 };
 
-const DeleteConfirmationModal: React.FC<DeleteProps> = ({ documentId }) => {
+const DeleteConfirmationModal: React.FC<DeleteProps> = ({
+  documentId,
+  refreshState,
+}) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   const handleOpenModal = () => {
@@ -29,27 +33,15 @@ const DeleteConfirmationModal: React.FC<DeleteProps> = ({ documentId }) => {
       .then((r) => r.json())
       .then((res) => {
         console.log(res, documentId);
-        window.location.reload();
-      });
+        refreshState(); // Call refreshState after deletion
+      })
+      .catch((error) => console.error("Error deleting file:", error));
 
     handleCloseModal();
   };
 
   return (
     <div>
-      {/* <button
-        
-        style={{
-          padding: "0.5rem 1rem",
-          backgroundColor: "#0070f3",
-          borderRadius: "0.3rem",
-          color: "#fff",
-          cursor: "pointer",
-          border: "none",
-        }}
-      >
-        Delete File
-      </button> */}
       <div
         className="grid h-10 w-10 cursor-pointer place-items-center rounded-lg border-2 border-fileRed"
         onClick={handleOpenModal}
