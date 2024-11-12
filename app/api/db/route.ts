@@ -7,6 +7,7 @@ import {
 } from "@aws-sdk/client-dynamodb";
 import { v4 as uuidv4 } from "uuid";
 import AWS from "aws-sdk";
+import { resourceMetaTable } from "./resourcemeta/route";
 
 dotenv.config();
 
@@ -17,30 +18,39 @@ export const dynamic = "force-dynamic";
 
 export type Resource = {
   id: string;
-  documentId: string;
-  name: string;
-  text: string;
+  markdown: string;
   url: string;
-  dateAdded: string;
 };
 
-export type ResourceCompressed = {
-  name: string;
+export type ResourceMetaCompressed = {
   id: string;
+  name: string;
+};
+
+export type ResourceMeta = {
+  id: string;
+  hash: string;
+  name: string;
+  dateAdded: string;
+  lastOpened: string;
+  notes: string;
+  summary: string;
+  tags: Array<string>;
 };
 
 export type Document = {
   id: string;
-  owner: string;
+  ownerID: string;
   name: string;
   folders: Record<string, Folder>;
   text: string;
   dateAdded: string;
+  lastOpened: string;
 };
 
 export type Folder = {
   name: string;
-  resources: Array<ResourceCompressed>;
+  resources: Array<ResourceMetaCompressed>;
 };
 
 // send json object to dynamodb
@@ -93,6 +103,16 @@ export const deleteObject = async (client: any, id: any, table: string) => {
   };
 
   try {
+    // if is document obj, recursively delete all resource metadata as well
+    if (table === tableName) {
+      const obj = await getObject(client, id, table);
+      for (const folder in obj.folders) {
+        for (const resource in obj.folders[folder].resources) {
+          await deleteObject(client, resource, resourceMetaTable);
+        }
+      }
+    }
+
     // Send the DeleteItemCommand to DynamoDB
     const command = new DeleteItemCommand(params);
     const data = await client.send(command);
@@ -164,11 +184,12 @@ export async function POST(request: Request) {
 
   const Item: Document = {
     id: uuidv4(),
-    owner: "",
-    name: data?.name || "test",
+    name: data.name,
     folders: { General: defaultFolder },
-    text: data?.text || "test",
-    dateAdded: data?.dateAdded,
+    text: data?.text || "",
+    dateAdded: data.dateAdded,
+    ownerID: data?.ownerID || "jason",
+    lastOpened: data?.lastOpened || "now",
   };
 
   console.log(Item);
@@ -184,8 +205,8 @@ export async function POST(request: Request) {
 }
 
 export async function DELETE(request: Request) {
-  console.log("call put dynamodb");
   const data = await request.json();
+  console.log("call delete dynamodb: ", data.id);
 
   await deleteObject(client, data.id, tableName);
 

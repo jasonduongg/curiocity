@@ -1,7 +1,4 @@
-type Resource = {
-  name: string;
-  url: string;
-};
+import { Resource } from "@/types/types";
 
 interface ResourceViewerProps {
   resource: Resource | null;

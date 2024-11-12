@@ -1,55 +1,57 @@
 "use client";
-
 import { useEffect, useState } from "react";
+import { useSession } from "next-auth/react"; // Import useSession to access user session
+import NameYourReport from "@/components/DocumentComponents/newPrompt";
 import FileList from "@/components/FileList";
 import NavBar from "@/components/NavBar";
 import TextEditor from "@/components/TextEditor";
 import AllDocumentsGrid from "@/components/AllDocumentsGrid";
 import AWS from "aws-sdk";
-
 import {
   ResizableHandle,
   ResizablePanel,
   ResizablePanelGroup,
 } from "@/components/ui/resizable";
 
-type newDocument = {
+type FolderData = {
+  name: string;
+  resources: string[];
+};
+
+type NewDocument = {
   id?: string;
   name: string;
-  files: Array<string>;
-  text: string;
-  folders?: Record<
-    string,
-    {
-      name: string;
-      resources: string[];
-    }
-  >;
+  ownerID?: string; // Add ownerID to the NewDocument type
+  text?: string;
+  folders: Record<string, FolderData>;
 };
 
 export default function TestPage() {
-  const [allDocuments, setAllDocuments] = useState<newDocument[]>([]);
+  const { data: session } = useSession(); // Get session to access user ID
+  const [allDocuments, setAllDocuments] = useState<NewDocument[]>([]);
   const [swapState, setSwapState] = useState(false);
   const [currentDocument, setCurrentDocument] = useState<
-    newDocument | undefined
+    NewDocument | undefined
   >(undefined);
-  const [fileListKey, setFileListKey] = useState(0); // Key for FileList to reset its state
-
+  const [fileListKey, setFileListKey] = useState(0);
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const fetchDocuments = () => {
-    fetch("/api/db/getAll", {
-      method: "GET",
-    })
+    if (!session?.user?.id) return;
+
+    fetch(`/api/db/getAll?ownerID=${session.user.id}`, { method: "GET" })
       .then((r) => r.json())
       .then((data) => {
-        console.log("All documents response:", data);
+        console.log("User's documents response:", data);
         setAllDocuments(data);
       })
-      .catch((error) => console.error("Error fetching all documents:", error));
+      .catch((error) =>
+        console.error("Error fetching user's documents:", error),
+      );
   };
 
   useEffect(() => {
     fetchDocuments();
-  }, []);
+  }, [session]);
 
   const handleBack = () => {
     setSwapState(false);
@@ -58,26 +60,54 @@ export default function TestPage() {
     setFileListKey((prevKey) => prevKey + 1); // Increment key to reset FileList
   };
 
-  const handleGridItemClick = (document: newDocument) => {
+  const handleGridItemClick = (document: NewDocument) => {
     setCurrentDocument(document);
     setSwapState(true);
   };
 
   const handleCreateNewReport = () => {
-    console.log("Creating a new report...");
+    setIsModalOpen(true); // Open the modal to enter a new report name
+  };
+
+  const createDocument = (name: string) => {
+    if (!session?.user?.id) {
+      console.error("User ID not found. Please log in.");
+      return;
+    }
+
+    const newDoc = {
+      name,
+      text: "",
+      ownerID: session.user.id, // Set the ownerID to the logged-in user’s ID
+      dateAdded: new Date().toISOString(),
+      lastOpened: new Date().toISOString(),
+      folders: {},
+    };
+
+    // API call to create a new document in the database
+    fetch("/api/db", {
+      method: "POST",
+      body: JSON.stringify(newDoc),
+      headers: { "Content-Type": "application/json" },
+    })
+      .then((response) => response.json())
+      .then((data) => {
+        const createdDoc = { ...newDoc, id: data.id };
+        setCurrentDocument(createdDoc);
+        setSwapState(true); // Open the document in TextEditor
+        fetchDocuments(); // Refresh document list
+      })
+      .catch((error) => console.error("Error creating document:", error));
   };
 
   const onResourceUpload = (documentId: string) => {
     console.log(`Uploaded new resource for document ID: ${documentId}`);
 
-    fetch(`/api/db?id=${documentId}`, {
-      method: "GET",
-    })
+    fetch(`/api/db?id=${documentId}`, { method: "GET" })
       .then((r) => r.json())
       .then((data) => {
         console.log("Raw DynamoDB response:", data);
 
-        // Unmarshall the data to convert DynamoDB types into normal JS objects
         const unmarshalledData = AWS.DynamoDB.Converter.unmarshall(data);
         console.log("Unmarshalled data:", unmarshalledData);
         setCurrentDocument(unmarshalledData);
@@ -123,7 +153,7 @@ export default function TestPage() {
             <div className="h-full w-full p-4">
               <div className="flex h-full shrink grow basis-1/2 flex-col rounded-xl border-[1px] border-zinc-700 bg-bgSecondary">
                 <FileList
-                  key={fileListKey} // Add key here to reset FileList on change
+                  key={fileListKey}
                   currentDocument={currentDocument}
                   onResourceUpload={() =>
                     onResourceUpload(currentDocument?.id || "")
@@ -134,6 +164,17 @@ export default function TestPage() {
           </ResizablePanel>
         </ResizablePanelGroup>
       </div>
+
+      {/* Render the NameYourReport component as a modal */}
+      {isModalOpen && (
+        <NameYourReport
+          onSave={(name) => {
+            createDocument(name); // Create a new document with the provided name
+            setIsModalOpen(false); // Close the modal
+          }}
+          onCancel={() => setIsModalOpen(false)} // Close the modal without saving
+        />
+      )}
     </section>
   );
 }

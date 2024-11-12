@@ -2,24 +2,18 @@
 
 import { useEffect, useState } from "react";
 import { Switch } from "@/components/ui/switch";
-import AccessibilityOptionsModal from "@/components/AccessibilityOptionsModal";
+import AccessibilityOptionsModal from "@/components/ModalComponents/AccessibilityOptionsModal";
+import { Resource, ResourceMeta } from "@/types/types";
 
-type Resource = {
-  id: string;
-  documentId: string;
-  name: string;
-  text: string;
-  url: string;
-  dateAdded: string;
-};
-
-interface ResourceViewerProps {
+export interface ResourceViewerProps {
   resource: Resource | null;
   resourceChangeCount: number;
+  resourceMeta: ResourceMeta | null;
 }
 
 export default function ResourceViewer({
   resource,
+  resourceMeta,
   resourceChangeCount,
 }: ResourceViewerProps) {
   const [csvData, setCsvData] = useState<string[][] | null>(null);
@@ -84,7 +78,7 @@ export default function ResourceViewer({
             </button>
           ) : (
             <p className="whitespace-nowrap text-sm font-bold text-white">
-              {resource.name}
+              {resourceMeta.name}
             </p>
           )}
         </div>
@@ -107,7 +101,9 @@ export default function ResourceViewer({
               className={`rounded-md p-4 pb-16 ${textBackgroundColor} ${textColor}`} // Added `pb-8` for extra bottom padding
               style={{ fontSize: `${textSize}px`, minHeight: "100%" }}
             >
-              <p className="whitespace-normal break-words">{resource.text}</p>
+              <p className="whitespace-normal break-words">
+                {resource.markdown}
+              </p>
             </div>
           </div>
         ) : (
