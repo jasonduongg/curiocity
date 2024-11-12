@@ -1,11 +1,11 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react"; // Import useSession to access user session
-import FileList from "@/components/ResourceComponents/FileList";
-import NavBar from "@/components/GeneralComponents/NavBar";
-import TextEditor from "@/components/DocumentComponents/TextEditor";
-import AllDocumentsGrid from "@/components/DocumentComponents/AllDocumentsGrid";
 import NameYourReport from "@/components/DocumentComponents/newPrompt";
+import FileList from "@/components/FileList";
+import NavBar from "@/components/NavBar";
+import TextEditor from "@/components/TextEditor";
+import AllDocumentsGrid from "@/components/AllDocumentsGrid";
 import AWS from "aws-sdk";
 import {
   ResizableHandle,
