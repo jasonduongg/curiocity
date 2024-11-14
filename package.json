@@ -43,7 +43,7 @@
     "next-s3-upload": "^0.3.4",
     "papaparse": "^5.4.1",
     "pdf-parse": "^1.1.1",
-    "pdfjs-dist": "^4.8.69",
+    "pdfjs-dist": "^3.11.174",
     "quill": "^2.0.2",
     "react": "^18",
     "react-dom": "^18",
