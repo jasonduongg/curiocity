@@ -2,10 +2,10 @@
 import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react"; // Import useSession to access user session
 import NameYourReport from "@/components/DocumentComponents/newPrompt";
-import FileList from "@/components/FileList";
-import NavBar from "@/components/NavBar";
-import TextEditor from "@/components/TextEditor";
-import AllDocumentsGrid from "@/components/AllDocumentsGrid";
+import FileList from "@/components/ResourceComponents/FileList";
+import NavBar from "@/components/GeneralComponents/NavBar";
+import TextEditor from "@/components/DocumentComponents/TextEditor";
+import AllDocumentsGrid from "@/components/DocumentComponents/AllDocumentsGrid";
 import AWS from "aws-sdk";
 import {
   ResizableHandle,
@@ -36,8 +36,9 @@ export default function TestPage() {
   const [fileListKey, setFileListKey] = useState(0);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const fetchDocuments = () => {
+    console.log(session);
     if (!session?.user?.id) return;
-
+    console.log(session);
     fetch(`/api/db/getAll?ownerID=${session.user.id}`, { method: "GET" })
       .then((r) => r.json())
       .then((data) => {

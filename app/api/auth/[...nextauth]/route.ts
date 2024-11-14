@@ -31,8 +31,6 @@ const options: NextAuthOptions = {
           name: profile.name || "",
           email: profile.email || "",
           image: profile.picture || "",
-          given_name: profile.given_name || "",
-          family_name: profile.family_name || "",
         };
       },
     }),
@@ -40,39 +38,32 @@ const options: NextAuthOptions = {
   callbacks: {
     async signIn({ user, profile }) {
       console.log("signIn callback triggered");
-      const email = user.email?.toLowerCase();
-      if (!email || !profile) return false;
+      const userId = profile?.sub;
+      if (!userId || !profile) return false;
 
       const userData = {
-        userId: profile.sub,
+        id: userId,
         name: profile.name,
         email: profile.email,
         image: user.image,
         lastLoggedIn: new Date().toISOString(),
       };
-      console.log("Prepared user data:", userData);
 
       try {
-        // Check if the user already exists in the database
         const checkResponse = await fetch(
-          `http://localhost:3000/api/user?id=${email}`,
+          `http://localhost:3000/api/user?id=${userId}`,
           {
             method: "GET",
-            headers: {
-              "Content-Type": "application/json",
-            },
+            headers: { "Content-Type": "application/json" },
           },
         );
 
         if (checkResponse.ok) {
-          // User exists, update lastLoggedIn
           const updateResponse = await fetch(`http://localhost:3000/api/user`, {
             method: "PUT",
-            headers: {
-              "Content-Type": "application/json",
-            },
+            headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
-              email: userData.email,
+              id: userData.id,
               lastLoggedIn: userData.lastLoggedIn,
             }),
           });
@@ -86,15 +77,12 @@ const options: NextAuthOptions = {
           }
 
           console.log("User's lastLoggedIn field successfully updated");
-          return true; // Continue sign-in if the update succeeds
+          return true;
         } else if (checkResponse.status === 404) {
-          // User does not exist, create a new user
           const createResponse = await fetch(`http://localhost:3000/api/user`, {
             method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({ userData }),
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(userData),
           });
 
           if (!createResponse.ok) {
@@ -106,50 +94,35 @@ const options: NextAuthOptions = {
           }
 
           console.log("New user successfully created");
-          return true; // Continue sign-in if the creation succeeds
-        } else {
-          console.error(
-            "Unexpected error while checking user existence:",
-            checkResponse.statusText,
-          );
-          return false;
+          return true;
         }
       } catch (error) {
         console.error("Error during user sign-in process:", error);
-        return false; // Prevent sign-in if any step fails
+        return false;
       }
     },
-    async session({ session }) {
-      if (DISABLE_AUTH) return session; // Bypass session if auth is disabled
-
-      const email = session.user?.email?.toLowerCase();
-      if (!email) return session;
+    async session({ session, token }) {
+      // Attach user id from token to the session
+      if (token?.sub) {
+        session.user.id = token.sub;
+      }
 
       try {
-        // Fetch user data from your API
         const response = await fetch(
-          `http://localhost:3000/api/user?id=${email}`,
+          `http://localhost:3000/api/user?id=${token.sub}`,
           {
             method: "GET",
-            headers: {
-              "Content-Type": "application/json",
-            },
+            headers: { "Content-Type": "application/json" },
           },
         );
 
         if (!response.ok) {
           console.error("Failed to fetch user data:", response.statusText);
-          return session; // Return the original session if the API call fails
+          return session;
         }
 
         const userData = await response.json();
-
-        // Attach user data from the API to the session
-        session.user.id = userData.id;
-        session.user.name = userData.name;
-        session.user.email = userData.email;
-        session.user.image = userData.image;
-        session.user.lastLoggedIn = userData.lastLoggedIn;
+        session.user = { ...session.user, ...userData };
 
         console.log("Fetched user data attached to session:", userData);
       } catch (error) {
@@ -158,10 +131,17 @@ const options: NextAuthOptions = {
 
       return session;
     },
+    async jwt({ token, user }) {
+      // Attach user id to the token on initial sign-in
+      if (user) {
+        token.sub = user.id;
+      }
+      return token;
+    },
   },
   pages: {
-    signIn: "/report-home", // Redirect to report-hoem after login
-    signOut: "/login", // Redirect to login after logout
+    signIn: "/report-home",
+    signOut: "/login",
   },
   secret: NEXTAUTH_SECRET,
 };

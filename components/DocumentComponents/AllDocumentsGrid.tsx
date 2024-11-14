@@ -27,28 +27,30 @@ export default function AllDocumentGrid({
 
   return (
     <div className="flex h-full w-full flex-col">
-      <div className="flex h-1/4 w-full flex-col justify-center">
-        <div className="w-full px-10 pt-3">
-          <TextInput
-            placeholder="Search for documents..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-          />
-        </div>
+      <div className="h-1/8 flex w-full px-4 py-2">
+        <div className="flex h-full w-full flex-row items-center justify-between">
+          <div className="w-full px-4 pt-3">
+            <TextInput
+              placeholder="Search for documents..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+          </div>
 
-        <div className="w-full px-8 py-4">
-          <div
-            className="cursor-pointer rounded-xl border-[1px] border-textSecondary px-1 py-2"
-            onClick={onCreateNewReport}
-          >
-            <div className="flex h-full w-full items-center justify-center">
-              <p className="text-lg text-textPrimary">Add New Document</p>
+          <div className="">
+            <div className="w-full px-2 py-4">
+              <div
+                className="flex h-10 w-10 cursor-pointer items-center justify-center rounded-xl border-[1px] border-textSecondary duration-300 ease-in-out hover:bg-bgPrimary"
+                onClick={onCreateNewReport}
+              >
+                <p className="text-lg text-textPrimary">+</p>
+              </div>
             </div>
           </div>
         </div>
       </div>
 
-      <div className="grid w-full grow grid-cols-[repeat(auto-fit,minmax(200px,1fr))] gap-4 overflow-y-auto px-8">
+      <div className="grid w-full grid-cols-[repeat(auto-fill,minmax(200px,235px))] gap-x-6 gap-y-8 overflow-y-auto px-8 py-4">
         {filteredDocuments.map((item, index) => (
           <GridItem
             key={index}

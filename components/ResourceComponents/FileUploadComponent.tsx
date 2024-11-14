@@ -2,16 +2,10 @@
 
 import React, { useEffect, useState } from "react";
 import * as pdfjsLib from "pdfjs-dist";
+import Papa from "papaparse";
+import TurndownService from "turndown";
 
-interface FileUploadComponentProps {
-  file: File | null;
-  onTextExtracted: (text: string) => void;
-}
-
-const FileUploadComponent: React.FC<FileUploadComponentProps> = ({
-  file,
-  onTextExtracted,
-}) => {
+const FileUploadComponent: React.FC = () => {
   const [pdfjs, setPdfjs] = useState<typeof pdfjsLib | null>(null);
 
   useEffect(() => {
@@ -28,16 +22,48 @@ const FileUploadComponent: React.FC<FileUploadComponentProps> = ({
     }
   }, []);
 
-  useEffect(() => {
-    if (file && pdfjs) {
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = event.target.files;
+
+    if (files && files.length > 0 && pdfjs) {
+      const file = files[0];
       const fileName = file.name;
       const fileExtension = fileName.split(".").pop()?.toLowerCase();
 
-      if (fileExtension === "csv" || fileExtension === "html") {
+      if (fileExtension === "csv") {
         const reader = new FileReader();
         reader.onload = () => {
           const text = reader.result as string;
-          onTextExtracted(text);
+          const results = Papa.parse(text, { header: false });
+          const data = results.data;
+          let markdown = "";
+          if (Array.isArray(data) && data.length > 0) {
+            const header = data[0];
+            const separator = header.map(() => "---");
+            markdown += `| ${header.join(" | ")} |\n`;
+            markdown += `| ${separator.join(" | ")} |\n`;
+            for (let i = 1; i < data.length; i++) {
+              const row = data[i];
+              markdown += `| ${row.join(" | ")} |\n`;
+            }
+          }
+          console.log(markdown);
+        };
+        reader.readAsText(file);
+      } else if (fileExtension === "html") {
+        const reader = new FileReader();
+        reader.onload = () => {
+          const html = reader.result as string;
+          const turndownService = new TurndownService();
+          turndownService.addRule("image", {
+            filter: "img",
+            replacement: function (content, node) {
+              const src = node.getAttribute("src");
+              return `![Image](${src})`;
+            },
+          });
+          const markdown = turndownService.turndown(html);
+          console.log(markdown);
         };
         reader.readAsText(file);
       } else if (fileExtension === "pdf") {
@@ -47,16 +73,16 @@ const FileUploadComponent: React.FC<FileUploadComponentProps> = ({
             const typedarray = new Uint8Array(reader.result as ArrayBuffer);
             const loadingTask = pdfjs.getDocument({ data: typedarray });
             const pdf = await loadingTask.promise;
-            let textContent = "";
+            let markdown = "";
             for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
               const page = await pdf.getPage(pageNum);
               const textContentObj = await page.getTextContent();
               const pageText = textContentObj.items
                 .map((item: any) => ("str" in item ? item.str : ""))
                 .join(" ");
-              textContent += pageText + "\n";
+              markdown += `# Page ${pageNum}\n\n${pageText}\n\n`;
             }
-            onTextExtracted(textContent);
+            console.log(markdown);
           } catch (error) {
             console.error("Error parsing PDF:", error);
           }
@@ -65,10 +91,16 @@ const FileUploadComponent: React.FC<FileUploadComponentProps> = ({
       } else {
         console.error("Unsupported file type");
       }
+    } else {
+      console.error("PDF.js library not loaded yet or no file selected");
     }
-  }, [file, pdfjs, onTextExtracted]);
+  };
 
-  return null; // This component no longer renders anything
+  return (
+    <div>
+      <input type="file" accept=".csv,.pdf,.html" onChange={handleFileChange} />
+    </div>
+  );
 };
 
 export default FileUploadComponent;

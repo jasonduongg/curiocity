@@ -5,7 +5,7 @@ import {
   PutItemCommand,
   DeleteItemCommand,
 } from "@aws-sdk/client-dynamodb";
-import { marshall, unmarshall } from "@aws-sdk/util-dynamodb"; // Import from util-dynamodb
+import { marshall, unmarshall } from "@aws-sdk/util-dynamodb";
 
 dotenv.config();
 
@@ -40,11 +40,11 @@ export const putUser = async (inputData: User) => {
   }
 };
 
-// GET user object from DynamoDB by email
-export const getUser = async (email: string) => {
-  if (typeof email !== "string") {
-    console.error("Invalid data type for email:", typeof email);
-    throw new Error("Email must be a string");
+// GET user object from DynamoDB by id
+export const getUser = async (id: string) => {
+  if (typeof id !== "string") {
+    console.error("Invalid data type for id:", typeof id);
+    throw new Error("ID must be a string");
   }
 
   try {
@@ -52,13 +52,14 @@ export const getUser = async (email: string) => {
       new GetItemCommand({
         TableName: tableName,
         Key: {
-          email: { S: email },
+          id: { S: id },
         },
       }),
     );
     return data.Item ? (unmarshall(data.Item) as User) : null;
   } catch (error) {
     console.error("Error getting user:", error);
+    console.log(error);
     throw new Error("Could not retrieve the user");
   }
 };
@@ -81,18 +82,18 @@ export const deleteUser = async (id: string) => {
 
 // API Endpoints
 
-// GET endpoint to retrieve a user by email
+// GET endpoint to retrieve a user by id
 export async function GET(request: Request) {
   console.log("Retrieving user from DynamoDB");
   const url = new URL(request.url);
-  const email = url.searchParams.get("email");
+  const id = url.searchParams.get("id");
 
-  if (!email) {
-    return new Response("User email is required", { status: 400 });
+  if (!id) {
+    return new Response("User ID is required", { status: 400 });
   }
 
   try {
-    const user = await getUser(email);
+    const user = await getUser(id);
     if (!user) {
       return new Response("User not found", { status: 404 });
     }
@@ -143,12 +144,12 @@ export async function PUT(request: Request) {
   console.log("Updating user in DynamoDB");
   const data = await request.json();
 
-  if (!data.email) {
-    return new Response("User email is required", { status: 400 });
+  if (!data.id) {
+    return new Response("User ID is required", { status: 400 });
   }
 
-  console.log("Retrieving user with email:", data.email);
-  const existingUser = await getUser(data.email);
+  console.log("Retrieving user with ID:", data.id);
+  const existingUser = await getUser(data.id);
 
   if (!existingUser) {
     return new Response("User not found", { status: 404 });

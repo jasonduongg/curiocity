@@ -1,9 +1,9 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { signIn, signOut, useSession } from "next-auth/react";
+import { useState, useEffect, ChangeEvent } from "react";
+import { useSession } from "next-auth/react";
 import { AvatarIcon, Cross2Icon } from "@radix-ui/react-icons";
-import { Button } from "./ui/button";
+import { Button } from "@/components/ui/button";
 import Image from "next/image";
 import {
   Form,
@@ -12,8 +12,7 @@ import {
   FormLabel,
   FormControl,
   FormMessage,
-} from "./ui/form";
-
+} from "@/components/ui/form";
 import { useForm, SubmitHandler, FieldValues } from "react-hook-form";
 
 // Define the form values type
@@ -22,19 +21,14 @@ interface ChangeUserFormValues extends FieldValues {
   email: string;
 }
 
-export default function ProfileCustomization() {
+export default function ProfileCustomization({ onProfileUpdate }) {
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const { data: session } = useSession();
+  const { data: session, update: updateSession } = useSession(); // Include updateSession function
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [previewImage, setPreviewImage] = useState<string | null>(
+    session?.user?.image || null,
+  );
 
-  const handleOpenModal = () => {
-    setIsModalOpen(true);
-  };
-
-  const handleCloseModal = () => {
-    setIsModalOpen(false);
-  };
-
-  // Initialize useForm only if session is available
   const formMethods = useForm<ChangeUserFormValues>({
     defaultValues: {
       username: session?.user?.name || "",
@@ -42,45 +36,87 @@ export default function ProfileCustomization() {
     },
   });
 
-  const onSubmit: SubmitHandler<ChangeUserFormValues> = async (data) => {
-    console.log("Form Data:", data);
+  const handleOpenModal = () => {
+    setIsModalOpen(true);
+  };
 
-    try {
-      const response = await fetch("/api/user", {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          email: session?.user.email, // Use the email field
-          name: data.username,
-        }),
-      });
+  const handleCloseModal = () => {
+    formMethods.reset({
+      username: session?.user?.name || "",
+      email: session?.user?.email || "",
+    });
+    setPreviewImage(session?.user?.image || null);
+    setSelectedFile(null);
+    setIsModalOpen(false);
+  };
 
-      if (!response.ok) {
-        throw new Error("Failed to update profile");
-      }
-
-      const updatedUser = await response.json();
-      console.log("Profile updated successfully:", updatedUser);
-
-      alert("Updated User Profile");
-    } catch (error) {
-      console.error("Error updating profile:", error);
-      alert("Update Failed");
+  const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
+    if (event.target.files && event.target.files[0]) {
+      const file = event.target.files[0];
+      setSelectedFile(file);
+      setPreviewImage(URL.createObjectURL(file));
     }
   };
 
-  // Watch for session changes and reset the form values
+  const onSubmit: SubmitHandler<ChangeUserFormValues> = async (data) => {
+    try {
+      let imageUrl = previewImage;
+
+      if (selectedFile) {
+        const formData = new FormData();
+        formData.append("file", selectedFile);
+        formData.append("userId", session?.user?.id || "");
+
+        const response = await fetch("/api/user/upload-photo", {
+          method: "POST",
+          body: formData,
+        });
+
+        if (!response.ok) {
+          throw new Error("Failed to upload photo");
+        }
+
+        const result = await response.json();
+        imageUrl = result.imageUrl;
+      }
+
+      const profileResponse = await fetch("/api/user", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          id: session?.user.id,
+          email: session?.user.email,
+          name: data.username,
+          image: imageUrl,
+        }),
+      });
+
+      if (!profileResponse.ok) {
+        throw new Error("Failed to update profile");
+      }
+
+      console.log("Profile updated successfully");
+
+      // Update the session to reflect new profile info
+      await updateSession();
+
+      handleCloseModal();
+      onProfileUpdate();
+      setSelectedFile(null);
+    } catch (error) {
+      console.error("Error updating profile:", error);
+    }
+  };
+
   useEffect(() => {
-    // I am aware that useEffect should be avoided but haven't found any other solution that works yet
     if (session?.user) {
       formMethods.reset({
         username: session.user.name || "",
         email: session.user.email || "",
       });
+      setPreviewImage(session.user.image || null);
     }
-  }, [session, formMethods]); // Dependency array includes session and formMethods
+  }, [session, formMethods]);
 
   return (
     <div className="grid h-10 w-10 place-items-center rounded-lg border-2 border-fileBlue">
@@ -107,26 +143,32 @@ export default function ProfileCustomization() {
 
             <h5 className="text-textPrimary">Profile Picture</h5>
             <div className="my-4 grid w-full place-items-center">
-              {session?.user.image ? (
+              {previewImage ? (
                 <Image
-                  src={session.user.image}
-                  alt={`${session.user.name}'s profile picture`}
-                  width={128} // Set appropriate width
-                  height={128} // Set appropriate height
+                  src={previewImage}
+                  alt={`${session?.user?.name}'s profile picture`}
+                  width={128}
+                  height={128}
                   className="h-32 w-32 rounded-full text-center text-textPrimary"
                 />
               ) : (
                 <p className="text-textPrimary">No user image available</p>
               )}
             </div>
+
+            <input
+              type="file"
+              accept="image/*"
+              style={{ display: "none" }}
+              id="photo-upload"
+              onChange={handleFileChange}
+            />
             <Button
-              onClick={() => {
-                console.log("Click");
-              }}
+              onClick={() => document.getElementById("photo-upload")?.click()}
             >
               Change Photo
             </Button>
-            {/* Use `key` on the Form to trigger re-render when `session` updates */}
+
             <Form
               {...formMethods}
               key={session ? session.user.email : "default"}
@@ -167,15 +209,15 @@ export default function ProfileCustomization() {
                       message: "Enter a valid email address",
                     },
                   }}
-                  render={({ field }) => (
+                  render={({}) => (
                     <FormItem className="space-y-2">
                       <FormLabel className="text-textPrimary">Email</FormLabel>
                       <FormControl>
                         <input
-                          {...field}
                           type="email"
-                          placeholder="Enter new email"
-                          className="w-full rounded-md border border-textPrimary bg-bgSecondary px-4 py-2 text-textPrimary focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          placeholder="Feature Coming Soon"
+                          disabled
+                          className="w-full rounded-md border border-red-500 bg-bgSecondary px-4 py-2 text-textPrimary focus:outline-none focus:ring-2 focus:ring-blue-500"
                         />
                       </FormControl>
                       <FormMessage className="text-sm font-medium text-red-500" />
@@ -191,28 +233,6 @@ export default function ProfileCustomization() {
                 </button>
               </form>
             </Form>
-            {session && (
-              <button
-                type="submit"
-                onClick={() => {
-                  signOut({ callbackUrl: "/login" });
-                }}
-                className="mt-auto w-full rounded-md bg-red-600 py-2 font-semibold text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
-              >
-                Log Out
-              </button>
-            )}
-            {!session && (
-              <button
-                type="submit"
-                onClick={() => {
-                  signIn();
-                }}
-                className="mt-auto w-full rounded-md bg-blue-600 py-2 font-semibold text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-              >
-                Sign In
-              </button>
-            )}
           </div>
         </div>
       )}
