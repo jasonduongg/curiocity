@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -18,32 +19,60 @@ const MoreOptionsDropdown: React.FC<MoreOptionsDropdownProps> = ({
   documentId,
   refreshState,
 }) => {
-  const handleEdit = () => {
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+
+  const handleEdit = (e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevents event bubbling
     console.log(`Edit document with ID: ${documentId}`);
   };
 
-  //   const handleDelete = () => {
-  //     console.log(`Delete document with ID: ${documentId}`);
-  //     refreshState();
-  //   };
+  const handleDeleteClick = (e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevents event bubbling
+    setIsDeleteModalOpen(true); // Open the delete confirmation modal
+  };
+
+  const handleModalClose = () => {
+    setIsDeleteModalOpen(false); // Close the modal
+  };
+
+  const handleDeleteComplete = () => {
+    setIsDeleteModalOpen(false); // Close the modal after deletion
+    refreshState(); // Refresh the state to update the UI
+  };
 
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button variant="ghost" className="h-8 w-8 p-0 text-white">
-          <span className="sr-only">Open menu</span>
-          ...
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent className="w-48">
-        <DropdownMenuItem onClick={handleEdit}>Edit</DropdownMenuItem>
-        <DropdownMenuSeparator />
+    <>
+      {/* Dropdown Menu */}
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button
+            variant="ghost"
+            className="h-8 w-8 p-0 text-white"
+            onClick={(e) => e.stopPropagation()} // Prevent opening document when menu is clicked
+          >
+            <span className="sr-only">Open menu</span>
+            ...
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent className="w-48">
+          <DropdownMenuItem onClick={handleEdit}>Edit</DropdownMenuItem>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem onClick={handleDeleteClick}>
+            Delete
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+
+      {/* Delete Confirmation Modal */}
+      {isDeleteModalOpen && (
         <DeleteConfirmationModal
-          documentId={documentId}
-          refreshState={refreshState}
+          documentId={documentId || ""}
+          refreshState={handleDeleteComplete}
+          isOpen={isDeleteModalOpen}
+          onClose={handleModalClose}
         />
-      </DropdownMenuContent>
-    </DropdownMenu>
+      )}
+    </>
   );
 };
 

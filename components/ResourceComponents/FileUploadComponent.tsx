@@ -21,7 +21,7 @@ const FileUploadComponent: React.FC<FileUploadComponentProps> = ({
       (async () => {
         const pdfjs = await import("pdfjs-dist");
         pdfjs.GlobalWorkerOptions.workerSrc =
-          "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js"; // Use Cloudflare-hosted worker
+          pdfjs.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.js`;
         setPdfjs(pdfjs);
       })();
     }

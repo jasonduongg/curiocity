@@ -13,6 +13,7 @@ export interface Document {
   files: Array<string>;
   text: string;
   dateAdded: string;
+  lastOpened: string;
 }
 
 export interface ResourceMeta {

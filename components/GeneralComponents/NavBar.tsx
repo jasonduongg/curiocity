@@ -4,16 +4,13 @@ import Image from "next/image";
 import { signOut, useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import logoIconSmall from "@/assets/logo.png";
-import { AvatarIcon, GearIcon } from "@radix-ui/react-icons";
+import { GearIcon } from "@radix-ui/react-icons";
 import ProfileCustomization from "./ProfileCustomization";
 
 export default function NavBar() {
-  const [isHidden, setIsHidden] = useState(false);
   const [profileVersion, setProfileVersion] = useState(0); // Track profile updates
   const { data: session } = useSession();
   const router = useRouter();
-
-  const toggleNavBar = () => setIsHidden(!isHidden);
 
   const handleSignOut = async () => {
     await signOut({ redirect: false });
@@ -24,12 +21,6 @@ export default function NavBar() {
     <div className="h-18 w-full px-8">
       <div className="flex h-full items-center justify-between py-2">
         <div className="flex h-full items-center">
-          <button
-            onClick={toggleNavBar}
-            className="mx-2 grid h-10 w-10 place-items-center rounded-lg border-2 border-fileBlue"
-          >
-            <AvatarIcon className="h-6 w-6 text-fileBlue" />
-          </button>
           <div className="relative h-14 w-14 p-2">
             <Image src={logoIconSmall} alt="Logo" />
           </div>

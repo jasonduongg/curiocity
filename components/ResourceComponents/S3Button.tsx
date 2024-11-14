@@ -5,8 +5,8 @@ import { useS3Upload } from "next-s3-upload";
 import { FaCheckCircle, FaTrash, FaArrowLeft } from "react-icons/fa";
 import ResourceViewerMini from "./ResourceViewerMini";
 import FolderDropdown from "./FolderSelectionDropdown";
-import FileUploadComponent from "./FileUploadComponent";
 import { Resource } from "@/types/types";
+import TurndownService from "turndown";
 
 interface S3ButtonProps {
   documentId: string;
@@ -27,13 +27,11 @@ export default function S3Button({
   const [isNewFolder, setIsNewFolder] = useState(false);
   const [newFolderName, setNewFolderName] = useState("");
   const [fileQueue, setFileQueue] = useState<File[]>([]);
-  const [uploadedFiles] = useState<Record<string, boolean>>({});
-  const [fileMarkdowns, setFileMarkdowns] = useState<Record<string, string>>(
+  const [uploadedFiles, setUploadedFiles] = useState<Record<string, boolean>>(
     {},
   );
   const [previewResource, setPreviewResource] = useState<Resource | null>(null);
   const [isUploading, setIsUploading] = useState(false);
-  const [currentFileIndex, setCurrentFileIndex] = useState<number | null>(null);
   const { uploadToS3 } = useS3Upload();
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
@@ -43,24 +41,56 @@ export default function S3Button({
         ...prevQueue,
         ...Array.from(e.target.files),
       ]);
-      setCurrentFileIndex(0); // Start processing the first file
     }
   };
 
-  const handleMarkdownExtraction = (file: File, markdown: string) => {
-    console.log("ehre2");
-    console.log(markdown);
-    setFileMarkdowns((prevMarkdowns) => ({
-      ...prevMarkdowns,
-      [file.name]: markdown,
-    }));
+  const extractTextFromFile = (file: File): Promise<string> => {
+    return new Promise((resolve) => {
+      const fileExtension = file.name.split(".").pop()?.toLowerCase();
 
-    // Move to the next file in the queue
-    setCurrentFileIndex((prevIndex) =>
-      prevIndex !== null && prevIndex + 1 < fileQueue.length
-        ? prevIndex + 1
-        : null,
-    );
+      if (fileExtension === "csv") {
+        const reader = new FileReader();
+        reader.onload = () => {
+          const text = reader.result as string;
+          const rows = text.split("\n");
+          const table = rows
+            .map((row) => `| ${row.split(",").join(" | ")} |`)
+            .join("\n");
+          resolve(table);
+        };
+        reader.readAsText(file);
+      } else if (fileExtension === "html") {
+        const reader = new FileReader();
+        reader.onload = () => {
+          const text = reader.result as string;
+          const markdown = new TurndownService().turndown(text);
+          resolve(markdown);
+        };
+        reader.readAsText(file);
+      } else if (fileExtension === "pdf") {
+        const reader = new FileReader();
+        reader.onload = async () => {
+          const pdfjsLib = await import("pdfjs-dist");
+          pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
+
+          const typedArray = new Uint8Array(reader.result as ArrayBuffer);
+          const loadingTask = pdfjsLib.getDocument({ data: typedArray });
+          const pdf = await loadingTask.promise;
+          let text = "";
+
+          for (let i = 1; i <= pdf.numPages; i++) {
+            const page = await pdf.getPage(i);
+            const content = await page.getTextContent();
+            text += content.items.map((item: any) => item.str || "").join(" ");
+          }
+
+          resolve(text);
+        };
+        reader.readAsArrayBuffer(file);
+      } else {
+        resolve(""); // Unsupported file types return empty string
+      }
+    });
   };
 
   const handleUploadAll = async () => {
@@ -74,21 +104,21 @@ export default function S3Button({
 
     for (const file of fileQueue) {
       try {
-        console.log(fileMarkdowns);
+        // Extract text from file before uploading
+        const markdown = await extractTextFromFile(file);
+
         // Upload to S3 and get the file URL
         const { url } = await uploadToS3(file);
-        const markdown = fileMarkdowns[file.name] || "";
-        console.log("here");
-        console.log(markdown);
+
         // Convert the file to Base64
-        const fileBase64 = await new Promise((resolve, reject) => {
+        const fileBase64 = await new Promise<string>((resolve, reject) => {
           const reader = new FileReader();
           reader.readAsDataURL(file);
-          reader.onload = () => resolve(reader.result?.split(",")[1]); // Extract only Base64 part
+          reader.onload = () => resolve(reader.result!.split(",")[1]); // Extract only Base64 part
           reader.onerror = (error) => reject(error);
         });
 
-        // Send the POST request with the Base64 file
+        // Send the POST request with the Base64 file and extracted Markdown
         await fetch("/api/db/resourcemeta", {
           method: "POST",
           body: JSON.stringify({
@@ -107,6 +137,7 @@ export default function S3Button({
         });
 
         console.log(`File ${file.name} uploaded successfully`);
+        setUploadedFiles((prev) => ({ ...prev, [file.name]: true }));
       } catch (error) {
         console.error(`Error uploading file ${file.name}:`, error);
       }
@@ -175,15 +206,6 @@ export default function S3Button({
         className="hidden"
         ref={fileInputRef}
       />
-
-      {currentFileIndex !== null && (
-        <FileUploadComponent
-          file={fileQueue[currentFileIndex]} // Pass the current file from the queue
-          onTextExtracted={(text: string) => {
-            handleMarkdownExtraction(fileQueue[currentFileIndex!], text);
-          }}
-        />
-      )}
 
       <div className="h-[30%] flex-grow overflow-y-auto">
         <div className="flex h-full items-center justify-center overflow-y-auto rounded-xl border border-zinc-700 p-2">

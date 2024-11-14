@@ -1,9 +1,9 @@
-// components/ResourceViewer.tsx
-
 import { useEffect, useState } from "react";
 import { Switch } from "@/components/ui/switch";
 import AccessibilityOptionsModal from "@/components/ModalComponents/AccessibilityOptionsModal";
 import { Resource, ResourceMeta } from "@/types/types";
+import ReactMarkdown from "react-markdown"; // Markdown rendering library
+import remarkGfm from "remark-gfm"; // GitHub-flavored markdown plugin
 
 export interface ResourceViewerProps {
   resource: Resource | null;
@@ -78,7 +78,7 @@ export default function ResourceViewer({
             </button>
           ) : (
             <p className="whitespace-nowrap text-sm font-bold text-white">
-              {resourceMeta.name}
+              {resourceMeta?.name}
             </p>
           )}
         </div>
@@ -98,12 +98,15 @@ export default function ResourceViewer({
         {viewMode === "Text" ? (
           <div className="h-full overflow-y-auto">
             <div
-              className={`rounded-md p-4 pb-16 ${textBackgroundColor} ${textColor}`} // Added `pb-8` for extra bottom padding
+              className={`rounded-md p-4 pb-16 ${textBackgroundColor} ${textColor}`}
               style={{ fontSize: `${textSize}px`, minHeight: "100%" }}
             >
-              <p className="whitespace-normal break-words">
-                {resource.markdown}
-              </p>
+              <ReactMarkdown
+                remarkPlugins={[remarkGfm]}
+                className="prose max-w-none"
+              >
+                {resource.markdown || ""}
+              </ReactMarkdown>
             </div>
           </div>
         ) : (

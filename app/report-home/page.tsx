@@ -27,22 +27,26 @@ type NewDocument = {
 };
 
 export default function TestPage() {
-  const { data: session } = useSession(); // Get session to access user ID
+  const { data: session } = useSession();
   const [allDocuments, setAllDocuments] = useState<NewDocument[]>([]);
+  const [isSortedByLastOpened, setIsSortedByLastOpened] = useState(true); // Track sorting state
   const [swapState, setSwapState] = useState(false);
   const [currentDocument, setCurrentDocument] = useState<
     NewDocument | undefined
   >(undefined);
   const [fileListKey, setFileListKey] = useState(0);
   const [isModalOpen, setIsModalOpen] = useState(false);
+
   const fetchDocuments = () => {
-    console.log(session);
     if (!session?.user?.id) return;
-    console.log(session);
-    fetch(`/api/db/getAll?ownerID=${session.user.id}`, { method: "GET" })
+
+    const endpoint = isSortedByLastOpened
+      ? `/api/db/getAllLastOpened?ownerID=${session.user.id}`
+      : `/api/db/getAll?ownerID=${session.user.id}`;
+
+    fetch(endpoint, { method: "GET" })
       .then((r) => r.json())
       .then((data) => {
-        console.log("User's documents response:", data);
         setAllDocuments(data);
       })
       .catch((error) =>
@@ -52,7 +56,11 @@ export default function TestPage() {
 
   useEffect(() => {
     fetchDocuments();
-  }, [session]);
+  }, [session, isSortedByLastOpened]);
+
+  const toggleSortOrder = () => {
+    setIsSortedByLastOpened((prevState) => !prevState);
+  };
 
   const handleBack = () => {
     setSwapState(false);
@@ -64,6 +72,18 @@ export default function TestPage() {
   const handleGridItemClick = (document: NewDocument) => {
     setCurrentDocument(document);
     setSwapState(true);
+
+    //updated nov 5st by richa
+    fetch("/api/db/updateLastOpened", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id: document.id }),
+    })
+      .then((r) => r.json())
+      .then((data) => {
+        console.log("Updated lastOpened:", data);
+      })
+      .catch((error) => console.error("Error updating lastOpened:", error));
   };
 
   const handleCreateNewReport = () => {
@@ -140,6 +160,8 @@ export default function TestPage() {
                           onDocumentClick={handleGridItemClick}
                           refreshState={handleBack}
                           onCreateNewReport={handleCreateNewReport}
+                          toggleSortOrder={toggleSortOrder} // Pass toggleSortOrder function
+                          isSortedByLastOpened={isSortedByLastOpened} // Pass current sorting state
                         />
                       </div>
                     )}
