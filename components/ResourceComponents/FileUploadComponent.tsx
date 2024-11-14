@@ -7,13 +7,17 @@ import TurndownService from "turndown";
 
 const FileUploadComponent: React.FC = () => {
   const [pdfjs, setPdfjs] = useState<typeof pdfjsLib | null>(null);
-  // test
+
   useEffect(() => {
     if (typeof window !== "undefined") {
       (async () => {
         try {
           const pdfjs = await import("pdfjs-dist");
-          pdfjs.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.js`;
+          pdfjs.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
+          console.log(
+            "Worker source set to:",
+            pdfjs.GlobalWorkerOptions.workerSrc,
+          );
           setPdfjs(pdfjs);
         } catch (error) {
           console.error("Failed to load pdfjs-dist:", error);

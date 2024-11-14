@@ -57,6 +57,7 @@
     "tailwindcss-animate": "^1.0.7",
     "testing-library": "^0.0.2",
     "turndown": "^7.2.0",
+    "worker-loader": "^3.0.8",
     "zod": "^3.23.8"
   },
   "devDependencies": {
