@@ -84,7 +84,7 @@ export async function POST(request: Request) {
 
     const resource: Resource = {
       id: fileHash,
-      markdown: data.text, // Placeholder - replace as needed
+      markdown: data.markdown, // Placeholder - replace as needed
       url: data.url,
     };
 

@@ -1,3 +1,5 @@
+"use client";
+
 import { useState, useRef } from "react";
 import { useS3Upload } from "next-s3-upload";
 import { FaCheckCircle, FaTrash, FaArrowLeft } from "react-icons/fa";
@@ -25,12 +27,13 @@ export default function S3Button({
   const [isNewFolder, setIsNewFolder] = useState(false);
   const [newFolderName, setNewFolderName] = useState("");
   const [fileQueue, setFileQueue] = useState<File[]>([]);
-  const [uploadedFiles, setUploadedFiles] = useState<Record<string, boolean>>(
+  const [uploadedFiles] = useState<Record<string, boolean>>({});
+  const [fileMarkdowns, setFileMarkdowns] = useState<Record<string, string>>(
     {},
   );
   const [previewResource, setPreviewResource] = useState<Resource | null>(null);
   const [isUploading, setIsUploading] = useState(false);
-  const [currentFile, setCurrentFile] = useState<File | null>(null);
+  const [currentFileIndex, setCurrentFileIndex] = useState<number | null>(null);
   const { uploadToS3 } = useS3Upload();
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
@@ -40,18 +43,24 @@ export default function S3Button({
         ...prevQueue,
         ...Array.from(e.target.files),
       ]);
+      setCurrentFileIndex(0); // Start processing the first file
     }
   };
 
-  const extractTextFromFile = async (file: File) => {
-    const fileExtension = file.name.split(".").pop()?.toLowerCase();
-    if (["csv", "html", "pdf"].includes(fileExtension)) {
-      return new Promise<string>((resolve) => {
-        const handleTextExtracted = (text: string) => resolve(text);
-        setCurrentFile({ file, onTextExtracted: handleTextExtracted });
-      });
-    }
-    return "";
+  const handleMarkdownExtraction = (file: File, markdown: string) => {
+    console.log("ehre2");
+    console.log(markdown);
+    setFileMarkdowns((prevMarkdowns) => ({
+      ...prevMarkdowns,
+      [file.name]: markdown,
+    }));
+
+    // Move to the next file in the queue
+    setCurrentFileIndex((prevIndex) =>
+      prevIndex !== null && prevIndex + 1 < fileQueue.length
+        ? prevIndex + 1
+        : null,
+    );
   };
 
   const handleUploadAll = async () => {
@@ -65,36 +74,41 @@ export default function S3Button({
 
     for (const file of fileQueue) {
       try {
+        console.log(fileMarkdowns);
+        // Upload to S3 and get the file URL
+        const { url } = await uploadToS3(file);
+        const markdown = fileMarkdowns[file.name] || "";
+        console.log("here");
+        console.log(markdown);
+        // Convert the file to Base64
         const fileBase64 = await new Promise((resolve, reject) => {
           const reader = new FileReader();
           reader.readAsDataURL(file);
-          reader.onload = () =>
-            resolve(reader.result!.toString().split(",")[1]);
+          reader.onload = () => resolve(reader.result?.split(",")[1]); // Extract only Base64 part
           reader.onerror = (error) => reject(error);
         });
 
-        const { url } = await uploadToS3(file);
-
+        // Send the POST request with the Base64 file
         await fetch("/api/db/resourcemeta", {
           method: "POST",
           body: JSON.stringify({
-            file: fileBase64,
             documentId,
             name: file.name,
             folderName: folderToSave,
             url,
             dateAdded: new Date().toISOString(),
             lastOpened: new Date().toISOString(),
-            text: await extractTextFromFile(file),
+            file: fileBase64, // Pass the Base64 file
+            markdown: markdown, // Include extracted markdown
           }),
           headers: {
             "Content-Type": "application/json",
           },
         });
 
-        setUploadedFiles((prev) => ({ ...prev, [file.name]: true }));
+        console.log(`File ${file.name} uploaded successfully`);
       } catch (error) {
-        console.error(`Error uploading ${file.name}:`, error);
+        console.error(`Error uploading file ${file.name}:`, error);
       }
     }
 
@@ -102,11 +116,7 @@ export default function S3Button({
     if (onResourceUpload) onResourceUpload();
     cancelCallBack();
     setFileQueue([]);
-  };
-
-  const handleFolderChange = (folderName: string) => {
-    setSelectedFolder(folderName);
-    setIsNewFolder(folderName === "Enter New Folder Name");
+    setFileMarkdowns({});
   };
 
   const handleCancelUpload = () => {
@@ -114,7 +124,13 @@ export default function S3Button({
     setIsNewFolder(false);
     setNewFolderName("");
     setPreviewResource(null);
+    setFileMarkdowns({});
     cancelCallBack();
+  };
+
+  const handleFolderChange = (folderName: string) => {
+    setSelectedFolder(folderName);
+    setIsNewFolder(folderName === "Enter New Folder Name");
   };
 
   return (
@@ -160,10 +176,12 @@ export default function S3Button({
         ref={fileInputRef}
       />
 
-      {currentFile && (
+      {currentFileIndex !== null && (
         <FileUploadComponent
-          file={currentFile.file}
-          onTextExtracted={currentFile.onTextExtracted}
+          file={fileQueue[currentFileIndex]} // Pass the current file from the queue
+          onTextExtracted={(text: string) => {
+            handleMarkdownExtraction(fileQueue[currentFileIndex!], text);
+          }}
         />
       )}
 

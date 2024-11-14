@@ -5,34 +5,34 @@ import * as pdfjsLib from "pdfjs-dist";
 import Papa from "papaparse";
 import TurndownService from "turndown";
 
-const FileUploadComponent: React.FC = () => {
+interface FileUploadComponentProps {
+  file: File;
+  onTextExtracted: (text: string) => void;
+}
+
+const FileUploadComponent: React.FC<FileUploadComponentProps> = ({
+  file,
+  onTextExtracted,
+}) => {
   const [pdfjs, setPdfjs] = useState<typeof pdfjsLib | null>(null);
 
   useEffect(() => {
     if (typeof window !== "undefined") {
       (async () => {
-        try {
-          const pdfjs = await import("pdfjs-dist");
-          pdfjs.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
-          console.log(
-            "Worker source set to:",
-            pdfjs.GlobalWorkerOptions.workerSrc,
-          );
-          setPdfjs(pdfjs);
-        } catch (error) {
-          console.error("Failed to load pdfjs-dist:", error);
-        }
+        const pdfjs = await import("pdfjs-dist");
+        pdfjs.GlobalWorkerOptions.workerSrc =
+          "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js"; // Use Cloudflare-hosted worker
+        setPdfjs(pdfjs);
       })();
     }
   }, []);
 
-  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const files = event.target.files;
+  useEffect(() => {
+    const extractText = async () => {
+      const fileExtension = file.name.split(".").pop()?.toLowerCase();
+      let extractedText = "";
 
-    if (files && files.length > 0 && pdfjs) {
-      const file = files[0];
-      const fileName = file.name;
-      const fileExtension = fileName.split(".").pop()?.toLowerCase();
+      console.log(`Extracting text from: ${file.name} (${fileExtension})`);
 
       if (fileExtension === "csv") {
         const reader = new FileReader();
@@ -40,18 +40,22 @@ const FileUploadComponent: React.FC = () => {
           const text = reader.result as string;
           const results = Papa.parse(text, { header: false });
           const data = results.data;
-          let markdown = "";
+
           if (Array.isArray(data) && data.length > 0) {
             const header = data[0];
             const separator = header.map(() => "---");
-            markdown += `| ${header.join(" | ")} |\n`;
-            markdown += `| ${separator.join(" | ")} |\n`;
+            extractedText += `| ${header.join(" | ")} |\n`;
+            extractedText += `| ${separator.join(" | ")} |\n`;
             for (let i = 1; i < data.length; i++) {
               const row = data[i];
-              markdown += `| ${row.join(" | ")} |\n`;
+              extractedText += `| ${row.join(" | ")} |\n`;
             }
+          } else {
+            console.log("CSV file has no data.");
           }
-          console.log(markdown);
+
+          console.log("Extracted CSV Markdown:", extractedText);
+          onTextExtracted(extractedText);
         };
         reader.readAsText(file);
       } else if (fileExtension === "html") {
@@ -61,50 +65,55 @@ const FileUploadComponent: React.FC = () => {
           const turndownService = new TurndownService();
           turndownService.addRule("image", {
             filter: "img",
-            replacement: function (content, node) {
-              const src = node.getAttribute("src");
-              return `![Image](${src})`;
-            },
+            replacement: (content, node) =>
+              `![Image](${node.getAttribute("src")})`,
           });
-          const markdown = turndownService.turndown(html);
-          console.log(markdown);
+          extractedText = turndownService.turndown(html);
+          console.log("Extracted HTML Markdown:", extractedText);
+          onTextExtracted(extractedText);
         };
         reader.readAsText(file);
       } else if (fileExtension === "pdf") {
+        if (!pdfjs) {
+          console.error("PDF.js is not ready yet.");
+          return;
+        }
+
         const reader = new FileReader();
         reader.onload = async () => {
           try {
             const typedarray = new Uint8Array(reader.result as ArrayBuffer);
             const loadingTask = pdfjs.getDocument({ data: typedarray });
             const pdf = await loadingTask.promise;
-            let markdown = "";
+
+            console.log(`Extracting text from PDF (${pdf.numPages} pages)...`);
+
             for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
               const page = await pdf.getPage(pageNum);
               const textContentObj = await page.getTextContent();
-              const pageText = textContentObj.items
+              extractedText += textContentObj.items
                 .map((item: any) => ("str" in item ? item.str : ""))
                 .join(" ");
-              markdown += `# Page ${pageNum}\n\n${pageText}\n\n`;
             }
-            console.log(markdown);
+
+            console.log("Extracted PDF Text:", extractedText);
+            onTextExtracted(extractedText);
           } catch (error) {
             console.error("Error parsing PDF:", error);
+            onTextExtracted(""); // Pass empty string if there's an error
           }
         };
         reader.readAsArrayBuffer(file);
       } else {
-        console.error("Unsupported file type");
+        console.error("Unsupported file type:", fileExtension);
+        onTextExtracted(""); // Pass empty string for unsupported file types
       }
-    } else {
-      console.error("PDF.js library not loaded yet or no file selected");
-    }
-  };
+    };
 
-  return (
-    <div>
-      <input type="file" accept=".csv,.pdf,.html" onChange={handleFileChange} />
-    </div>
-  );
+    extractText();
+  }, [file, pdfjs, onTextExtracted]);
+
+  return <div>Processing {file.name}...</div>;
 };
 
 export default FileUploadComponent;
