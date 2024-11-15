@@ -68,25 +68,22 @@ export default function S3Button({
         };
         reader.readAsText(file);
       } else if (fileExtension === "pdf") {
-        const reader = new FileReader();
-        reader.onload = async () => {
-          const pdfjsLib = await import("pdfjs-dist");
-          pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
-
-          const typedArray = new Uint8Array(reader.result as ArrayBuffer);
-          const loadingTask = pdfjsLib.getDocument({ data: typedArray });
-          const pdf = await loadingTask.promise;
-          let text = "";
-
-          for (let i = 1; i <= pdf.numPages; i++) {
-            const page = await pdf.getPage(i);
-            const content = await page.getTextContent();
-            text += content.items.map((item: any) => item.str || "").join(" ");
-          }
-
-          resolve(text);
-        };
-        reader.readAsArrayBuffer(file);
+        // const reader = new FileReader();
+        // reader.onload = async () => {
+        //   const pdfjsLib = await import("pdfjs-dist");
+        //   pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
+        //   const typedArray = new Uint8Array(reader.result as ArrayBuffer);
+        //   const loadingTask = pdfjsLib.getDocument({ data: typedArray });
+        //   const pdf = await loadingTask.promise;
+        //   let text = "";
+        //   for (let i = 1; i <= pdf.numPages; i++) {
+        //     const page = await pdf.getPage(i);
+        //     const content = await page.getTextContent();
+        //     text += content.items.map((item: any) => item.str || "").join(" ");
+        //   }
+        //   resolve(text);
+        // };
+        // reader.readAsArrayBuffer(file);
       } else {
         resolve(""); // Unsupported file types return empty string
       }

@@ -29,7 +29,7 @@ export default function AllDocumentGrid({
   );
 
   return (
-    <div className="flex h-full w-full flex-col">
+    <div className="relative flex h-full w-full flex-col">
       <div className="h-1/8 flex w-full px-4 py-2">
         <div className="flex h-full w-full flex-row items-center justify-between">
           <div className="w-full px-4 pt-3">
