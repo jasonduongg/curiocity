@@ -5,7 +5,7 @@ import {
   PutItemCommand,
   DeleteItemCommand,
 } from "@aws-sdk/client-dynamodb";
-import AWS from "aws-sdk";
+import { marshall, unmarshall } from "@aws-sdk/util-dynamodb";
 
 dotenv.config();
 
@@ -17,13 +17,10 @@ export type User = {
   id: string;
   name: string;
   email: string;
+  image: string;
   accountCreated: string;
   lastLoggedIn: string;
 };
-
-// Helper function to marshal and unmarshal data
-const marshall = AWS.DynamoDB.Converter.marshall;
-const unmarshall = AWS.DynamoDB.Converter.unmarshall;
 
 // PUT user object into DynamoDB
 export const putUser = async (inputData: User) => {
@@ -43,18 +40,26 @@ export const putUser = async (inputData: User) => {
   }
 };
 
-// GET user object from DynamoDB by ID
+// GET user object from DynamoDB by id
 export const getUser = async (id: string) => {
+  if (typeof id !== "string") {
+    console.error("Invalid data type for id:", typeof id);
+    throw new Error("ID must be a string");
+  }
+
   try {
     const data = await client.send(
       new GetItemCommand({
         TableName: tableName,
-        Key: { id: { S: id } },
+        Key: {
+          id: { S: id },
+        },
       }),
     );
     return data.Item ? (unmarshall(data.Item) as User) : null;
   } catch (error) {
     console.error("Error getting user:", error);
+    console.log(error);
     throw new Error("Could not retrieve the user");
   }
 };
@@ -77,7 +82,7 @@ export const deleteUser = async (id: string) => {
 
 // API Endpoints
 
-// GET endpoint to retrieve a user by ID
+// GET endpoint to retrieve a user by id
 export async function GET(request: Request) {
   console.log("Retrieving user from DynamoDB");
   const url = new URL(request.url);
@@ -108,15 +113,16 @@ export async function POST(request: Request) {
   console.log("Creating new user in DynamoDB");
   const data = await request.json();
 
-  const { userId, name, email, lastLoggedIn } = data.userData || {};
-  if (!userId || !email) {
+  const { id, name, email, image, lastLoggedIn } = data || {};
+  if (!id || !email) {
     return new Response("User ID and email are required", { status: 400 });
   }
 
   const newUser: User = {
-    id: userId,
+    id,
     name: name || "Anonymous",
     email,
+    image: image || "",
     accountCreated: new Date().toISOString(),
     lastLoggedIn: lastLoggedIn || new Date().toISOString(),
   };
@@ -138,23 +144,24 @@ export async function PUT(request: Request) {
   console.log("Updating user in DynamoDB");
   const data = await request.json();
 
-  const { id } = data;
-  if (!id) {
+  if (!data.id) {
     return new Response("User ID is required", { status: 400 });
   }
 
+  console.log("Retrieving user with ID:", data.id);
+  const existingUser = await getUser(data.id);
+
+  if (!existingUser) {
+    return new Response("User not found", { status: 404 });
+  }
+
+  const updatedUser: User = {
+    ...existingUser,
+    ...data,
+    lastLoggedIn: new Date().toISOString(),
+  };
+
   try {
-    const existingUser = await getUser(id);
-    if (!existingUser) {
-      return new Response("User not found", { status: 404 });
-    }
-
-    const updatedUser: User = {
-      ...existingUser,
-      ...data,
-      lastLoggedIn: new Date().toISOString(),
-    };
-
     await putUser(updatedUser);
     return new Response(JSON.stringify(updatedUser), {
       status: 200,

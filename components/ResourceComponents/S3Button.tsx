@@ -1,10 +1,12 @@
+"use client";
+
 import { useState, useRef } from "react";
 import { useS3Upload } from "next-s3-upload";
 import { FaCheckCircle, FaTrash, FaArrowLeft } from "react-icons/fa";
 import ResourceViewerMini from "./ResourceViewerMini";
 import FolderDropdown from "./FolderSelectionDropdown";
-import FileUploadComponent from "./FileUploadComponent";
 import { Resource } from "@/types/types";
+import TurndownService from "turndown";
 
 interface S3ButtonProps {
   documentId: string;
@@ -30,7 +32,6 @@ export default function S3Button({
   );
   const [previewResource, setPreviewResource] = useState<Resource | null>(null);
   const [isUploading, setIsUploading] = useState(false);
-  const [currentFile, setCurrentFile] = useState<File | null>(null);
   const { uploadToS3 } = useS3Upload();
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
@@ -43,15 +44,53 @@ export default function S3Button({
     }
   };
 
-  const extractTextFromFile = async (file: File) => {
-    const fileExtension = file.name.split(".").pop()?.toLowerCase();
-    if (["csv", "html", "pdf"].includes(fileExtension)) {
-      return new Promise<string>((resolve) => {
-        const handleTextExtracted = (text: string) => resolve(text);
-        setCurrentFile({ file, onTextExtracted: handleTextExtracted });
-      });
-    }
-    return "";
+  const extractTextFromFile = (file: File): Promise<string> => {
+    return new Promise((resolve) => {
+      const fileExtension = file.name.split(".").pop()?.toLowerCase();
+
+      if (fileExtension === "csv") {
+        const reader = new FileReader();
+        reader.onload = () => {
+          const text = reader.result as string;
+          const rows = text.split("\n");
+          const table = rows
+            .map((row) => `| ${row.split(",").join(" | ")} |`)
+            .join("\n");
+          resolve(table);
+        };
+        reader.readAsText(file);
+      } else if (fileExtension === "html") {
+        const reader = new FileReader();
+        reader.onload = () => {
+          const text = reader.result as string;
+          const markdown = new TurndownService().turndown(text);
+          resolve(markdown);
+        };
+        reader.readAsText(file);
+      } else if (fileExtension === "pdf") {
+        const reader = new FileReader();
+        reader.onload = async () => {
+          const pdfjsLib = await import("pdfjs-dist");
+          pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
+
+          const typedArray = new Uint8Array(reader.result as ArrayBuffer);
+          const loadingTask = pdfjsLib.getDocument({ data: typedArray });
+          const pdf = await loadingTask.promise;
+          let text = "";
+
+          for (let i = 1; i <= pdf.numPages; i++) {
+            const page = await pdf.getPage(i);
+            const content = await page.getTextContent();
+            text += content.items.map((item: any) => item.str || "").join(" ");
+          }
+
+          resolve(text);
+        };
+        reader.readAsArrayBuffer(file);
+      } else {
+        resolve(""); // Unsupported file types return empty string
+      }
+    });
   };
 
   const handleUploadAll = async () => {
@@ -65,36 +104,42 @@ export default function S3Button({
 
     for (const file of fileQueue) {
       try {
-        const fileBase64 = await new Promise((resolve, reject) => {
+        // Extract text from file before uploading
+        const markdown = await extractTextFromFile(file);
+
+        // Upload to S3 and get the file URL
+        const { url } = await uploadToS3(file);
+
+        // Convert the file to Base64
+        const fileBase64 = await new Promise<string>((resolve, reject) => {
           const reader = new FileReader();
           reader.readAsDataURL(file);
-          reader.onload = () =>
-            resolve(reader.result!.toString().split(",")[1]);
+          reader.onload = () => resolve(reader.result!.split(",")[1]); // Extract only Base64 part
           reader.onerror = (error) => reject(error);
         });
 
-        const { url } = await uploadToS3(file);
-
+        // Send the POST request with the Base64 file and extracted Markdown
         await fetch("/api/db/resourcemeta", {
           method: "POST",
           body: JSON.stringify({
-            file: fileBase64,
             documentId,
             name: file.name,
             folderName: folderToSave,
             url,
             dateAdded: new Date().toISOString(),
             lastOpened: new Date().toISOString(),
-            text: await extractTextFromFile(file),
+            file: fileBase64, // Pass the Base64 file
+            markdown: markdown, // Include extracted markdown
           }),
           headers: {
             "Content-Type": "application/json",
           },
         });
 
+        console.log(`File ${file.name} uploaded successfully`);
         setUploadedFiles((prev) => ({ ...prev, [file.name]: true }));
       } catch (error) {
-        console.error(`Error uploading ${file.name}:`, error);
+        console.error(`Error uploading file ${file.name}:`, error);
       }
     }
 
@@ -102,11 +147,7 @@ export default function S3Button({
     if (onResourceUpload) onResourceUpload();
     cancelCallBack();
     setFileQueue([]);
-  };
-
-  const handleFolderChange = (folderName: string) => {
-    setSelectedFolder(folderName);
-    setIsNewFolder(folderName === "Enter New Folder Name");
+    setFileMarkdowns({});
   };
 
   const handleCancelUpload = () => {
@@ -114,7 +155,13 @@ export default function S3Button({
     setIsNewFolder(false);
     setNewFolderName("");
     setPreviewResource(null);
+    setFileMarkdowns({});
     cancelCallBack();
+  };
+
+  const handleFolderChange = (folderName: string) => {
+    setSelectedFolder(folderName);
+    setIsNewFolder(folderName === "Enter New Folder Name");
   };
 
   return (
@@ -159,13 +206,6 @@ export default function S3Button({
         className="hidden"
         ref={fileInputRef}
       />
-
-      {currentFile && (
-        <FileUploadComponent
-          file={currentFile.file}
-          onTextExtracted={currentFile.onTextExtracted}
-        />
-      )}
 
       <div className="h-[30%] flex-grow overflow-y-auto">
         <div className="flex h-full items-center justify-center overflow-y-auto rounded-xl border border-zinc-700 p-2">

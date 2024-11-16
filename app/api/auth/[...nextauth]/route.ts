@@ -31,8 +31,6 @@ const options: NextAuthOptions = {
           name: profile.name || "",
           email: profile.email || "",
           image: profile.picture || "",
-          given_name: profile.given_name || "",
-          family_name: profile.family_name || "",
         };
       },
     }),
@@ -40,52 +38,110 @@ const options: NextAuthOptions = {
   callbacks: {
     async signIn({ user, profile }) {
       console.log("signIn callback triggered");
-      const email = user.email?.toLowerCase();
-      if (!email || !profile) return false;
+      const userId = profile?.sub;
+      if (!userId || !profile) return false;
 
       const userData = {
-        userId: profile.sub,
+        id: userId,
         name: profile.name,
         email: profile.email,
+        image: user.image,
         lastLoggedIn: new Date().toISOString(),
       };
-      console.log(userData);
 
       try {
-        const response = await fetch(`http://localhost:3000/api/user`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
+        const checkResponse = await fetch(
+          `http://localhost:3000/api/user?id=${userId}`,
+          {
+            method: "GET",
+            headers: { "Content-Type": "application/json" },
           },
-          body: JSON.stringify({ userData }),
-        });
+        );
 
-        if (!response.ok) {
-          console.error(
-            "Failed to save user to DynamoDB:",
-            response.statusText,
-          );
-          return false;
+        if (checkResponse.ok) {
+          const updateResponse = await fetch(`http://localhost:3000/api/user`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              id: userData.id,
+              lastLoggedIn: userData.lastLoggedIn,
+            }),
+          });
+
+          if (!updateResponse.ok) {
+            console.error(
+              "Failed to update user's lastLoggedIn field:",
+              updateResponse.statusText,
+            );
+            return false;
+          }
+
+          console.log("User's lastLoggedIn field successfully updated");
+          return true;
+        } else if (checkResponse.status === 404) {
+          const createResponse = await fetch(`http://localhost:3000/api/user`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(userData),
+          });
+
+          if (!createResponse.ok) {
+            console.error(
+              "Failed to create a new user:",
+              createResponse.statusText,
+            );
+            return false;
+          }
+
+          console.log("New user successfully created");
+          return true;
         }
-
-        console.log("User successfully saved or updated in DynamoDB");
-        return true;
       } catch (error) {
-        console.error("Failed to save user to DynamoDB:", error);
+        console.error("Error during user sign-in process:", error);
         return false;
       }
     },
     async session({ session, token }) {
-      const email = session.user?.email?.toLowerCase();
-      if (email) {
+      // Attach user id from token to the session
+      if (token?.sub) {
         session.user.id = token.sub;
-        session.user.lastLoggedIn = new Date().toISOString();
       }
+
+      try {
+        const response = await fetch(
+          `http://localhost:3000/api/user?id=${token.sub}`,
+          {
+            method: "GET",
+            headers: { "Content-Type": "application/json" },
+          },
+        );
+
+        if (!response.ok) {
+          console.error("Failed to fetch user data:", response.statusText);
+          return session;
+        }
+
+        const userData = await response.json();
+        session.user = { ...session.user, ...userData };
+
+        console.log("Fetched user data attached to session:", userData);
+      } catch (error) {
+        console.error("Error fetching user data from API:", error);
+      }
+
       return session;
     },
-    async redirect({ baseUrl }) {
-      return `${baseUrl}/report-home`;
+    async jwt({ token, user }) {
+      // Attach user id to the token on initial sign-in
+      if (user) {
+        token.sub = user.id;
+      }
+      return token;
     },
+  },
+  pages: {
+    signIn: "/report-home",
+    signOut: "/login",
   },
   secret: NEXTAUTH_SECRET,
 };
