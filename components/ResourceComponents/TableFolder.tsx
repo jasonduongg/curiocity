@@ -1,6 +1,6 @@
 // components/TableFolder.tsx
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import TableRow from "@/components/ResourceComponents/TableRow";
 import { FileIcon } from "@radix-ui/react-icons";
 import { Resource } from "@/types/types";
@@ -26,6 +26,46 @@ export default function TableFolder({
   showUploadForm,
 }: TableFolderProps) {
   const [isExpanded, setIsExpanded] = useState(false);
+  const [sortedResources, setSortedResources] = useState<[Resource, string][]>(
+    [],
+  );
+
+  useEffect(() => {
+    if (isExpanded) {
+      const fetchAndSortResources = async () => {
+        try {
+          const resourcesWithDates: [Resource, string][] = await Promise.all(
+            folderData.resources.map(async (resource) => {
+              const response = await fetch(
+                `/api/db/resourcemeta?resourceId=${resource.id}`,
+                {
+                  method: "GET",
+                },
+              );
+
+              const data = await response.json();
+              console.log("testing data object", data);
+              console.log("data date added", data.dateAdded);
+              return [resource, data.dateAdded];
+            }),
+          );
+
+          const sorted = resourcesWithDates.sort((a, b) => {
+            return new Date(b[1]).getTime() - new Date(a[1]).getTime();
+          });
+
+          console.log("sorted resources: ", sorted);
+          setSortedResources(sorted);
+        } catch (error) {
+          console.log("Failed to fetch resource meta:", error);
+        }
+      };
+
+      if (isExpanded) {
+        fetchAndSortResources();
+      }
+    }
+  }, [isExpanded, folderData.resources]);
 
   const handleFolderClick = () => {
     setIsExpanded(!isExpanded);
@@ -41,13 +81,13 @@ export default function TableFolder({
       </div>
       {isExpanded && (
         <div className="pt-1">
-          {folderData.resources.map((resource) => (
+          {sortedResources.map(([resource, dateAdded]) => (
             <TableRow
               key={resource.id}
               icon={FileIcon}
               iconColor="white"
               title={resource.name}
-              dateAdded={resource.dateAdded || "Unknown"}
+              dateAdded={dateAdded || "Unknown"}
               lastViewed={resource.lastViewed || "Unknown"}
               id={resource.id}
               isSelected={
