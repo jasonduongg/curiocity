@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import dynamic from "next/dynamic";
 import "react-quill/dist/quill.snow.css";
 import { Document } from "@/types/types";
+import TagSection from "./TagSection";
 
 // Dynamically import ReactQuill with SSR disabled
 const ReactQuill = dynamic(() => import("react-quill"), { ssr: false });
@@ -14,6 +15,7 @@ interface TextEditorProps {
 }
 
 const TextEditor = ({ currentDocument, swapState }: TextEditorProps) => {
+  console.log(currentDocument);
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [id, setID] = useState<string | undefined>("");
@@ -50,7 +52,6 @@ const TextEditor = ({ currentDocument, swapState }: TextEditorProps) => {
         body: JSON.stringify({
           name: title,
           text: content,
-          files: [],
           dateAdded: new Date().toISOString(),
         } as Document),
         headers: {
@@ -89,7 +90,6 @@ const TextEditor = ({ currentDocument, swapState }: TextEditorProps) => {
           id,
           name: title,
           text: content,
-          files: [],
         }),
         headers: {
           "Content-Type": "application/json",
@@ -123,7 +123,9 @@ const TextEditor = ({ currentDocument, swapState }: TextEditorProps) => {
       matchVisual: false,
     },
   };
-
+  console.log("here");
+  console.log(currentDocument);
+  console.log(currentDocument?.tags);
   return (
     <div className="flex h-full max-w-full flex-col rounded-xl border-[1px] border-zinc-700 text-white">
       <input
@@ -133,9 +135,11 @@ const TextEditor = ({ currentDocument, swapState }: TextEditorProps) => {
         placeholder="Enter document title"
         className="text-md h-[5vh] w-full rounded-t-xl bg-bgSecondary px-2 font-bold outline-none"
       />
-
-      <style>
-        {`
+      {id && <TagSection documentId={id} initialTags={currentDocument?.tags} />}{" "}
+      {/* Pass documentId to TagSection */}
+      <div className="bgg-green-500 flex flex-grow flex-col">
+        <style>
+          {`
           .ql-toolbar {
             position: sticky;
             top: 0;
@@ -163,32 +167,32 @@ const TextEditor = ({ currentDocument, swapState }: TextEditorProps) => {
             border: none !important;
           }
         `}
-      </style>
+        </style>
 
-      <ReactQuill
-        className="scrollbar-hide h-full max-w-full overflow-y-auto bg-bgSecondary text-white"
-        formats={[
-          "header",
-          "font",
-          "size",
-          "bold",
-          "italic",
-          "underline",
-          "strike",
-          "blockquote",
-          "list",
-          "bullet",
-          "indent",
-          "link",
-          "image",
-          "video",
-        ]}
-        placeholder="Write something amazing..."
-        modules={modules}
-        onChange={setContent}
-        value={content}
-      />
-
+        <ReactQuill
+          className="scrollbar-hide h-full max-w-full overflow-y-auto bg-bgSecondary text-white"
+          formats={[
+            "header",
+            "font",
+            "size",
+            "bold",
+            "italic",
+            "underline",
+            "strike",
+            "blockquote",
+            "list",
+            "bullet",
+            "indent",
+            "link",
+            "image",
+            "video",
+          ]}
+          placeholder="Write something amazing..."
+          modules={modules}
+          onChange={setContent}
+          value={content}
+        />
+      </div>
       <div className="flex h-[10vh] items-center justify-end space-x-4 rounded-b-xl bg-bgSecondary p-4">
         {isUploading ? (
           <div className="flex items-center">
@@ -215,7 +219,6 @@ const TextEditor = ({ currentDocument, swapState }: TextEditorProps) => {
           </div>
         )}
       </div>
-
       <style jsx>{`
         .loader {
           border: 4px solid #f3f3f3;

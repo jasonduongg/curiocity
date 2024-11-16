@@ -1,4 +1,5 @@
 "use client";
+
 import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react"; // Import useSession to access user session
 import NameYourReport from "@/components/DocumentComponents/newPrompt";
@@ -24,11 +25,13 @@ type NewDocument = {
   ownerID?: string; // Add ownerID to the NewDocument type
   text?: string;
   folders: Record<string, FolderData>;
+  tags: Array<string>;
 };
 
 export default function TestPage() {
   const { data: session } = useSession();
   const [allDocuments, setAllDocuments] = useState<NewDocument[]>([]);
+  console.log(allDocuments);
   const [isSortedByLastOpened, setIsSortedByLastOpened] = useState(true); // Track sorting state
   const [swapState, setSwapState] = useState(false);
   const [currentDocument, setCurrentDocument] = useState<
@@ -69,21 +72,52 @@ export default function TestPage() {
     setFileListKey((prevKey) => prevKey + 1); // Increment key to reset FileList
   };
 
-  const handleGridItemClick = (document: NewDocument) => {
-    setCurrentDocument(document);
-    setSwapState(true);
+  const handleGridItemClick = async (document: NewDocument) => {
+    try {
+      // Fetch the document via your API
+      const response = await fetch(`/api/db?id=${document.id}`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
 
-    //updated nov 5st by richa
-    fetch("/api/db/updateLastOpened", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ id: document.id }),
-    })
-      .then((r) => r.json())
-      .then((data) => {
-        console.log("Updated lastOpened:", data);
-      })
-      .catch((error) => console.error("Error updating lastOpened:", error));
+      if (!response.ok) {
+        console.error("Failed to fetch document:", response.statusText);
+        return;
+      }
+
+      // Parse the response and unmarshall DynamoDB data
+      const dynamoResponse = await response.json();
+      const unmarshalledData =
+        AWS.DynamoDB.Converter.unmarshall(dynamoResponse);
+
+      console.log("Fetched and unmarshalled document:", unmarshalledData);
+
+      // Update the state with the fetched document
+      setCurrentDocument(unmarshalledData);
+      setSwapState(true);
+
+      // Update the lastOpened field via your API
+      const lastOpenedResponse = await fetch("/api/db/updateLastOpened", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: document.id }),
+      });
+
+      if (!lastOpenedResponse.ok) {
+        console.error(
+          "Failed to update lastOpened:",
+          lastOpenedResponse.statusText,
+        );
+        return;
+      }
+
+      const lastOpenedData = await lastOpenedResponse.json();
+      console.log("Updated lastOpened:", lastOpenedData);
+    } catch (error) {
+      console.error("Error handling grid item click:", error);
+    }
   };
 
   const handleCreateNewReport = () => {
@@ -105,7 +139,6 @@ export default function TestPage() {
       folders: {},
     };
 
-    // API call to create a new document in the database
     fetch("/api/db", {
       method: "POST",
       body: JSON.stringify(newDoc),
@@ -137,35 +170,29 @@ export default function TestPage() {
   };
 
   return (
-    <section className="overscroll-none bg-bgPrimary">
-      <div className="flex h-screen w-full max-w-full flex-col items-start justify-start">
+    <section className="h-screen overscroll-contain bg-bgPrimary">
+      <div className="flex h-full w-full flex-col items-start justify-start overflow-hidden">
         <NavBar />
-        <ResizablePanelGroup direction="horizontal" className="px-8">
+        <ResizablePanelGroup direction="horizontal" className="flex-grow px-8">
           <ResizablePanel>
-            <div className="h-full w-full max-w-full gap-4 overflow-hidden bg-bgPrimary p-4">
-              <div className="max-w-1/2 h-full shrink grow basis-1/2 flex-col gap-4 overflow-hidden rounded-xl border-[1px] border-zinc-700">
-                <div className="h-full max-w-full grow flex-col overflow-hidden rounded-lg bg-bgSecondary">
-                  <div className="h-full max-w-full grow flex-col overflow-hidden border-zinc-700">
-                    {swapState ? (
-                      <div className="h-full">
-                        <TextEditor
-                          currentDocument={currentDocument}
-                          swapState={handleBack}
-                        />
-                      </div>
-                    ) : (
-                      <div className="h-full">
-                        <AllDocumentsGrid
-                          allDocuments={allDocuments}
-                          onDocumentClick={handleGridItemClick}
-                          refreshState={handleBack}
-                          onCreateNewReport={handleCreateNewReport}
-                          toggleSortOrder={toggleSortOrder} // Pass toggleSortOrder function
-                          isSortedByLastOpened={isSortedByLastOpened} // Pass current sorting state
-                        />
-                      </div>
-                    )}
-                  </div>
+            <div className="flex h-full w-full flex-col gap-4 overflow-hidden bg-bgPrimary p-4">
+              <div className="flex flex-grow flex-col gap-4 overflow-hidden rounded-xl border-[1px] border-zinc-700">
+                <div className="flex flex-grow flex-col overflow-hidden rounded-lg bg-bgSecondary">
+                  {swapState ? (
+                    <TextEditor
+                      currentDocument={currentDocument}
+                      swapState={handleBack}
+                    />
+                  ) : (
+                    <AllDocumentsGrid
+                      allDocuments={allDocuments}
+                      onDocumentClick={handleGridItemClick}
+                      refreshState={handleBack}
+                      onCreateNewReport={handleCreateNewReport}
+                      toggleSortOrder={toggleSortOrder}
+                      isSortedByLastOpened={isSortedByLastOpened}
+                    />
+                  )}
                 </div>
               </div>
             </div>
@@ -175,7 +202,7 @@ export default function TestPage() {
 
           <ResizablePanel>
             <div className="h-full w-full p-4">
-              <div className="flex h-full shrink grow basis-1/2 flex-col rounded-xl border-[1px] border-zinc-700 bg-bgSecondary">
+              <div className="flex h-full flex-col rounded-xl border-[1px] border-zinc-700 bg-bgSecondary">
                 <FileList
                   key={fileListKey}
                   currentDocument={currentDocument}
@@ -193,10 +220,10 @@ export default function TestPage() {
       {isModalOpen && (
         <NameYourReport
           onSave={(name) => {
-            createDocument(name); // Create a new document with the provided name
-            setIsModalOpen(false); // Close the modal
+            createDocument(name);
+            setIsModalOpen(false);
           }}
-          onCancel={() => setIsModalOpen(false)} // Close the modal without saving
+          onCancel={() => setIsModalOpen(false)}
         />
       )}
     </section>

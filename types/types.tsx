@@ -14,6 +14,7 @@ export interface Document {
   text: string;
   dateAdded: string;
   lastOpened: string;
+  tags: Array<string>;
 }
 
 export interface ResourceMeta {
