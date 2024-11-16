@@ -33,6 +33,7 @@ function FileList({ currentDocument, onResourceUpload }: DocumentProps) {
   const [showUploadForm, setShowUploadForm] = useState(false);
   const [showConfirmCancelModal, setShowConfirmCancelModal] = useState(false);
   const [pendingResource, setPendingResource] = useState<Resource | null>(null);
+  const [searchQuery, setSearchQuery] = useState<string>("");
   console.log(currentDocument);
   const handleResourceAPI = (
     resource: Resource,
@@ -69,6 +70,13 @@ function FileList({ currentDocument, onResourceUpload }: DocumentProps) {
   const cancelFileUploader = () => {
     setCurrentResource(null);
     setShowUploadForm(false);
+  };
+
+  const filterResources = (folderData: FolderData): FolderData => {
+    const filteredResources = folderData.resources.filter((resource) =>
+      resource.name.toLowerCase().includes(searchQuery.toLowerCase()),
+    );
+    return { ...folderData, resources: filteredResources };
   };
 
   if (!currentDocument) {
@@ -128,20 +136,27 @@ function FileList({ currentDocument, onResourceUpload }: DocumentProps) {
         <ResizableHandle withHandle />
         <ResizablePanel defaultSize={35}>
           <div className="flex h-full w-full flex-col items-center p-3">
-            <TextInput placeholder="Search Resource" />
+            <TextInput
+              placeholder="Search Resource"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
             <div className="h-full w-full px-2">
               {currentDocument.folders &&
                 Object.entries(currentDocument.folders).map(
-                  ([folderName, folderData]) => (
-                    <TableFolder
-                      key={folderName}
-                      folderName={folderData.name}
-                      folderData={folderData}
-                      onResource={handleResourceAPI}
-                      currentResource={currentResource}
-                      showUploadForm={showUploadForm}
-                    />
-                  ),
+                  ([folderName, folderData]) => {
+                    const filteredFolderData = filterResources(folderData);
+                    return (
+                      <TableFolder
+                        key={folderName}
+                        folderName={filteredFolderData.name}
+                        folderData={filteredFolderData}
+                        onResource={handleResourceAPI}
+                        currentResource={currentResource}
+                        showUploadForm={showUploadForm}
+                      />
+                    );
+                  },
                 )}
             </div>
           </div>
