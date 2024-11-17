@@ -1,4 +1,3 @@
-// ParsingButton.tsx
 "use client";
 import React from "react";
 
@@ -13,7 +12,7 @@ function ParsingButton() {
     }
 
     const formData = new FormData();
-    formData.append("myFile", file); // Ensure the field name is 'myFile'
+    formData.append("myFile", file);
 
     try {
       const response = await fetch("/api/convert", {
