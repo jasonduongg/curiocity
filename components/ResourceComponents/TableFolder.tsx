@@ -26,15 +26,18 @@ export default function TableFolder({
   showUploadForm,
 }: TableFolderProps) {
   const [isExpanded, setIsExpanded] = useState(false);
-  const [sortedResources, setSortedResources] = useState<[Resource, string][]>(
-    [],
+  const [sortedResources, setSortedResources] = useState<
+    [Resource, string, string][]
+  >([]);
+  const [sortBy, setSortBy] = useState<"none" | "dateAdded" | "lastOpened">(
+    "none",
   );
 
   useEffect(() => {
-    if (isExpanded) {
-      const fetchAndSortResources = async () => {
-        try {
-          const resourcesWithDates: [Resource, string][] = await Promise.all(
+    const fetchAndSortResources = async () => {
+      try {
+        const resourcesWithDates: [Resource, string, string][] =
+          await Promise.all(
             folderData.resources.map(async (resource) => {
               const response = await fetch(
                 `/api/db/resourcemeta?resourceId=${resource.id}`,
@@ -46,26 +49,34 @@ export default function TableFolder({
               const data = await response.json();
               console.log("testing data object", data);
               console.log("data date added", data.dateAdded);
-              return [resource, data.dateAdded];
+              console.log("data last opened", data.lastOpened);
+              return [resource, data.dateAdded, data.lastOpened];
             }),
           );
 
-          const sorted = resourcesWithDates.sort((a, b) => {
-            return new Date(b[1]).getTime() - new Date(a[1]).getTime();
-          });
+        const sorted = [...resourcesWithDates];
 
-          console.log("sorted resources: ", sorted);
-          setSortedResources(sorted);
-        } catch (error) {
-          console.log("Failed to fetch resource meta:", error);
+        if (sortBy === "dateAdded") {
+          sorted.sort(
+            (a, b) => new Date(b[1]).getTime() - new Date(a[1]).getTime(),
+          );
+        } else if (sortBy === "lastOpened") {
+          sorted.sort(
+            (a, b) => new Date(b[2]).getTime() - new Date(a[2]).getTime(),
+          );
         }
-      };
 
-      if (isExpanded) {
-        fetchAndSortResources();
+        console.log("sorted resources: ", sorted);
+        setSortedResources(sorted);
+      } catch (error) {
+        console.log("Failed to fetch resource meta:", error);
       }
+    };
+
+    if (isExpanded) {
+      fetchAndSortResources();
     }
-  }, [isExpanded, folderData.resources]);
+  }, [isExpanded, folderData.resources, sortBy]);
 
   const handleFolderClick = () => {
     setIsExpanded(!isExpanded);
@@ -80,15 +91,44 @@ export default function TableFolder({
         <p className="text-sm font-semibold text-textPrimary">{folderName}</p>
       </div>
       {isExpanded && (
+        <div className="flex gap-2 pb-2 pt-2">
+          <button
+            className={`rounded-sm px-1.5 py-0.5 text-xs font-medium ${
+              sortBy === "none" ? "bg-gray-700" : "bg-gray-600"
+            }`}
+            onClick={() => setSortBy("none")}
+          >
+            No Sort Filter
+          </button>
+          <button
+            className={`rounded-sm px-1.5 py-0.5 text-xs font-medium ${
+              sortBy === "dateAdded" ? "bg-gray-700" : "bg-gray-600"
+            }`}
+            onClick={() => setSortBy("dateAdded")}
+          >
+            Sort by Date Added
+          </button>
+          <button
+            className={`rounded-sm px-1.5 py-0.5 text-xs font-medium ${
+              sortBy === "lastOpened" ? "bg-gray-700" : "bg-gray-600"
+            }`}
+            onClick={() => setSortBy("lastOpened")}
+          >
+            Sort by Last Opened
+          </button>
+        </div>
+      )}
+
+      {isExpanded && (
         <div className="pt-1">
-          {sortedResources.map(([resource, dateAdded]) => (
+          {sortedResources.map(([resource, dateAdded, lastOpened]) => (
             <TableRow
               key={resource.id}
               icon={FileIcon}
               iconColor="white"
               title={resource.name}
               dateAdded={dateAdded || "Unknown"}
-              lastViewed={resource.lastViewed || "Unknown"}
+              lastViewed={lastOpened || "Unknown"}
               id={resource.id}
               isSelected={
                 currentResource?.id === resource.id && !showUploadForm
