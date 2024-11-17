@@ -147,7 +147,7 @@ export default function S3Button({
     if (onResourceUpload) onResourceUpload();
     cancelCallBack();
     setFileQueue([]);
-    setFileMarkdowns({});
+    // setFileMarkdowns({});
   };
 
   const handleCancelUpload = () => {
@@ -155,7 +155,7 @@ export default function S3Button({
     setIsNewFolder(false);
     setNewFolderName("");
     setPreviewResource(null);
-    setFileMarkdowns({});
+    // setFileMarkdowns({});
     cancelCallBack();
   };
 
