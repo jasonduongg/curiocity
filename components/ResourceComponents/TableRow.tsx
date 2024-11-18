@@ -22,11 +22,9 @@ export default function TableRow({
   isSelected,
   onResource,
 }: Props) {
-  console.log(dateAdded, lastViewed);
-
   const handleClick = async () => {
+    console.log(dateAdded, lastViewed);
     try {
-      // Step 1: Fetch resourceMeta data using resourceId
       const resourceMetaResponse = await fetch(
         `/api/db/resourcemeta?resourceId=${id}`,
       );
@@ -34,9 +32,7 @@ export default function TableRow({
         throw new Error("Failed to fetch resourceMeta");
       }
       const resourceMetaData = await resourceMetaResponse.json();
-      console.log("Fetched resourceMeta:", resourceMetaData);
 
-      // Step 2: Use the hash from resourceMeta to fetch the actual resource
       const resourceResponse = await fetch(
         `/api/db/resource?hash=${resourceMetaData.hash}`,
       );
@@ -44,10 +40,8 @@ export default function TableRow({
         throw new Error("Failed to fetch resource");
       }
       const resourceData: Resource = await resourceResponse.json();
-      console.log("Fetched resource:", resourceData);
 
-      // Step 3: Pass both resourceData and resourceMetaData to onResource
-      onResource(resourceData, resourceMetaData);
+      onResource(resourceData, resourceMetaData); // Pass data back to `onResource`
     } catch (error) {
       console.error("Error fetching resource data:", error);
     }
@@ -58,7 +52,7 @@ export default function TableRow({
       className={`flex h-full cursor-pointer items-center gap-2 rounded-lg border px-2 py-1 ${
         isSelected ? "border-blue-500" : "border-transparent"
       }`}
-      onClick={handleClick}
+      onClick={handleClick} // Trigger the click handler
     >
       <div className="h-5 w-5 flex-shrink-0">
         {Icon && (
