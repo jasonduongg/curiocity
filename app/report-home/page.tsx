@@ -149,6 +149,7 @@ export default function TestPage() {
                     {swapState ? (
                       <div className="h-full">
                         <TextEditor
+                          mode="full"
                           currentDocument={currentDocument}
                           swapState={handleBack}
                         />
