@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import TableRow from "@/components/ResourceComponents/TableRow";
 import { FileIcon } from "@radix-ui/react-icons";
 import { Resource } from "@/types/types";
-import { useDraggable } from "@dnd-kit/core";
+import { useDraggable, useDroppable } from "@dnd-kit/core";
 import { CSS } from "@dnd-kit/utilities";
 
 interface FolderData {
@@ -11,11 +11,12 @@ interface FolderData {
 }
 
 interface TableFolderProps {
+  folderKey: string;
   folderName: string;
   folderData: FolderData;
-  onResource: (resource: Resource) => void;
+  onResource: (resource: Resource, meta: any) => void;
   currentResource: Resource | null;
-  showUploadForm: boolean; // Add showUploadForm prop
+  showUploadForm: boolean;
 }
 
 function DraggableItem({
@@ -23,14 +24,19 @@ function DraggableItem({
   onResource,
   currentResource,
   showUploadForm,
+  sourceFolderKey,
 }: {
   resource: Resource;
-  onResource: (resource: Resource) => void;
+  onResource: (resource: Resource, meta: any) => void;
   currentResource: Resource | null;
   showUploadForm: boolean;
+  sourceFolderKey: string;
 }) {
   const { attributes, listeners, setNodeRef, transform, transition } =
-    useDraggable({ id: resource.id });
+    useDraggable({
+      id: resource.id,
+      data: { sourceFolderKey }, // Attach the source folder key
+    });
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -54,6 +60,7 @@ function DraggableItem({
 }
 
 function TableFolder({
+  folderKey,
   folderName,
   folderData,
   onResource,
@@ -66,10 +73,15 @@ function TableFolder({
     setIsExpanded(!isExpanded);
   };
 
+  const { setNodeRef, isOver } = useDroppable({ id: folderKey });
+
   return (
     <div className="mb-2">
       <div
-        className="cursor-pointer rounded-lg border-[1px] border-zinc-700 px-2 py-1 transition duration-300 hover:bg-gray-700"
+        ref={setNodeRef}
+        className={`cursor-pointer rounded-lg border-[1px] border-zinc-700 px-2 py-1 transition duration-300 hover:bg-gray-700 ${
+          isOver ? "bg-accentPrimary" : ""
+        }`}
         onClick={handleFolderClick}
       >
         <p className="text-sm font-semibold text-textPrimary">{folderName}</p>
@@ -83,6 +95,7 @@ function TableFolder({
               onResource={onResource}
               currentResource={currentResource}
               showUploadForm={showUploadForm}
+              sourceFolderKey={folderKey} // Pass the folder key to DraggableItem
             />
           ))}
         </div>

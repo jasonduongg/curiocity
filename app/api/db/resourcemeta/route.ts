@@ -196,3 +196,78 @@ export async function DELETE(request: Request) {
     });
   }
 }
+
+export async function PUT(request: Request) {
+  try {
+    const data = await request.json();
+    const { documentId, resourceId, sourceFolderName, targetFolderName } = data;
+
+    if (!documentId || !resourceId || !sourceFolderName || !targetFolderName) {
+      return new Response(JSON.stringify({ err: "Missing Essential Field" }), {
+        status: 400,
+      });
+    }
+
+    // Retrieve the document
+    const document = await getObject(client, documentId, documentTable);
+
+    if (!document.Item) {
+      return new Response(JSON.stringify({ err: "Document not found" }), {
+        status: 404,
+      });
+    }
+
+    const newDocument = AWS.DynamoDB.Converter.unmarshall(
+      document.Item,
+    ) as Document;
+
+    // Remove the resource from the source folder
+    const sourceFolder = newDocument.folders[sourceFolderName];
+    if (!sourceFolder) {
+      return new Response(JSON.stringify({ err: "Source folder not found" }), {
+        status: 404,
+      });
+    }
+
+    const resourceIndex = sourceFolder.resources.findIndex(
+      (resource) => resource.id === resourceId,
+    );
+
+    if (resourceIndex === -1) {
+      return new Response(
+        JSON.stringify({ err: "Resource not found in source folder" }),
+        {
+          status: 404,
+        },
+      );
+    }
+
+    const [movedResource] = sourceFolder.resources.splice(resourceIndex, 1);
+
+    // Add the resource to the target folder
+    if (!newDocument.folders[targetFolderName]) {
+      newDocument.folders[targetFolderName] = {
+        name: targetFolderName,
+        resources: [],
+      };
+    }
+
+    newDocument.folders[targetFolderName].resources.push(movedResource);
+
+    // Update the document in the database
+    const inputDocumentData = AWS.DynamoDB.Converter.marshall(newDocument);
+    await putObject(client, inputDocumentData, documentTable);
+
+    return new Response(
+      JSON.stringify({ msg: "Resource moved successfully" }),
+      {
+        status: 200,
+      },
+    );
+  } catch (error) {
+    console.error("Error in PUT request:", error);
+    return new Response(JSON.stringify({ err: "Internal server error" }), {
+      status: 500,
+    });
+  }
+}

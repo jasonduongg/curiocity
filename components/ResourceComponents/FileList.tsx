@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import TableFolder from "@/components/ResourceComponents/TableFolder";
 import ResourceViewer from "@/components/ResourceComponents/ResourceViewer";
 import S3Button from "./S3Button";
@@ -12,11 +12,11 @@ import {
 import { Resource, ResourceMeta } from "@/types/types";
 import {
   DndContext,
-  closestCenter,
   useSensor,
   useSensors,
   KeyboardSensor,
   PointerSensor,
+  pointerWithin,
 } from "@dnd-kit/core";
 
 type FolderData = {
@@ -41,10 +41,19 @@ function FileList({ currentDocument, onResourceUpload }: DocumentProps) {
   const [showConfirmCancelModal, setShowConfirmCancelModal] = useState(false);
   const [pendingResource, setPendingResource] = useState<Resource | null>(null);
 
+  // New state for folders
+  const [folders, setFolders] = useState<Record<string, FolderData>>({});
+
+  useEffect(() => {
+    if (currentDocument && currentDocument.folders) {
+      setFolders(currentDocument.folders);
+    }
+  }, [currentDocument]);
+
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: {
-        distance: 5, // Minimum drag distance in pixels before drag activates
+        distance: 5,
       },
     }),
     useSensor(KeyboardSensor),
@@ -53,10 +62,110 @@ function FileList({ currentDocument, onResourceUpload }: DocumentProps) {
   const handleDragEnd = ({ active, over }: { active: any; over: any }) => {
     if (!over) {
       console.log("Dropped outside a valid target");
-      return; // Exit if there is no valid target
+      return;
     }
 
-    console.log(active, over);
+    const activeId = active.id;
+    const overId = over.id;
+
+    if (activeId === overId) {
+      return;
+    }
+
+    setFolders((prevFolders) => {
+      const newFolders = { ...prevFolders };
+
+      let sourceFolderName = null;
+      let sourceFolderIndex = null;
+
+      // Find the source folder and resource index
+      for (const [folderKey, folderData] of Object.entries(newFolders)) {
+        const resourceIndex = folderData.resources.findIndex(
+          (resource) => resource.id === activeId,
+        );
+        if (resourceIndex !== -1) {
+          sourceFolderName = folderKey;
+          sourceFolderIndex = resourceIndex;
+          break;
+        }
+      }
+
+      if (sourceFolderName == null) {
+        console.error("Could not find source folder for resource", activeId);
+        return prevFolders;
+      }
+
+      // Deep copy the source folder data
+      const sourceFolderData = {
+        ...newFolders[sourceFolderName],
+        resources: [...newFolders[sourceFolderName].resources],
+      };
+
+      // Remove the resource from the source folder
+      const [resource] = sourceFolderData.resources.splice(
+        sourceFolderIndex,
+        1,
+      );
+
+      // Update the source folder in newFolders
+      newFolders[sourceFolderName] = sourceFolderData;
+
+      // Deep copy the target folder data
+      const targetFolderData = {
+        ...newFolders[overId],
+        resources: [...newFolders[overId].resources],
+      };
+
+      // Add the resource to the target folder
+      targetFolderData.resources.push(resource);
+
+      // Update the target folder in newFolders
+      newFolders[overId] = targetFolderData;
+
+      // **Make the API call to update the database**
+      updateResourceFolderInDB(
+        currentDocument.id,
+        resource.id,
+        sourceFolderName,
+        overId,
+      );
+
+      return newFolders;
+    });
+  };
+
+  const updateResourceFolderInDB = async (
+    documentId: string,
+    resourceId: string,
+    sourceFolderName: string,
+    targetFolderName: string,
+  ) => {
+    try {
+      const response = await fetch("/api/db/resourcemeta", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          documentId,
+          resourceId,
+          sourceFolderName,
+          targetFolderName,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error("Failed to update resource folder:", errorData.err);
+        return { success: false };
+      } else {
+        console.log("Resource folder updated successfully");
+        return { success: true };
+      }
+    } catch (error) {
+      console.error("Error updating resource folder:", error);
+      return { success: false };
+    }
   };
 
   const handleResourceAPI = (
@@ -159,22 +268,21 @@ function FileList({ currentDocument, onResourceUpload }: DocumentProps) {
             <div className="h-full w-full">
               <DndContext
                 sensors={sensors}
-                collisionDetection={closestCenter}
+                collisionDetection={pointerWithin}
                 onDragEnd={handleDragEnd}
               >
-                {currentDocument.folders &&
-                  Object.entries(currentDocument.folders).map(
-                    ([folderName, folderData]) => (
-                      <TableFolder
-                        key={folderName}
-                        folderName={folderData.name}
-                        folderData={folderData}
-                        onResource={handleResourceAPI}
-                        currentResource={currentResource}
-                        showUploadForm={showUploadForm}
-                      />
-                    ),
-                  )}
+                {folders &&
+                  Object.entries(folders).map(([folderKey, folderData]) => (
+                    <TableFolder
+                      key={folderKey}
+                      folderKey={folderKey}
+                      folderName={folderData.name}
+                      folderData={folderData}
+                      onResource={handleResourceAPI}
+                      currentResource={currentResource}
+                      showUploadForm={showUploadForm}
+                    />
+                  ))}
               </DndContext>
             </div>
           </div>
