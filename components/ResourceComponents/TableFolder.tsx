@@ -2,20 +2,7 @@ import React, { useState } from "react";
 import TableRow from "@/components/ResourceComponents/TableRow";
 import { FileIcon } from "@radix-ui/react-icons";
 import { Resource } from "@/types/types";
-import {
-  DndContext,
-  closestCenter,
-  useSensor,
-  useSensors,
-  KeyboardSensor,
-  PointerSensor,
-} from "@dnd-kit/core";
-import {
-  SortableContext,
-  arrayMove,
-  useSortable,
-  verticalListSortingStrategy,
-} from "@dnd-kit/sortable";
+import { useDraggable } from "@dnd-kit/core";
 import { CSS } from "@dnd-kit/utilities";
 
 interface FolderData {
@@ -31,19 +18,19 @@ interface TableFolderProps {
   showUploadForm: boolean; // Add showUploadForm prop
 }
 
-function SortableItem({
+function DraggableItem({
   resource,
   onResource,
   currentResource,
   showUploadForm,
 }: {
   resource: Resource;
-  onResource: (resource: Resource, resourceMeta: any) => void;
+  onResource: (resource: Resource) => void;
   currentResource: Resource | null;
   showUploadForm: boolean;
 }) {
   const { attributes, listeners, setNodeRef, transform, transition } =
-    useSortable({ id: resource.id });
+    useDraggable({ id: resource.id });
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -66,7 +53,7 @@ function SortableItem({
   );
 }
 
-export default function TableFolder({
+function TableFolder({
   folderName,
   folderData,
   onResource,
@@ -74,34 +61,9 @@ export default function TableFolder({
   showUploadForm,
 }: TableFolderProps) {
   const [isExpanded, setIsExpanded] = useState(false);
-  const [resources, setResources] = useState(folderData.resources);
-
-  const sensors = useSensors(
-    useSensor(PointerSensor, {
-      activationConstraint: {
-        distance: 5, // Minimum drag distance in pixels before drag activates
-      },
-    }),
-    useSensor(KeyboardSensor),
-  );
 
   const handleFolderClick = () => {
     setIsExpanded(!isExpanded);
-  };
-
-  const handleDragEnd = ({ active, over }: { active: any; over: any }) => {
-    if (!over) {
-      console.log("Dropped outside a valid target");
-      return; // Exit if there is no valid target
-    }
-
-    if (active.id !== over.id) {
-      setResources((items) => {
-        const oldIndex = items.findIndex((item) => item.id === active.id);
-        const newIndex = items.findIndex((item) => item.id === over.id);
-        return arrayMove(items, oldIndex, newIndex);
-      });
-    }
   };
 
   return (
@@ -114,28 +76,19 @@ export default function TableFolder({
       </div>
       {isExpanded && (
         <div className="pt-1">
-          <DndContext
-            sensors={sensors}
-            collisionDetection={closestCenter}
-            onDragEnd={handleDragEnd}
-          >
-            <SortableContext
-              items={resources}
-              strategy={verticalListSortingStrategy}
-            >
-              {resources.map((resource) => (
-                <SortableItem
-                  key={resource.id}
-                  resource={resource}
-                  onResource={onResource}
-                  currentResource={currentResource}
-                  showUploadForm={showUploadForm}
-                />
-              ))}
-            </SortableContext>
-          </DndContext>
+          {folderData.resources.map((resource) => (
+            <DraggableItem
+              key={resource.id}
+              resource={resource}
+              onResource={onResource}
+              currentResource={currentResource}
+              showUploadForm={showUploadForm}
+            />
+          ))}
         </div>
       )}
     </div>
   );
 }
+
+export default TableFolder;

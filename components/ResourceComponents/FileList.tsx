@@ -10,6 +10,14 @@ import {
   ResizablePanelGroup,
 } from "@/components/ui/resizable";
 import { Resource, ResourceMeta } from "@/types/types";
+import {
+  DndContext,
+  closestCenter,
+  useSensor,
+  useSensors,
+  KeyboardSensor,
+  PointerSensor,
+} from "@dnd-kit/core";
 
 type FolderData = {
   name: string;
@@ -32,6 +40,24 @@ function FileList({ currentDocument, onResourceUpload }: DocumentProps) {
   const [showUploadForm, setShowUploadForm] = useState(false);
   const [showConfirmCancelModal, setShowConfirmCancelModal] = useState(false);
   const [pendingResource, setPendingResource] = useState<Resource | null>(null);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 5, // Minimum drag distance in pixels before drag activates
+      },
+    }),
+    useSensor(KeyboardSensor),
+  );
+
+  const handleDragEnd = ({ active, over }: { active: any; over: any }) => {
+    if (!over) {
+      console.log("Dropped outside a valid target");
+      return; // Exit if there is no valid target
+    }
+
+    console.log(active, over);
+  };
 
   const handleResourceAPI = (
     resource: Resource,
@@ -131,19 +157,25 @@ function FileList({ currentDocument, onResourceUpload }: DocumentProps) {
           <div className="flex h-full w-full flex-col items-center p-5">
             <TextInput placeholder="Search Resource" />
             <div className="h-full w-full">
-              {currentDocument.folders &&
-                Object.entries(currentDocument.folders).map(
-                  ([folderName, folderData]) => (
-                    <TableFolder
-                      key={folderName}
-                      folderName={folderData.name}
-                      folderData={folderData}
-                      onResource={handleResourceAPI}
-                      currentResource={currentResource}
-                      showUploadForm={showUploadForm}
-                    />
-                  ),
-                )}
+              <DndContext
+                sensors={sensors}
+                collisionDetection={closestCenter}
+                onDragEnd={handleDragEnd}
+              >
+                {currentDocument.folders &&
+                  Object.entries(currentDocument.folders).map(
+                    ([folderName, folderData]) => (
+                      <TableFolder
+                        key={folderName}
+                        folderName={folderData.name}
+                        folderData={folderData}
+                        onResource={handleResourceAPI}
+                        currentResource={currentResource}
+                        showUploadForm={showUploadForm}
+                      />
+                    ),
+                  )}
+              </DndContext>
             </div>
           </div>
         </ResizablePanel>
