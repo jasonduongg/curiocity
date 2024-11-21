@@ -1,9 +1,7 @@
-// components/TableFolder.tsx
-
 import React, { useState } from "react";
 import TableRow from "@/components/ResourceComponents/TableRow";
 import { FileIcon } from "@radix-ui/react-icons";
-import { Resource } from "@/types/types";
+import { Resource, ResourceMeta } from "@/types/types";
 
 interface FolderData {
   name: string;
@@ -13,16 +11,19 @@ interface FolderData {
 interface TableFolderProps {
   folderName: string;
   folderData: FolderData;
-  onResource: (resource: Resource) => void;
+  onResource: (resource: Resource, meta: ResourceMeta) => void;
+  onNameUpdate: (resourceId: string, newName: string) => void;
   currentResource: Resource | null;
-  showUploadForm: boolean; // Add showUploadForm prop
+  showUploadForm: boolean;
+  currentResourceMeta: ResourceMeta | null;
 }
 
 export default function TableFolder({
   folderName,
   folderData,
   onResource,
-  currentResource,
+  onNameUpdate,
+  currentResourceMeta,
   showUploadForm,
 }: TableFolderProps) {
   const [isExpanded, setIsExpanded] = useState(false);
@@ -51,9 +52,10 @@ export default function TableFolder({
               lastViewed={resource.lastViewed || "Unknown"}
               id={resource.id}
               isSelected={
-                currentResource?.id === resource.id && !showUploadForm
+                currentResourceMeta?.id === resource.id && !showUploadForm
               }
               onResource={onResource}
+              onNameUpdate={onNameUpdate} // Pass the function here
             />
           ))}
         </div>

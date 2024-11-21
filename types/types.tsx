@@ -26,4 +26,5 @@ export interface ResourceMeta {
   notes: string;
   summary: string;
   tags: Array<string>;
+  documentId: string;
 }

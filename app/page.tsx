@@ -1,13 +1,9 @@
-import AddNote from "@/components/ResourceComponents/AddingNotes";
-import DeleteConfirmationModal from "@/components/ModalComponents/DeleteConfirmationModal";
 export default function Home() {
   return (
     <div className="flex h-screen flex-col space-y-4">
       <h1 className="text-2xl">Curiocity x WDB</h1>
       <div className="bg-gray-200">
         <h2> Components to integrate </h2>
-        <AddNote />
-        <DeleteConfirmationModal />
       </div>
       <div className="flex h-screen flex-col items-center justify-center">
         <h1 className="text-2xl">Design System </h1>

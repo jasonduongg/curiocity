@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react"; // Import useSession to access user session
 import NameYourReport from "@/components/DocumentComponents/newPrompt";
-import FileList from "@/components/ResourceComponents/FileList";
+import FileViewer from "@/components/ResourceComponents/FilesViewer";
 import NavBar from "@/components/GeneralComponents/NavBar";
 import TextEditor from "@/components/DocumentComponents/TextEditor";
 import AllDocumentsGrid from "@/components/DocumentComponents/AllDocumentsGrid";
@@ -31,14 +31,17 @@ type NewDocument = {
 export default function TestPage() {
   const { data: session } = useSession();
   const [allDocuments, setAllDocuments] = useState<NewDocument[]>([]);
-  console.log(allDocuments);
-  const [isSortedByLastOpened, setIsSortedByLastOpened] = useState(true); // Track sorting state
+  const [isSortedByLastOpened, setIsSortedByLastOpened] = useState(true);
   const [swapState, setSwapState] = useState(false);
   const [currentDocument, setCurrentDocument] = useState<
     NewDocument | undefined
   >(undefined);
-  const [fileListKey, setFileListKey] = useState(0);
   const [isModalOpen, setIsModalOpen] = useState(false);
+
+  const clearResourceViewer = () => {
+    setCurrentDocument(undefined); // Clear the current document
+    setFileListKey((prevKey) => prevKey + 1); // Reset FileViewer state
+  };
 
   const fetchDocuments = () => {
     if (!session?.user?.id) return;
@@ -61,20 +64,8 @@ export default function TestPage() {
     fetchDocuments();
   }, [session, isSortedByLastOpened]);
 
-  const toggleSortOrder = () => {
-    setIsSortedByLastOpened((prevState) => !prevState);
-  };
-
-  const handleBack = () => {
-    setSwapState(false);
-    fetchDocuments();
-    setCurrentDocument(undefined);
-    setFileListKey((prevKey) => prevKey + 1); // Increment key to reset FileList
-  };
-
   const handleGridItemClick = async (document: NewDocument) => {
     try {
-      // Fetch the document via your API
       const response = await fetch(`/api/db?id=${document.id}`, {
         method: "GET",
         headers: {
@@ -87,37 +78,33 @@ export default function TestPage() {
         return;
       }
 
-      // Parse the response and unmarshall DynamoDB data
       const dynamoResponse = await response.json();
       const unmarshalledData =
         AWS.DynamoDB.Converter.unmarshall(dynamoResponse);
 
-      console.log("Fetched and unmarshalled document:", unmarshalledData);
-
-      // Update the state with the fetched document
       setCurrentDocument(unmarshalledData);
       setSwapState(true);
 
-      // Update the lastOpened field via your API
-      const lastOpenedResponse = await fetch("/api/db/updateLastOpened", {
+      // Update the lastOpened field
+      await fetch("/api/db/updateLastOpened", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ id: document.id }),
       });
-
-      if (!lastOpenedResponse.ok) {
-        console.error(
-          "Failed to update lastOpened:",
-          lastOpenedResponse.statusText,
-        );
-        return;
-      }
-
-      const lastOpenedData = await lastOpenedResponse.json();
-      console.log("Updated lastOpened:", lastOpenedData);
     } catch (error) {
       console.error("Error handling grid item click:", error);
     }
+  };
+
+  const toggleSortOrder = () => {
+    setIsSortedByLastOpened((prevState) => !prevState);
+  };
+
+  const handleBack = () => {
+    setSwapState(false);
+    fetchDocuments();
+    setCurrentDocument(undefined);
+    setFileListKey((prevKey) => prevKey + 1); // Increment key to reset FileList
   };
 
   const handleCreateNewReport = () => {
@@ -139,6 +126,7 @@ export default function TestPage() {
       folders: {},
     };
 
+    // API call to create a new document in the database
     fetch("/api/db", {
       method: "POST",
       body: JSON.stringify(newDoc),
@@ -154,45 +142,40 @@ export default function TestPage() {
       .catch((error) => console.error("Error creating document:", error));
   };
 
-  const onResourceUpload = (documentId: string) => {
-    console.log(`Uploaded new resource for document ID: ${documentId}`);
-
-    fetch(`/api/db?id=${documentId}`, { method: "GET" })
-      .then((r) => r.json())
-      .then((data) => {
-        console.log("Raw DynamoDB response:", data);
-
-        const unmarshalledData = AWS.DynamoDB.Converter.unmarshall(data);
-        console.log("Unmarshalled data:", unmarshalledData);
-        setCurrentDocument(unmarshalledData);
-      })
-      .catch((error) => console.error("Error fetching document:", error));
-  };
-
   return (
     <section className="h-screen overscroll-contain bg-bgPrimary">
       <div className="flex h-full w-full flex-col items-start justify-start overflow-hidden">
         <NavBar />
         <ResizablePanelGroup direction="horizontal" className="flex-grow px-8">
           <ResizablePanel>
-            <div className="flex h-full w-full flex-col gap-4 overflow-hidden bg-bgPrimary p-4">
-              <div className="flex flex-grow flex-col gap-4 overflow-hidden rounded-xl border-[1px] border-zinc-700">
-                <div className="flex flex-grow flex-col overflow-hidden rounded-lg bg-bgSecondary">
-                  {swapState ? (
-                    <TextEditor
-                      currentDocument={currentDocument}
-                      swapState={handleBack}
-                    />
-                  ) : (
-                    <AllDocumentsGrid
-                      allDocuments={allDocuments}
-                      onDocumentClick={handleGridItemClick}
-                      refreshState={handleBack}
-                      onCreateNewReport={handleCreateNewReport}
-                      toggleSortOrder={toggleSortOrder}
-                      isSortedByLastOpened={isSortedByLastOpened}
-                    />
-                  )}
+            <div className="h-full w-full max-w-full gap-4 overflow-hidden bg-bgPrimary p-4">
+              <div className="max-w-1/2 h-full shrink grow basis-1/2 flex-col gap-4 overflow-hidden rounded-xl border-[1px] border-zinc-700">
+                <div className="h-full max-w-full grow flex-col overflow-hidden rounded-lg bg-bgSecondary">
+                  <div className="h-full max-w-full grow flex-col overflow-hidden border-zinc-700">
+                    {swapState ? (
+                      <div className="h-full">
+                        <TextEditor
+                          mode="full"
+                          currentDocument={currentDocument}
+                          swapState={() => {
+                            setSwapState(false);
+                            clearResourceViewer();
+                          }}
+                        />
+                      </div>
+                    ) : (
+                      <div className="h-full">
+                        <AllDocumentsGrid
+                          allDocuments={allDocuments}
+                          onDocumentClick={handleGridItemClick}
+                          refreshState={handleBack}
+                          onCreateNewReport={handleCreateNewReport}
+                          toggleSortOrder={toggleSortOrder} // Pass toggleSortOrder function
+                          isSortedByLastOpened={isSortedByLastOpened} // Pass current sorting state
+                        />
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
@@ -203,12 +186,9 @@ export default function TestPage() {
           <ResizablePanel>
             <div className="h-full w-full p-4">
               <div className="flex h-full flex-col rounded-xl border-[1px] border-zinc-700 bg-bgSecondary">
-                <FileList
-                  key={fileListKey}
+                <FileViewer
                   currentDocument={currentDocument}
-                  onResourceUpload={() =>
-                    onResourceUpload(currentDocument?.id || "")
-                  }
+                  setCurrentDocument={setCurrentDocument} // Pass the updater
                 />
               </div>
             </div>
@@ -216,14 +196,13 @@ export default function TestPage() {
         </ResizablePanelGroup>
       </div>
 
-      {/* Render the NameYourReport component as a modal */}
       {isModalOpen && (
         <NameYourReport
           onSave={(name) => {
-            createDocument(name);
-            setIsModalOpen(false);
+            createDocument(name); // Create a new document with the provided name
+            setIsModalOpen(false); // Close the modal
           }}
-          onCancel={() => setIsModalOpen(false)}
+          onCancel={() => setIsModalOpen(false)} // Close the modal without saving
         />
       )}
     </section>
