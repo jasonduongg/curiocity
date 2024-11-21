@@ -22,6 +22,7 @@ export default function TableRow({
   onResource,
 }: Props) {
   const handleClick = async () => {
+    console.log(dateAdded, lastViewed);
     try {
       const resourceMetaResponse = await fetch(
         `/api/db/resourcemeta?resourceId=${id}`,
@@ -40,6 +41,7 @@ export default function TableRow({
       const resourceData: Resource = await resourceResponse.json();
 
       onResource(resourceData, resourceMetaData);
+      
     } catch (error) {
       console.error("Error fetching resource data:", error);
     }
@@ -50,7 +52,7 @@ export default function TableRow({
       className={`flex h-full cursor-pointer items-center gap-2 rounded-lg border px-2 py-1 ${
         isSelected ? "border-blue-500" : "border-transparent"
       }`}
-      onClick={handleClick}
+      onClick={handleClick} // Trigger the click handler
     >
       <div className="h-5 w-5 flex-shrink-0">
         {Icon && (
