@@ -1,11 +1,9 @@
 import React, { useState } from "react";
 import TableRow from "@/components/ResourceComponents/TableRow";
 import { FileIcon } from "@radix-ui/react-icons";
-
 import { Resource, ResourceMeta } from "@/types/types";
 import { useDraggable, useDroppable } from "@dnd-kit/core";
 import { CSS } from "@dnd-kit/utilities";
-
 
 interface FolderData {
   name: string;
@@ -16,7 +14,7 @@ interface TableFolderProps {
   folderKey: string;
   folderName: string;
   folderData: FolderData;
-  onResource: (resource: Resource, meta: ResourceMeta) => void;
+  onResource: (resource: Resource, resourceMeta: ResourceMeta) => void;
   onNameUpdate: (resourceId: string, newName: string) => void;
   currentResource: Resource | null;
   showUploadForm: boolean;
@@ -29,17 +27,19 @@ function DraggableItem({
   currentResource,
   showUploadForm,
   sourceFolderKey,
+  onNameUpdate,
 }: {
   resource: Resource;
   onResource: (resource: Resource, meta: any) => void;
   currentResource: Resource | null;
   showUploadForm: boolean;
   sourceFolderKey: string;
+  onNameUpdate: () => void;
 }) {
   const { attributes, listeners, setNodeRef, transform, transition } =
     useDraggable({
       id: resource.id,
-      data: { sourceFolderKey }, // Attach the source folder key
+      data: { sourceFolderKey },
     });
 
   const style = {
@@ -58,6 +58,7 @@ function DraggableItem({
         id={resource.id}
         isSelected={currentResource?.id === resource.id && !showUploadForm}
         onResource={onResource}
+        onNameUpdate={onNameUpdate}
       />
     </div>
   );
@@ -98,7 +99,7 @@ function TableFolder({
               key={resource.id}
               resource={resource}
               onResource={onResource}
-              currentResource={currentResource}
+              currentResource={resource}
               showUploadForm={showUploadForm}
               sourceFolderKey={folderKey} // Pass the folder key to DraggableItem
               isSelected={

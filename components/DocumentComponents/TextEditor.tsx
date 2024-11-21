@@ -12,8 +12,8 @@ const ReactQuill = dynamic(() => import("react-quill"), { ssr: false });
 interface TextEditorProps {
   mode: "mini" | "full";
   currentDocument?: Document;
-  swapState: () => void;
   resourceMeta?: ResourceMeta;
+  handleBack: () => void;
   onNotesUpdate?: (resourceId: string, newNotes: string) => void; // Add callback prop
 }
 
@@ -21,7 +21,7 @@ const TextEditor = ({
   mode,
   currentDocument,
   resourceMeta,
-  swapState,
+  handleBack,
   onNotesUpdate,
 }: TextEditorProps) => {
   const [title, setTitle] = useState("");
@@ -184,7 +184,9 @@ const TextEditor = ({
             ) : (
               <div className="flex w-full flex-grow space-x-2 p-2">
                 <button
-                  onClick={swapState}
+                  onClick={() => {
+                    handleBack();
+                  }}
                   className="w-1/2 whitespace-nowrap rounded-md border border-zinc-700 bg-transparent px-2 py-1 text-sm text-white hover:bg-gray-700"
                 >
                   Back

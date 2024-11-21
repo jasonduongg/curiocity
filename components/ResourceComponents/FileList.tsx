@@ -1,10 +1,16 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { DndContext, useSensor, useSensors, PointerSensor, KeyboardSensor, pointerWithin } from "@dnd-kit/core";
+import {
+  DndContext,
+  useSensor,
+  useSensors,
+  PointerSensor,
+  KeyboardSensor,
+  pointerWithin,
+} from "@dnd-kit/core";
 import TextInput from "@/components/GeneralComponents/TextInput";
 import TableFolder from "@/components/ResourceComponents/TableFolder";
-import ResourceViewer from "@/components/ResourceComponents/ResourceViewer";
 import S3Button from "@/components/ResourceComponents/S3Button";
 import ConfirmCancelModal from "@/components/ModalComponents/ConfirmCancelModal";
 import { Resource, ResourceMeta } from "@/types/types";
@@ -20,16 +26,18 @@ interface FileListProps {
     folders?: Record<string, FolderData>;
   };
   onResourceUpload: () => void;
+  onResource: (resource: Resource, resourceMeta: ResourceMeta) => void;
 }
 
-const FileList: React.FC<FileListProps> = ({ currentDocument, onResourceUpload }) => {
+const FileList: React.FC<FileListProps> = ({
+  currentDocument,
+  onResourceUpload,
+  onResource,
+}) => {
   const [folders, setFolders] = useState<Record<string, FolderData>>({});
   const [currentResource, setCurrentResource] = useState<Resource | null>(null);
-  const [currentResourceMeta, setCurrentResourceMeta] = useState<ResourceMeta | null>(null);
   const [showUploadForm, setShowUploadForm] = useState(false);
   const [showConfirmCancelModal, setShowConfirmCancelModal] = useState(false);
-  const [pendingResource, setPendingResource] = useState<Resource | null>(null);
-  const [resourceChangeCount, setResourceChangeCount] = useState(0);
 
   // Initialize folders when currentDocument changes
   useEffect(() => {
@@ -41,7 +49,7 @@ const FileList: React.FC<FileListProps> = ({ currentDocument, onResourceUpload }
   // Sensors for drag-and-drop
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
-    useSensor(KeyboardSensor)
+    useSensor(KeyboardSensor),
   );
 
   // Handle drag-and-drop end event
@@ -61,7 +69,9 @@ const FileList: React.FC<FileListProps> = ({ currentDocument, onResourceUpload }
       let sourceFolderIndex = null;
 
       for (const [folderKey, folderData] of Object.entries(newFolders)) {
-        const resourceIndex = folderData.resources.findIndex((resource) => resource.id === activeId);
+        const resourceIndex = folderData.resources.findIndex(
+          (resource) => resource.id === activeId,
+        );
         if (resourceIndex !== -1) {
           sourceFolderName = folderKey;
           sourceFolderIndex = resourceIndex;
@@ -73,7 +83,10 @@ const FileList: React.FC<FileListProps> = ({ currentDocument, onResourceUpload }
 
       // Remove resource from source folder
       const sourceFolderData = { ...newFolders[sourceFolderName] };
-      const [resource] = sourceFolderData.resources.splice(sourceFolderIndex, 1);
+      const [resource] = sourceFolderData.resources.splice(
+        sourceFolderIndex,
+        1,
+      );
       newFolders[sourceFolderName] = sourceFolderData;
 
       // Add resource to target folder
@@ -82,7 +95,12 @@ const FileList: React.FC<FileListProps> = ({ currentDocument, onResourceUpload }
       newFolders[overId] = targetFolderData;
 
       // Update database
-      updateResourceFolderInDB(currentDocument?.id || "", resource.id, sourceFolderName, overId);
+      updateResourceFolderInDB(
+        currentDocument?.id || "",
+        resource.id,
+        sourceFolderName,
+        overId,
+      );
 
       return newFolders;
     });
@@ -93,13 +111,18 @@ const FileList: React.FC<FileListProps> = ({ currentDocument, onResourceUpload }
     documentId: string,
     resourceId: string,
     sourceFolderName: string,
-    targetFolderName: string
+    targetFolderName: string,
   ) => {
     try {
-      await fetch("/api/db/resourcemeta", {
+      await fetch("/api/db/resourcemeta/folders", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ documentId, resourceId, sourceFolderName, targetFolderName }),
+        body: JSON.stringify({
+          documentId,
+          resourceId,
+          sourceFolderName,
+          targetFolderName,
+        }),
       });
     } catch (error) {
       console.error("Error updating resource folder:", error);
@@ -107,16 +130,6 @@ const FileList: React.FC<FileListProps> = ({ currentDocument, onResourceUpload }
   };
 
   // Handle resource API
-  const handleResourceAPI = (resource: Resource, resourceMeta: ResourceMeta) => {
-    if (showUploadForm) {
-      setPendingResource(resource);
-      setShowConfirmCancelModal(true);
-    } else {
-      setCurrentResource(resource);
-      setCurrentResourceMeta(resourceMeta);
-      setResourceChangeCount((prev) => prev + 1);
-    }
-  };
 
   const confirmLeaveUploadForm = () => {
     setShowUploadForm(false);
@@ -131,11 +144,6 @@ const FileList: React.FC<FileListProps> = ({ currentDocument, onResourceUpload }
     setPendingResource(null);
   };
 
-  const openFileUploader = () => {
-    setCurrentResource(null);
-    setShowUploadForm(true);
-  };
-
   const cancelFileUploader = () => {
     setCurrentResource(null);
     setShowUploadForm(false);
@@ -146,7 +154,11 @@ const FileList: React.FC<FileListProps> = ({ currentDocument, onResourceUpload }
       <div className="flex h-full w-full flex-col">
         <TextInput placeholder="Search Resource" />
         <div className="h-full w-full overflow-auto">
-          <DndContext sensors={sensors} collisionDetection={pointerWithin} onDragEnd={handleDragEnd}>
+          <DndContext
+            sensors={sensors}
+            collisionDetection={pointerWithin}
+            onDragEnd={handleDragEnd}
+          >
             {folders &&
               Object.entries(folders).map(([folderKey, folderData]) => (
                 <TableFolder
@@ -154,7 +166,7 @@ const FileList: React.FC<FileListProps> = ({ currentDocument, onResourceUpload }
                   folderKey={folderKey}
                   folderName={folderData.name}
                   folderData={folderData}
-                  onResource={handleResourceAPI}
+                  onResource={onResource}
                   currentResource={currentResource}
                   showUploadForm={showUploadForm}
                 />

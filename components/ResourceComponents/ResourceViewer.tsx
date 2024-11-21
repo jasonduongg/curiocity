@@ -80,7 +80,7 @@ export default function ResourceViewer({
     }
 
     try {
-      const response = await fetch(`/api/db/resourcemeta`, {
+      const response = await fetch(`/api/db/resourcemeta/name`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -94,12 +94,9 @@ export default function ResourceViewer({
         throw new Error("Failed to update resource name.");
       }
 
-      const updatedResource = await response.json();
-      console.log("Resource name updated successfully:", updatedResource);
-
       // Call the onNameUpdate callback to update the list
       if (onResourceNameUpdate) {
-        onResourceNameUpdate(resourceMeta.id, resourceName);
+        onResourceNameUpdate();
       }
 
       setIsEditingName(false);

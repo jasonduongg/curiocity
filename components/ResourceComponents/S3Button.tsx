@@ -13,7 +13,7 @@ interface S3ButtonProps {
   folderName: string;
   possibleFolders?: Record<string, { name: string }>;
   onResourceUpload?: () => void;
-  cancelCallBack: () => void;
+  onCancel: () => void;
 }
 
 export default function S3Button({
@@ -21,7 +21,7 @@ export default function S3Button({
   folderName,
   possibleFolders,
   onResourceUpload,
-  cancelCallBack,
+  onCancel,
 }: S3ButtonProps) {
   const [selectedFolder, setSelectedFolder] = useState(folderName);
   const [isNewFolder, setIsNewFolder] = useState(false);
@@ -145,18 +145,18 @@ export default function S3Button({
 
     setIsUploading(false);
     if (onResourceUpload) onResourceUpload();
-    cancelCallBack();
+    onCancel();
     setFileQueue([]);
     // setFileMarkdowns({});
   };
 
   const handleCancelUpload = () => {
+    onCancel();
     setFileQueue([]);
     setIsNewFolder(false);
     setNewFolderName("");
     setPreviewResource(null);
     // setFileMarkdowns({});
-    cancelCallBack();
   };
 
   const handleFolderChange = (folderName: string) => {
@@ -165,7 +165,7 @@ export default function S3Button({
   };
 
   return (
-    <div className="mt-2 flex h-full flex-col">
+    <div className="flex h-full flex-col">
       <div className="flex items-center space-x-2 p-2">
         <p className="text-sm text-white">Select Folder:</p>
         {!isNewFolder ? (

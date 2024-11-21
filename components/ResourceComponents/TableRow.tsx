@@ -1,5 +1,5 @@
 import React from "react";
-import { Resource } from "@/types/types";
+import { Resource, ResourceMeta } from "@/types/types";
 
 interface Props {
   icon: React.ComponentType<any>;
@@ -9,7 +9,8 @@ interface Props {
   lastViewed: string;
   id: string;
   isSelected: boolean;
-  onResource: (url: Resource, meta: any) => void;
+  onResource: (resource: Resource, resourceMeta: ResourceMeta) => void;
+
   onNameUpdate: (resourceId: string, newName: string) => void;
 }
 
@@ -22,7 +23,6 @@ export default function TableRow({
   onResource,
 }: Props) {
   const handleClick = async () => {
-    console.log(dateAdded, lastViewed);
     try {
       const resourceMetaResponse = await fetch(
         `/api/db/resourcemeta?resourceId=${id}`,
@@ -41,7 +41,6 @@ export default function TableRow({
       const resourceData: Resource = await resourceResponse.json();
 
       onResource(resourceData, resourceMetaData);
-      
     } catch (error) {
       console.error("Error fetching resource data:", error);
     }
