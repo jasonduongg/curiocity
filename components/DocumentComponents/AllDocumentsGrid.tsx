@@ -7,6 +7,7 @@ interface AllDocumentGridProps {
   allDocuments: Document[];
   onDocumentClick: (document: Document) => void;
   onCreateNewReport: () => void;
+  onCreateFolder: () => void; // Add a prop for creating a folder
   refreshState: () => void;
   toggleSortOrder: () => void; // Add a prop to toggle sort order
   isSortedByLastOpened: boolean; // Prop to track current sorting state
@@ -16,6 +17,7 @@ export default function AllDocumentGrid({
   allDocuments,
   onDocumentClick,
   onCreateNewReport,
+  onCreateFolder,
   refreshState,
   toggleSortOrder,
   isSortedByLastOpened,
@@ -39,7 +41,16 @@ export default function AllDocumentGrid({
               onChange={(e) => setSearchQuery(e.target.value)}
             />
           </div>
-
+          <div className="w-full px-2 py-4">
+            <div
+              className="flex h-10 w-auto cursor-pointer items-center justify-center rounded-xl border-[1px] border-textSecondary px-4 duration-300 ease-in-out hover:bg-bgPrimary"
+              onClick={onCreateFolder}
+            >
+              <p className="whitespace-nowrap text-sm text-textPrimary">
+                Create Document Folder
+              </p>
+            </div>
+          </div>
           <div className="flex flex-row space-x-2">
             <div className="w-full px-2 py-4">
               <div

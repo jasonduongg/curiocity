@@ -26,6 +26,17 @@ type NewDocument = {
   folders: Record<string, FolderData>;
 };
 
+// interface Folder {
+//   id: string;
+//   name: string;
+//   isFolder: true;
+//   children: Document[];
+//   dateAdded: string;
+//   lastOpened: string | null;
+// }
+
+// type DocumentOrFolder = Document | Folder;
+
 export default function TestPage() {
   const { data: session } = useSession();
   const [allDocuments, setAllDocuments] = useState<NewDocument[]>([]);
@@ -89,6 +100,8 @@ export default function TestPage() {
   const handleCreateNewReport = () => {
     setIsModalOpen(true); // Open the modal to enter a new report name
   };
+
+  // const handleCreateNewFolder = () => {};
 
   const createDocument = (name: string) => {
     if (!session?.user?.id) {
