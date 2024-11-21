@@ -46,6 +46,7 @@ export type Document = {
   text: string;
   dateAdded: string;
   lastOpened: string;
+  tags: Array<string>;
 };
 
 export type Folder = {
@@ -190,6 +191,7 @@ export async function POST(request: Request) {
     dateAdded: data.dateAdded,
     ownerID: data?.ownerID || "jason",
     lastOpened: data?.lastOpened || "now",
+    tags: [],
   };
 
   console.log(Item);

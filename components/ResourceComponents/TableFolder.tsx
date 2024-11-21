@@ -1,9 +1,11 @@
 import React, { useState } from "react";
 import TableRow from "@/components/ResourceComponents/TableRow";
 import { FileIcon } from "@radix-ui/react-icons";
-import { Resource } from "@/types/types";
+
+import { Resource, ResourceMeta } from "@/types/types";
 import { useDraggable, useDroppable } from "@dnd-kit/core";
 import { CSS } from "@dnd-kit/utilities";
+
 
 interface FolderData {
   name: string;
@@ -14,9 +16,11 @@ interface TableFolderProps {
   folderKey: string;
   folderName: string;
   folderData: FolderData;
-  onResource: (resource: Resource, meta: any) => void;
+  onResource: (resource: Resource, meta: ResourceMeta) => void;
+  onNameUpdate: (resourceId: string, newName: string) => void;
   currentResource: Resource | null;
   showUploadForm: boolean;
+  currentResourceMeta: ResourceMeta | null;
 }
 
 function DraggableItem({
@@ -64,7 +68,8 @@ function TableFolder({
   folderName,
   folderData,
   onResource,
-  currentResource,
+  onNameUpdate,
+  currentResourceMeta,
   showUploadForm,
 }: TableFolderProps) {
   const [isExpanded, setIsExpanded] = useState(false);
@@ -96,6 +101,10 @@ function TableFolder({
               currentResource={currentResource}
               showUploadForm={showUploadForm}
               sourceFolderKey={folderKey} // Pass the folder key to DraggableItem
+              isSelected={
+                currentResourceMeta?.id === resource.id && !showUploadForm
+              }
+              onNameUpdate={onNameUpdate} // Pass the function here
             />
           ))}
         </div>

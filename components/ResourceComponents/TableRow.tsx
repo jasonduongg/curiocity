@@ -10,14 +10,13 @@ interface Props {
   id: string;
   isSelected: boolean;
   onResource: (url: Resource, meta: any) => void;
+  onNameUpdate: (resourceId: string, newName: string) => void;
 }
 
 export default function TableRow({
   icon: Icon,
   iconColor,
   title,
-  dateAdded,
-  lastViewed,
   id,
   isSelected,
   onResource,
@@ -25,7 +24,6 @@ export default function TableRow({
   const handleClick = async () => {
     console.log(dateAdded, lastViewed);
     try {
-      // Step 1: Fetch resourceMeta data using resourceId
       const resourceMetaResponse = await fetch(
         `/api/db/resourcemeta?resourceId=${id}`,
       );
@@ -34,7 +32,6 @@ export default function TableRow({
       }
       const resourceMetaData = await resourceMetaResponse.json();
 
-      // Step 2: Use the hash from resourceMeta to fetch the actual resource
       const resourceResponse = await fetch(
         `/api/db/resource?hash=${resourceMetaData.hash}`,
       );
@@ -43,8 +40,8 @@ export default function TableRow({
       }
       const resourceData: Resource = await resourceResponse.json();
 
-      // Step 3: Pass both resourceData and resourceMetaData to onResource
-      onResource(resourceData, resourceMetaData); // Pass data back to `onResource`
+      onResource(resourceData, resourceMetaData);
+      
     } catch (error) {
       console.error("Error fetching resource data:", error);
     }

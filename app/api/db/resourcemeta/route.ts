@@ -75,6 +75,7 @@ export async function POST(request: Request) {
       notes: data.notes || "",
       summary: data.summary || "",
       tags: data.tags || [],
+      documentId: data.documentId,
     };
 
     const resourceMetaCompressed: ResourceMetaCompressed = {
@@ -200,10 +201,14 @@ export async function DELETE(request: Request) {
 export async function PUT(request: Request) {
   try {
     const data = await request.json();
-    const { documentId, resourceId, sourceFolderName, targetFolderName } = data;
+    const { documentId, resourceId, sourceFolderName, targetFolderName, id, name, notes, summary, tags } = data;
 
     if (!documentId || !resourceId || !sourceFolderName || !targetFolderName) {
       return new Response(JSON.stringify({ err: "Missing Essential Field" }), {
+
+    if (!id) {
+      console.error("Error: Missing resourceMeta ID in PUT request");
+      return new Response(JSON.stringify({ err: "Missing resourceMeta ID" }), {
         status: 400,
       });
     }
@@ -212,7 +217,14 @@ export async function PUT(request: Request) {
     const document = await getObject(client, documentId, documentTable);
 
     if (!document.Item) {
-      return new Response(JSON.stringify({ err: "Document not found" }), {
+      return new Response(JSON.stringify({ err: "Document not found" }), 
+                          
+    // Retrieve the existing resourceMeta
+    const resourceMeta = await getObject(client, id, resourceMetaTable);
+
+    if (!resourceMeta.Item) {
+      console.error("Error: ResourceMeta not found with ID:", id);
+      return new Response(JSON.stringify({ err: "ResourceMeta not found" }), {
         status: 404,
       });
     }
@@ -266,6 +278,84 @@ export async function PUT(request: Request) {
     );
   } catch (error) {
     console.error("Error in PUT request:", error);
+
+    const existingResourceMeta = AWS.DynamoDB.Converter.unmarshall(
+      resourceMeta.Item,
+    ) as ResourceMeta;
+    console.log("Existing resourceMeta:", existingResourceMeta);
+
+    // Update fields if provided
+    const updatedResourceMeta = {
+      ...existingResourceMeta,
+      name: name || existingResourceMeta.name,
+      notes: notes || existingResourceMeta.notes,
+      summary: summary || existingResourceMeta.summary,
+      tags: tags || existingResourceMeta.tags,
+      updatedAt: new Date().toISOString(),
+    };
+
+    console.log("Updated resourceMeta:", updatedResourceMeta);
+
+    // Save updated resourceMeta back to DynamoDB
+    const input = AWS.DynamoDB.Converter.marshall(updatedResourceMeta);
+    await putObject(client, input, resourceMetaTable);
+
+    // Update document table to reflect the new name in folder structure
+    const documentId = updatedResourceMeta.documentId;
+    if (documentId) {
+      console.log("Updating folder structure in document table...");
+
+      // Retrieve the document
+      const document = await getObject(client, documentId, documentTable);
+      if (!document.Item) {
+        console.error("Error: Document not found with documentId:", documentId);
+        return new Response(JSON.stringify({ err: "Document not found" }), {
+          status: 404,
+        });
+      }
+
+      const existingDocument = AWS.DynamoDB.Converter.unmarshall(
+        document.Item,
+      ) as Document;
+
+      console.log("Existing document:", existingDocument);
+
+      // Locate the resource in the folder structure and update its name
+      const updatedFolders = { ...existingDocument.folders };
+      let resourceFound = false;
+
+      for (const folderName in updatedFolders) {
+        const folder = updatedFolders[folderName];
+        const updatedResources = folder.resources.map((resource) => {
+          if (resource.id === id) {
+            resourceFound = true;
+            return { ...resource, name: name || resource.name };
+          }
+          return resource;
+        });
+        updatedFolders[folderName] = { ...folder, resources: updatedResources };
+      }
+
+      if (resourceFound) {
+        // Update the document
+        const updatedDocument = {
+          ...existingDocument,
+          folders: updatedFolders,
+          updatedAt: new Date().toISOString(),
+        };
+
+        const documentInput = AWS.DynamoDB.Converter.marshall(updatedDocument);
+        await putObject(client, documentInput, documentTable);
+
+        console.log("Document folder structure updated:", updatedDocument);
+      } else {
+        console.warn("ResourceMeta not found in any document folder.");
+      }
+    }
+
+    return new Response(JSON.stringify(updatedResourceMeta), { status: 200 });
+  } catch (error) {
+    console.error("Error in PUT request for resourceMeta:", error);
     return new Response(JSON.stringify({ err: "Internal server error" }), {
       status: 500,
     });
