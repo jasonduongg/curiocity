@@ -1,82 +1,73 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
-import TextEditor from "../DocumentComponents/TextEditor";
+import React, { useState, useEffect } from "react";
+import TextEditor from "@/components/DocumentComponents/TextEditor";
+import { ResourceMeta } from "@/types/types";
 
 interface NotesEditorProps {
-  resourceMetaId: string;
+  resourceMeta: ResourceMeta;
+  handleBack: () => void;
 }
 
-const NotesEditor: React.FC<NotesEditorProps> = ({ resourceMetaId }) => {
-  const [notes, setNotes] = useState<string>(""); // State to hold the notes
-  const [loading, setLoading] = useState<boolean>(true); // Loading state
-  const [error, setError] = useState<string | null>(null); // Error state
+const NotesEditor: React.FC<NotesEditorProps> = ({
+  resourceMeta,
+  handleBack,
+}) => {
+  const [notes, setNotes] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
 
-  // Fetch notes for the given resourceMetaId
+  // Fetch notes using resourceMeta.id
   useEffect(() => {
     const fetchNotes = async () => {
-      setLoading(true);
+      setIsLoading(true);
       setError(null);
-
       try {
         const response = await fetch(
-          `/api/db/resourcemeta/notes?id=${resourceMetaId}`,
+          `/api/db/resourcemeta/notes?id=${resourceMeta.id}`,
         );
         if (!response.ok) {
           throw new Error(`Failed to fetch notes: ${response.statusText}`);
         }
         const data = await response.json();
-        setNotes(data.notes || ""); // Assume the API returns { notes: string }
-      } catch (error) {
-        console.error(error);
-        setError("Failed to load notes. Please try again later.");
+        setNotes(data.notes || ""); // Fallback to an empty string if no notes exist
+      } catch (err) {
+        console.error(err);
+        setError("Failed to load notes. Please try again.");
       } finally {
-        setLoading(false);
+        setIsLoading(false);
       }
     };
 
     fetchNotes();
-  }, [resourceMetaId]);
+  }, [resourceMeta.id]);
 
-  // Save updated notes to the API
-  const saveNotes = async (updatedNotes: string) => {
-    try {
-      const response = await fetch(`/api/db/resourcemeta/notes`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id: resourceMetaId, notes: updatedNotes }),
-      });
-
-      if (!response.ok) {
-        throw new Error(`Failed to save notes: ${response.statusText}`);
-      }
-      console.log("Notes saved successfully.");
-    } catch (error) {
-      console.error(error);
-      alert("Failed to save notes. Please try again.");
-    }
-  };
-
-  // Render loading/error state
-  if (loading) {
-    return <p className="text-gray-500">Loading notes...</p>;
+  // Render loading/error states
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center">
+        <p className="text-gray-500">Loading notes...</p>
+      </div>
+    );
   }
 
   if (error) {
-    return <p className="text-red-500">{error}</p>;
+    return (
+      <div className="flex items-center justify-center">
+        <p className="text-red-500">{error}</p>
+      </div>
+    );
   }
 
-  // Render the TextEditor with the fetched notes
+  // Render the TextEditor once notes are loaded
   return (
-    <TextEditor
-      mode="mini"
-      resourceMeta={{ id: resourceMetaId, notes }} // Pass the notes into resourceMeta
-      swapState={() => console.log("Closing editor...")} // Handle closing editor logic
-      onSave={(updatedNotes: string) => {
-        setNotes(updatedNotes); // Update local state
-        saveNotes(updatedNotes); // Save to API
-      }}
-    />
+    <div className="flex flex-col py-2 text-white">
+      <TextEditor
+        mode="mini"
+        source={{ ...resourceMeta, notes }} // Pass fetched notes to TextEditor
+        generalCallback={handleBack}
+      />
+    </div>
   );
 };
 

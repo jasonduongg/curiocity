@@ -11,67 +11,59 @@ const ReactQuill = dynamic(() => import("react-quill"), { ssr: false });
 
 interface TextEditorProps {
   mode: "mini" | "full";
-  currentDocument?: Document;
-  resourceMeta?: ResourceMeta;
-  handleBack: () => void;
-  onNotesUpdate?: (resourceId: string, newNotes: string) => void; // Add callback prop
+  source: Document | ResourceMeta | undefined;
+  generalCallback: () => void;
 }
 
-const TextEditor = ({
-  mode,
-  currentDocument,
-  resourceMeta,
-  handleBack,
-  onNotesUpdate,
-}: TextEditorProps) => {
+const TextEditor = ({ mode, source, generalCallback }: TextEditorProps) => {
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [id, setID] = useState<string | undefined>("");
+
   const [isUploading, setIsUploading] = useState(false);
   const [uploadComplete, setUploadComplete] = useState(false);
 
   useEffect(() => {
-    if (mode === "full" && currentDocument) {
-      setTitle(currentDocument.name);
-      setContent(currentDocument.text);
-      setID(currentDocument.id);
-    } else if (mode === "mini" && resourceMeta) {
+    if (mode === "full") {
+      const document = source as Document;
+      setTitle(document.name);
+      setContent(document.text);
+      setID(document.id);
+    } else if (mode === "mini") {
+      const resourceMeta = source as ResourceMeta;
       setContent(resourceMeta.notes || "");
+      setID(resourceMeta.id);
     }
-  }, [mode, currentDocument, resourceMeta]);
+  }, [mode, source]);
 
   const handleSave = async () => {
-    if (mode === "full" && (!title || !content)) {
-      alert("Please provide both a title and content for the document.");
-      return;
-    }
-
     setIsUploading(true);
     setUploadComplete(false);
 
     try {
-      if (mode === "mini" && resourceMeta) {
+      if (mode === "mini") {
+        const resourceMeta = source as ResourceMeta;
+        const updatedResourceMeta: ResourceMeta = {
+          ...resourceMeta,
+          notes: content,
+        };
         await fetch(`/api/db/ResourceMetaNotes`, {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ id: resourceMeta.id, notes: content }),
+          body: JSON.stringify({ id: updatedResourceMeta.id, notes: content }),
         });
       } else if (mode === "full") {
+        const document = source as Document;
+        const updatedDocument: Document = {
+          ...document,
+          name: title,
+          text: content,
+        };
         await fetch("/api/db", {
           method: id ? "PUT" : "POST",
-          body: JSON.stringify({
-            id: id || undefined,
-            name: title,
-            text: content,
-            files: [],
-            dateAdded: new Date().toISOString(),
-            lastOpened: new Date().toISOString(),
-          } as Document),
           headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(updatedDocument),
         });
-      }
-      if (onNotesUpdate) {
-        onNotesUpdate(resourceMeta.id, content);
       }
       setUploadComplete(true);
     } catch (error) {
@@ -110,7 +102,10 @@ const TextEditor = ({
     return (
       <div className="flex h-full max-w-full flex-col rounded-xl border-[1px] border-zinc-700 text-white">
         {id && (
-          <TagSection documentId={id} initialTags={currentDocument?.tags} />
+          <TagSection
+            documentId={id}
+            initialTags={(source as Document)?.tags}
+          />
         )}
         <div className="flex flex-grow flex-col">
           <input
@@ -174,19 +169,13 @@ const TextEditor = ({
           <div className="flex h-[10vh] items-center justify-end space-x-4 rounded-b-xl bg-bgSecondary p-4">
             {isUploading ? (
               <div className="flex items-center">
-                <div className="loader mr-2"></div>
-                <span>Uploading...</span>
+                <div className="loader mr-2 h-5 w-5 animate-spin rounded-full border-2 border-gray-400 border-t-transparent"></div>
+                <span className="text-gray-400">Uploading...</span>
               </div>
-            ) : uploadComplete ? (
-              <span className="font-bold text-green-500">
-                &#10003; Uploaded!
-              </span>
             ) : (
-              <div className="flex w-full flex-grow space-x-2 p-2">
+              <>
                 <button
-                  onClick={() => {
-                    handleBack();
-                  }}
+                  onClick={() => generalCallback()}
                   className="w-1/2 whitespace-nowrap rounded-md border border-zinc-700 bg-transparent px-2 py-1 text-sm text-white hover:bg-gray-700"
                 >
                   Back
@@ -197,7 +186,7 @@ const TextEditor = ({
                 >
                   Save
                 </button>
-              </div>
+              </>
             )}
           </div>
         </div>
@@ -211,15 +200,30 @@ const TextEditor = ({
         <textarea
           value={content}
           onChange={(e) => setContent(e.target.value)}
-          className="w-full rounded-md border-[1px] border-zinc-700 bg-transparent px-2 py-2 text-xs text-white"
+          className="fw-full rounded-md border-[1px] border-zinc-700 bg-transparent px-2 py-2 text-xs text-white"
         />
-        <div className="mt-2 flex w-full justify-end">
-          <button
-            onClick={handleSave}
-            className="rounded-md border-[1px] border-zinc-700 px-2 py-1 text-xs text-white"
-          >
-            Save Notes
-          </button>
+        <div className="mt-2 flex justify-center space-x-4">
+          {isUploading ? (
+            <div className="flex items-center">
+              <div className="loader mr-2 h-5 w-5 animate-spin rounded-full border-2 border-gray-400 border-t-transparent"></div>
+              <span className="text-gray-400">Uploading...</span>
+            </div>
+          ) : (
+            <>
+              <button
+                onClick={() => generalCallback()}
+                className="w-1/2 rounded-md border-[1px] border-zinc-700 px-2 py-1 text-xs text-white"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleSave}
+                className="w-1/2 rounded-md border-[1px] border-zinc-700 px-2 py-1 text-xs text-white"
+              >
+                Save Notes
+              </button>
+            </>
+          )}
         </div>
       </div>
     );

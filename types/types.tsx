@@ -7,11 +7,21 @@ export interface Resource {
   url: string;
 }
 
+export interface ResourceCompressed {
+  name: string;
+  id: string;
+}
+
+export interface FolderData {
+  name: string;
+  resources: Array<ResourceCompressed>;
+}
+
 export interface Document {
   id?: string;
   name: string;
-  files: Array<string>;
   text: string;
+  folders: Array<FolderData>;
   dateAdded: string;
   lastOpened: string;
   tags: Array<string>;

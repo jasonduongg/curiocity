@@ -1,111 +1,63 @@
-import React, { useState } from "react";
+import React from "react";
+import { useDroppable } from "@dnd-kit/core";
+import { FolderData, ResourceMeta } from "@/types/types";
 import TableRow from "@/components/ResourceComponents/TableRow";
-import { FileIcon } from "@radix-ui/react-icons";
-import { Resource, ResourceMeta } from "@/types/types";
-import { useDraggable, useDroppable } from "@dnd-kit/core";
-import { CSS } from "@dnd-kit/utilities";
-
-interface FolderData {
-  name: string;
-  resources: Resource[];
-}
 
 interface TableFolderProps {
-  folderKey: string;
-  folderName: string;
   folderData: FolderData;
-  onResource: (resource: Resource, resourceMeta: ResourceMeta) => void;
-  onNameUpdate: (resourceId: string, newName: string) => void;
-  currentResource: Resource | null;
-  showUploadForm: boolean;
+  isExpanded: boolean; // Receive expanded state
+  onToggle: () => void; // Handle folder toggle
+  onResourceClickCallBack: (resourceId: string) => void;
+  onResourceMoveCallBack: (
+    resourceId: string,
+    sourceFolder: string,
+    targetFolder: string,
+  ) => void;
   currentResourceMeta: ResourceMeta | null;
 }
 
-function DraggableItem({
-  resource,
-  onResource,
-  currentResource,
-  showUploadForm,
-  sourceFolderKey,
-  onNameUpdate,
-}: {
-  resource: Resource;
-  onResource: (resource: Resource, meta: any) => void;
-  currentResource: Resource | null;
-  showUploadForm: boolean;
-  sourceFolderKey: string;
-  onNameUpdate: () => void;
-}) {
-  const { attributes, listeners, setNodeRef, transform, transition } =
-    useDraggable({
-      id: resource.id,
-      data: { sourceFolderKey },
-    });
-
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-  };
-
-  return (
-    <div ref={setNodeRef} style={style} {...attributes} {...listeners}>
-      <TableRow
-        icon={FileIcon}
-        iconColor="white"
-        title={resource.name}
-        dateAdded={resource.dateAdded || "Unknown"}
-        lastViewed={resource.lastViewed || "Unknown"}
-        id={resource.id}
-        isSelected={currentResource?.id === resource.id && !showUploadForm}
-        onResource={onResource}
-        onNameUpdate={onNameUpdate}
-      />
-    </div>
-  );
-}
-
 function TableFolder({
-  folderKey,
-  folderName,
   folderData,
-  onResource,
-  onNameUpdate,
+  isExpanded,
+  onToggle,
+  onResourceClickCallBack,
   currentResourceMeta,
-  showUploadForm,
 }: TableFolderProps) {
-  const [isExpanded, setIsExpanded] = useState(false);
-
-  const handleFolderClick = () => {
-    setIsExpanded(!isExpanded);
-  };
-
-  const { setNodeRef, isOver } = useDroppable({ id: folderKey });
+  const { setNodeRef, isOver } = useDroppable({
+    id: folderData.name,
+    data: { targetFolderName: folderData.name },
+  });
 
   return (
     <div className="mb-2">
       <div
         ref={setNodeRef}
-        className={`cursor-pointer rounded-lg border-[1px] border-zinc-700 px-2 py-1 transition duration-300 hover:bg-gray-700 ${
+        className={`flex cursor-pointer items-center rounded-lg border-[1px] border-zinc-700 px-2 py-1 transition duration-300 hover:bg-gray-700 ${
           isOver ? "bg-accentPrimary" : ""
         }`}
-        onClick={handleFolderClick}
+        onClick={onToggle} // Use onToggle for expanding/collapsing
       >
-        <p className="text-sm font-semibold text-textPrimary">{folderName}</p>
+        <span
+          className={`mr-2 transform transition-transform ${
+            isExpanded ? "rotate-90" : "rotate-0"
+          }`}
+        >
+          ▶
+        </span>
+        <p className="text-sm font-semibold text-textPrimary">
+          {folderData.name}
+        </p>
       </div>
+
       {isExpanded && (
-        <div className="pt-1">
+        <div className="pl-4 pt-1">
           {folderData.resources.map((resource) => (
-            <DraggableItem
+            <TableRow
               key={resource.id}
               resource={resource}
-              onResource={onResource}
-              currentResource={resource}
-              showUploadForm={showUploadForm}
-              sourceFolderKey={folderKey} // Pass the folder key to DraggableItem
-              isSelected={
-                currentResourceMeta?.id === resource.id && !showUploadForm
-              }
-              onNameUpdate={onNameUpdate} // Pass the function here
+              folderName={folderData.name} // Pass folder name to resource
+              onResourceClickCallBack={onResourceClickCallBack}
+              isSelected={currentResourceMeta?.id === resource.id}
             />
           ))}
         </div>

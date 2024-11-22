@@ -5,7 +5,7 @@ import { useState } from "react";
 
 interface AllDocumentGridProps {
   allDocuments: Document[];
-  onDocumentClick: (document: Document) => void;
+  onDocumentClick: (id: string) => void;
   onCreateNewReport: () => void;
   refreshState: () => void;
   toggleSortOrder: () => void; // Add a prop to toggle sort order
@@ -80,7 +80,7 @@ export default function AllDocumentGrid({
                 text={item.text}
                 dateAdded={item.dateAdded}
                 lastOpened={item.lastOpened}
-                onClick={() => onDocumentClick(item)}
+                onClick={() => onDocumentClick(item.id)}
                 refreshState={refreshState}
               />
             ))}

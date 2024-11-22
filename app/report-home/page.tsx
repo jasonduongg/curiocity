@@ -5,7 +5,7 @@ import { useSession } from "next-auth/react"; // Import useSession to access use
 import NameYourReport from "@/components/DocumentComponents/newPrompt";
 import FileViewer from "@/components/ResourceComponents/FilesViewer";
 import NavBar from "@/components/GeneralComponents/NavBar";
-import TextEditor from "@/components/DocumentComponents/TextEditor";
+import DocumentEditor from "@/components/DocumentComponents/DocumentEditor";
 import AllDocumentsGrid from "@/components/DocumentComponents/AllDocumentsGrid";
 import AWS from "aws-sdk";
 import {
@@ -20,12 +20,27 @@ export default function TestPage() {
   const { data: session } = useSession();
   const [allDocuments, setAllDocuments] = useState<Document[]>([]);
   const [isSortedByLastOpened, setIsSortedByLastOpened] = useState(true);
-  const [swapState, setSwapState] = useState(false);
+  const [viewingDocument, setViewingDocument] = useState(false);
   const [currentDocument, setCurrentDocument] = useState<Document | undefined>(
     undefined,
   );
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [fileViewerKey, setFileViewerKey] = useState(0);
+
+  useEffect(() => {
+    fetchDocuments();
+  }, [session, isSortedByLastOpened]);
+
+  const nameChangeCallBack = async (documentId: string) => {
+    await fetchSingleDocument(documentId); // Call fetchSingleDocument with the document ID
+  };
+
+  const resourceMoveCallBack = async (documentId: string) => {
+    await fetchSingleDocument(documentId); // Call fetchSingleDocument with the document ID
+  };
+
+  const resourcUploadCallBack = async (documentId: string) => {
+    await fetchSingleDocument(documentId); // Call fetchSingleDocument with the document ID
+  };
 
   const fetchDocuments = () => {
     if (!session?.user?.id) return;
@@ -44,14 +59,10 @@ export default function TestPage() {
       );
   };
 
-  useEffect(() => {
-    fetchDocuments();
-  }, [session, isSortedByLastOpened]);
-
-  const fetchSingleDocument = async (document: Document | undefined) => {
-    if (!document?.id) return;
+  const fetchSingleDocument = async (id: string) => {
+    if (!id) return;
     try {
-      const response = await fetch(`/api/db?id=${document.id}`, {
+      const response = await fetch(`/api/db?id=${id}`, {
         method: "GET",
         headers: { "Content-Type": "application/json" },
       });
@@ -67,16 +78,15 @@ export default function TestPage() {
     }
   };
 
-  // Handle clicking a document in the grid
-  const handleGridItemClick = async (document: Document) => {
-    await fetchSingleDocument(document);
-    setSwapState(true);
+  const handleGridItemClick = async (id: string) => {
+    await fetchSingleDocument(id);
+    setViewingDocument(true);
     // Update the lastOpened field
     try {
       await fetch("/api/db/updateLastOpened", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id: document.id }),
+        body: JSON.stringify({ id: id }),
       });
     } catch (error) {
       console.error("Error updating lastOpened:", error);
@@ -88,10 +98,9 @@ export default function TestPage() {
   };
 
   const handleBack = () => {
-    setSwapState(false);
     fetchDocuments();
+    setViewingDocument(false);
     setCurrentDocument(undefined);
-    setFileViewerKey((prevKey) => prevKey + 1);
   };
 
   const handleCreateNewReport = () => {
@@ -123,7 +132,7 @@ export default function TestPage() {
       .then((data) => {
         const createdDoc = { ...newDoc, id: data.id };
         setCurrentDocument(createdDoc);
-        setSwapState(true); // Open the document in TextEditor
+        setViewingDocument(true); // Open the document in TextEditor
         fetchDocuments(); // Refresh document list
       })
       .catch((error) => console.error("Error creating document:", error));
@@ -138,14 +147,11 @@ export default function TestPage() {
             <div className="h-full w-full max-w-full gap-4 overflow-hidden bg-bgPrimary p-4">
               <div className="max-w-1/2 h-full shrink grow basis-1/2 flex-col gap-4 overflow-hidden rounded-xl border-[1px] border-zinc-700">
                 <div className="h-full max-w-full grow flex-col overflow-hidden rounded-lg bg-bgSecondary">
-                  {swapState ? (
+                  {viewingDocument ? (
                     <div className="h-full">
-                      <TextEditor
-                        mode="full"
-                        currentDocument={currentDocument}
-                        handleBack={() => {
-                          handleBack();
-                        }}
+                      <DocumentEditor
+                        document={currentDocument}
+                        handleBack={handleBack}
                       />
                     </div>
                   ) : (
@@ -171,12 +177,10 @@ export default function TestPage() {
             <div className="h-full w-full p-4">
               <div className="flex h-full flex-col rounded-xl border-[1px] border-zinc-700 bg-bgSecondary">
                 <FileViewer
-                  key={fileViewerKey}
                   currentDocument={currentDocument}
-                  setCurrentDocument={setCurrentDocument} // Pass the updater
-                  refreshDocument={() => {
-                    fetchSingleDocument(currentDocument);
-                  }}
+                  onNameChangeCallBack={nameChangeCallBack} // Pass the callback to FileViewer
+                  onResourceMoveCallBack={resourceMoveCallBack}
+                  onResourceUploadCallBack={resourcUploadCallBack}
                 />
               </div>
             </div>
