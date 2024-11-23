@@ -3,15 +3,14 @@ import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
 import { v4 as uuidv4 } from "uuid";
 import AWS from "aws-sdk";
 import crypto from "crypto";
+import { putObject, getObject, deleteObject } from "../route";
+
 import {
   Resource,
-  ResourceMeta,
-  ResourceMetaCompressed,
-  putObject,
-  getObject,
   Document,
-  deleteObject,
-} from "../route";
+  ResourceMeta,
+  ResourceCompressed,
+} from "@/types/types";
 
 dotenv.config();
 
@@ -64,9 +63,11 @@ export async function POST(request: Request) {
       documentId: data.documentId,
     };
 
-    const resourceMetaCompressed: ResourceMetaCompressed = {
+    const resourceMetaCompressed: ResourceCompressed = {
       id: resourceMetaId,
       name: data.name,
+      lastOpened: data.lastOpened,
+      dateAdded: data.dateAdded,
     };
 
     const resource: Resource = {

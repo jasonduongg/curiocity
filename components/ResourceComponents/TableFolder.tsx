@@ -1,6 +1,6 @@
 import React from "react";
 import { useDroppable } from "@dnd-kit/core";
-import { FolderData, ResourceMeta } from "@/types/types";
+import { FolderData, ResourceMeta, Document } from "@/types/types";
 import TableRow from "@/components/ResourceComponents/TableRow";
 
 interface TableFolderProps {
@@ -14,6 +14,7 @@ interface TableFolderProps {
     targetFolder: string,
   ) => void;
   currentResourceMeta: ResourceMeta | null;
+  currentDocument: Document;
 }
 
 function TableFolder({
@@ -22,6 +23,7 @@ function TableFolder({
   onToggle,
   onResourceClickCallBack,
   currentResourceMeta,
+  currentDocument,
 }: TableFolderProps) {
   const { setNodeRef, isOver } = useDroppable({
     id: folderData.name,
@@ -58,6 +60,7 @@ function TableFolder({
               folderName={folderData.name} // Pass folder name to resource
               onResourceClickCallBack={onResourceClickCallBack}
               isSelected={currentResourceMeta?.id === resource.id}
+              currentDocument={currentDocument}
             />
           ))}
         </div>

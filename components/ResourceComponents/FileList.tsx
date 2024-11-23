@@ -3,7 +3,6 @@ import {
   DndContext,
   useSensor,
   useSensors,
-  DragEndEvent,
   PointerSensor,
 } from "@dnd-kit/core";
 import TableFolder from "@/components/ResourceComponents/TableFolder";
@@ -30,87 +29,104 @@ export default function FileList({
     Object.fromEntries(
       Object.keys(currentDocument.folders).map((folderName) => [
         folderName,
-        false, // Default to collapsed
+        false,
       ]),
     ),
   );
 
   const [searchQuery, setSearchQuery] = useState<string>("");
+  const [sortBy, setSortBy] = useState<"dateAdded" | "lastOpened">(
+    "lastOpened",
+  );
+  const [fileListKey, setFileListKey] = useState(0); // Key to force re-render
 
-  // Filter folders and their resources based on the search query
-  const filteredFolders = Object.entries(currentDocument.folders).reduce(
+  const handleResourceClick = async (resourceId: string) => {
+    setFileListKey((prevKey) => prevKey + 1);
+    onResourceClickCallBack(resourceId);
+  };
+
+  const filteredAndSortedFolders = Object.entries(
+    currentDocument.folders,
+  ).reduce(
     (acc, [folderName, folderData]) => {
       const filteredResources = folderData.resources.filter((resource) =>
         resource.name.toLowerCase().includes(searchQuery.toLowerCase()),
       );
+
       if (filteredResources.length > 0) {
-        acc[folderName] = { ...folderData, resources: filteredResources };
+        const sortedResources = [...filteredResources];
+
+        if (sortBy === "dateAdded") {
+          sortedResources.sort(
+            (a, b) =>
+              new Date(b.dateAdded).getTime() - new Date(a.dateAdded).getTime(),
+          );
+        } else if (sortBy === "lastOpened") {
+          sortedResources.sort(
+            (a, b) =>
+              new Date(b.lastOpened).getTime() -
+              new Date(a.lastOpened).getTime(),
+          );
+        }
+
+        acc[folderName] = { ...folderData, resources: sortedResources };
       }
       return acc;
     },
     {} as Record<string, FolderData>,
   );
 
-  const handleDragEnd = async (event: DragEndEvent) => {
-    const { active, over } = event;
-
-    if (!over) {
-      console.log("Dropped outside of any folder");
-      return;
-    }
-
-    const resourceId = String(active.id);
-    const sourceFolder = active.data.current?.folderName;
-    const targetFolder = over.data.current?.targetFolderName;
-
-    if (sourceFolder && targetFolder && sourceFolder !== targetFolder) {
-      try {
-        const response = await fetch(`/api/db/resourcemeta/folders`, {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            documentId: currentDocument?.id,
-            resourceId,
-            sourceFolderName: sourceFolder,
-            targetFolderName: targetFolder,
-          }),
-        });
-
-        if (!response.ok) throw new Error("Failed to move resource");
-        console.log("Resource moved successfully");
-        onResourceMoveCallBack(currentDocument?.id); // Update the front end
-      } catch (error) {
-        console.error("Error moving resource:", error);
-      }
-    }
-  };
-
-  const toggleFolder = (folderName: string) => {
-    setExpandedFolders((prev) => ({
-      ...prev,
-      [folderName]: !prev[folderName],
-    }));
+  const handleSortChange = (newSortBy: "dateAdded" | "lastOpened") => {
+    setSortBy(newSortBy);
   };
 
   return (
-    <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
+    <DndContext sensors={sensors}>
       <div className="flex h-full w-full flex-col overflow-auto">
         <TextInput
           placeholder="Search Resources"
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
         />
-        {Object.entries(filteredFolders).map(([key, folder]) => (
-          <TableFolder
-            key={key}
-            folderData={folder}
-            isExpanded={expandedFolders[key]} // Pass expanded state
-            onToggle={() => toggleFolder(key)} // Toggle folder state
-            onResourceClickCallBack={onResourceClickCallBack}
-            onResourceMoveCallBack={onResourceMoveCallBack}
-            currentResourceMeta={currentResourceMeta}
-          />
-        ))}
+        <div className="flex gap-2 pb-2 pt-2">
+          <button
+            className={`rounded-sm px-1.5 py-0.5 text-xs font-medium ${
+              sortBy === "dateAdded" ? "bg-gray-700" : "bg-gray-600"
+            }`}
+            onClick={() => handleSortChange("dateAdded")}
+          >
+            Sort by Date Added
+          </button>
+          <button
+            className={`rounded-sm px-1.5 py-0.5 text-xs font-medium ${
+              sortBy === "lastOpened" ? "bg-gray-700" : "bg-gray-600"
+            }`}
+            onClick={() => handleSortChange("lastOpened")}
+          >
+            Sort by Last Opened
+          </button>
+        </div>
+        <div key={fileListKey}>
+          {Object.entries(filteredAndSortedFolders).map(([key, folder]) => (
+            <TableFolder
+              key={`${key}-${sortBy}`}
+              folderData={folder}
+              isExpanded={expandedFolders[key]}
+              onToggle={() =>
+                setExpandedFolders((prev) => ({
+                  ...prev,
+                  [key]: !prev[key],
+                }))
+              }
+              onResourceClickCallBack={(resourceId) =>
+                handleResourceClick(resourceId)
+              }
+              onResourceMoveCallBack={onResourceMoveCallBack}
+              currentResourceMeta={currentResourceMeta}
+              currentDocument={currentDocument}
+            />
+          ))}
+        </div>
       </div>
     </DndContext>
   );

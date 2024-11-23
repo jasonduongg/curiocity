@@ -30,7 +30,7 @@ export default function AllDocumentGrid({
   );
 
   return (
-    <div className="flex h-full w-full flex-col overflow-hidden">
+    <div className="relative flex h-full w-full flex-col">
       {/* Header Section */}
       <div className="w-full flex-shrink-0 px-4 py-2">
         <div className="flex w-full items-center justify-between">

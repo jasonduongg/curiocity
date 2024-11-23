@@ -10,6 +10,8 @@ export interface Resource {
 export interface ResourceCompressed {
   name: string;
   id: string;
+  dateAdded: string;
+  lastOpened: string;
 }
 
 export interface FolderData {
