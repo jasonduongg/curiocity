@@ -7,7 +7,8 @@ import {
   PointerSensor,
 } from "@dnd-kit/core";
 import TableFolder from "@/components/ResourceComponents/TableFolder";
-import { Document, ResourceMeta } from "@/types/types";
+import { Document, ResourceMeta, FolderData } from "@/types/types";
+import TextInput from "../GeneralComponents/TextInput";
 
 interface FileListProps {
   currentDocument: Document;
@@ -29,9 +30,25 @@ export default function FileList({
     Object.fromEntries(
       Object.keys(currentDocument.folders).map((folderName) => [
         folderName,
-        false, // Default to expanded
+        false, // Default to collapsed
       ]),
     ),
+  );
+
+  const [searchQuery, setSearchQuery] = useState<string>("");
+
+  // Filter folders and their resources based on the search query
+  const filteredFolders = Object.entries(currentDocument.folders).reduce(
+    (acc, [folderName, folderData]) => {
+      const filteredResources = folderData.resources.filter((resource) =>
+        resource.name.toLowerCase().includes(searchQuery.toLowerCase()),
+      );
+      if (filteredResources.length > 0) {
+        acc[folderName] = { ...folderData, resources: filteredResources };
+      }
+      return acc;
+    },
+    {} as Record<string, FolderData>,
   );
 
   const handleDragEnd = async (event: DragEndEvent) => {
@@ -78,7 +95,12 @@ export default function FileList({
   return (
     <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
       <div className="flex h-full w-full flex-col overflow-auto">
-        {Object.entries(currentDocument.folders).map(([key, folder]) => (
+        <TextInput
+          placeholder="Search Resources"
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+        />
+        {Object.entries(filteredFolders).map(([key, folder]) => (
           <TableFolder
             key={key}
             folderData={folder}
