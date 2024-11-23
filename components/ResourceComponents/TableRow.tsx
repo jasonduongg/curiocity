@@ -8,7 +8,6 @@ interface TableRowProps {
   folderName: string; // Add folderName as a prop
   isSelected: boolean; // Indicates if the resource is selected
   onResourceClickCallBack: (resourceId: string) => void;
-  currentDocument: Document;
 }
 
 export function TableRow({
@@ -16,7 +15,6 @@ export function TableRow({
   folderName, // Destructure folderName
   isSelected,
   onResourceClickCallBack,
-  currentDocument,
 }: TableRowProps) {
   const { attributes, listeners, setNodeRef, transform, transition } =
     useDraggable({
@@ -54,27 +52,7 @@ export function TableRow({
 
   const handlePointerUp = async (event: React.PointerEvent) => {
     if (!isDragging) {
-      try {
-        const payload = {
-          resourceId: resource.id,
-          documentId: currentDocument.id,
-          folderName,
-        };
-        console.log("Updating lastOpened with payload:", payload);
-
-        const response = await fetch("/api/db/resourcemeta/updateLastOpened", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload),
-        });
-
-        const data = await response.json();
-        console.log("API Response:", data);
-
-        onResourceClickCallBack(resource.id);
-      } catch (error) {
-        console.error("Error updating lastOpened:", error);
-      }
+      onResourceClickCallBack(resource.id);
     }
 
     dragStartRef.current = null;

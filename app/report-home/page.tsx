@@ -181,6 +181,7 @@ export default function TestPage() {
                   onNameChangeCallBack={nameChangeCallBack} // Pass the callback to FileViewer
                   onResourceMoveCallBack={resourceMoveCallBack}
                   onResourceUploadCallBack={resourcUploadCallBack}
+                  onResourceClickForward={fetchSingleDocument}
                 />
               </div>
             </div>

@@ -20,7 +20,7 @@ export interface FolderData {
 }
 
 export interface Document {
-  id?: string;
+  id: string;
   name: string;
   text: string;
   folders: Array<FolderData>;

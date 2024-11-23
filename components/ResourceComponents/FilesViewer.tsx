@@ -9,6 +9,7 @@ interface FileViewerProps {
   onNameChangeCallBack: (documentId: string) => void;
   onResourceMoveCallBack: (documentId: string) => void;
   onResourceUploadCallBack: (documentId: string) => void;
+  onResourceClickForward: (documentId: string) => void;
 }
 
 const FileViewer: React.FC<FileViewerProps> = ({
@@ -16,6 +17,7 @@ const FileViewer: React.FC<FileViewerProps> = ({
   onNameChangeCallBack,
   onResourceMoveCallBack,
   onResourceUploadCallBack,
+  onResourceClickForward,
 }) => {
   const [currentResourceMeta, setCurrentResourceMeta] =
     useState<ResourceMeta | null>(null);
@@ -35,6 +37,11 @@ const FileViewer: React.FC<FileViewerProps> = ({
     } catch (error) {
       console.error("Error fetching resource metadata:", error);
     }
+  };
+
+  const handleResourceClick = async (resourceId: string) => {
+    fetchResourceMeta(resourceId);
+    onResourceClickForward(currentDocument?.id);
   };
 
   const handleNameChange = () => {
@@ -97,7 +104,7 @@ const FileViewer: React.FC<FileViewerProps> = ({
         <FileList
           currentResourceMeta={currentResourceMeta}
           currentDocument={currentDocument}
-          onResourceClickCallBack={fetchResourceMeta}
+          onResourceClickCallBack={handleResourceClick}
           onResourceMoveCallBack={onResourceMoveCallBack}
         />
       </div>

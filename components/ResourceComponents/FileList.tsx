@@ -35,14 +35,33 @@ export default function FileList({
   );
 
   const [searchQuery, setSearchQuery] = useState<string>("");
-  const [sortBy, setSortBy] = useState<"dateAdded" | "lastOpened">(
-    "lastOpened",
-  );
+  const [sortBy, setSortBy] = useState<"dateAdded" | "lastOpened">("dateAdded");
   const [fileListKey, setFileListKey] = useState(0); // Key to force re-render
 
-  const handleResourceClick = async (resourceId: string) => {
-    setFileListKey((prevKey) => prevKey + 1);
-    onResourceClickCallBack(resourceId);
+  const handleResourceClick = async (
+    resourceId: string,
+    folderName: string,
+  ) => {
+    try {
+      // Call API to update the lastOpened timestamp
+      await fetch("/api/db/resourcemeta/updateLastOpened", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          resourceId,
+          documentId: currentDocument.id,
+          folderName,
+        }),
+      });
+
+      // Update `fileListKey` to force re-render
+      setFileListKey((prevKey) => prevKey + 1);
+
+      // Call the parent callback
+      onResourceClickCallBack(resourceId);
+    } catch (error) {
+      console.error("Error updating lastOpened:", error);
+    }
   };
 
   const filteredAndSortedFolders = Object.entries(
@@ -59,7 +78,7 @@ export default function FileList({
         if (sortBy === "dateAdded") {
           sortedResources.sort(
             (a, b) =>
-              new Date(b.dateAdded).getTime() - new Date(a.dateAdded).getTime(),
+              new Date(a.dateAdded).getTime() - new Date(b.dateAdded).getTime(),
           );
         } else if (sortBy === "lastOpened") {
           sortedResources.sort(
@@ -91,7 +110,7 @@ export default function FileList({
         <div className="flex gap-2 pb-2 pt-2">
           <button
             className={`rounded-sm px-1.5 py-0.5 text-xs font-medium ${
-              sortBy === "dateAdded" ? "bg-gray-700" : "bg-gray-600"
+              sortBy === "dateAdded" ? "bg-gray-700" : "bg-gray-200"
             }`}
             onClick={() => handleSortChange("dateAdded")}
           >
@@ -99,7 +118,7 @@ export default function FileList({
           </button>
           <button
             className={`rounded-sm px-1.5 py-0.5 text-xs font-medium ${
-              sortBy === "lastOpened" ? "bg-gray-700" : "bg-gray-600"
+              sortBy === "lastOpened" ? "bg-gray-700" : "bg-gray-200"
             }`}
             onClick={() => handleSortChange("lastOpened")}
           >
@@ -119,7 +138,7 @@ export default function FileList({
                 }))
               }
               onResourceClickCallBack={(resourceId) =>
-                handleResourceClick(resourceId)
+                handleResourceClick(resourceId, key)
               }
               onResourceMoveCallBack={onResourceMoveCallBack}
               currentResourceMeta={currentResourceMeta}
