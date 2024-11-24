@@ -46,10 +46,26 @@ export async function POST(request: Request) {
         );
       }
     }
-
+    //generate hash for file
     const fileBuffer = Buffer.from(data.file, "base64");
     const fileHash = generateFileHash(fileBuffer);
 
+    //check if file already exists
+    const existingResourceMeta = await getObject(
+      client,
+      fileHash,
+      resourceMetaTable,
+    );
+
+    if (existingResourceMeta.Item) {
+      const resourceMetaData = AWS.DynamoDB.Converter.unmarshall(
+        existingResourceMeta.Item,
+      ) as ResourceMeta;
+      console.log("Duplicate file detected, returning existing metadata.");
+      return new Response(JSON.stringify(resourceMetaData), { status: 200 });
+    }
+
+    //create new metadata if file not duplicate
     const resourceMetaId = uuidv4();
     const resourceMetaItem: ResourceMeta = {
       id: resourceMetaId,
