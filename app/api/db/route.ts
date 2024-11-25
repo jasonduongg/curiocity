@@ -8,6 +8,7 @@ import {
 import { v4 as uuidv4 } from "uuid";
 import AWS from "aws-sdk";
 import { resourceMetaTable } from "./resourcemeta/route";
+import { PostHog } from "posthog-node";
 
 dotenv.config();
 
@@ -15,6 +16,26 @@ const client = new DynamoDBClient({ region: "us-west-1" });
 const tableName = process.env.DOCUMENT_TABLE || "";
 export const maxDuration = 60;
 export const dynamic = "force-dynamic";
+
+// Initialize the PostHog client
+const posthog = new PostHog(process.env.NEXT_PUBLIC_POSTHOG_KEY || "", {
+  host: process.env.NEXT_PUBLIC_POSTHOG_HOST, // Ensure this points to your PostHog host
+});
+
+const getCurrentTime = () => {
+  const now = new Date();
+
+  // Format components of the date
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, "0"); // Months are 0-indexed
+  const day = String(now.getDate()).padStart(2, "0");
+  const hours = String(now.getHours()).padStart(2, "0");
+  const minutes = String(now.getMinutes()).padStart(2, "0");
+  const seconds = String(now.getSeconds()).padStart(2, "0");
+
+  // Combine components into the desired format
+  return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`;
+};
 
 export type Resource = {
   id: string;
@@ -107,8 +128,10 @@ export const deleteObject = async (client: any, id: any, table: string) => {
     // if is document obj, recursively delete all resource metadata as well
     if (table === tableName) {
       const obj = await getObject(client, id, table);
-      for (const folder in obj.folders) {
-        for (const resource in obj.folders[folder].resources) {
+      const updatedObj = AWS.DynamoDB.Converter.unmarshall(obj.Item);
+
+      for (const folder in updatedObj.folders) {
+        for (const resource in updatedObj.folders[folder].resources) {
           await deleteObject(client, resource, resourceMetaTable);
         }
       }
@@ -201,6 +224,17 @@ export async function POST(request: Request) {
 
   await putObject(client, inputData, tableName);
 
+  // create posthog event for doc created
+  posthog.capture({
+    distinctId: data.ownerID, // Unique identifier for the user
+    event: "Document Created", // Event name
+    properties: {
+      documentId: Item.id,
+      name: Item.name,
+      createdAt: getCurrentTime(),
+    },
+  });
+
   console.log("Put new object ");
 
   return Response.json(Item);
@@ -209,6 +243,22 @@ export async function POST(request: Request) {
 export async function DELETE(request: Request) {
   const data = await request.json();
   console.log("call delete dynamodb: ", data.id);
+
+  // create posthog event for doc deleted
+  const obj = await getObject(client, data.id, tableName);
+  const updatedObj = AWS.DynamoDB.Converter.unmarshall(obj.Item);
+
+  console.log("posthog delete: ", updatedObj);
+
+  posthog.capture({
+    distinctId: updatedObj.ownerID, // Unique identifier for the user
+    event: "Document Deleted", // Event name
+    properties: {
+      documentId: data.id,
+      name: updatedObj.name,
+      createdAt: getCurrentTime(),
+    },
+  });
 
   await deleteObject(client, data.id, tableName);
 

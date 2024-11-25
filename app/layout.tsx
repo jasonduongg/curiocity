@@ -3,7 +3,15 @@ import localFont from "next/font/local";
 import "./globals.css";
 import { SwitchContextProvider } from "@/context/SwitchContext";
 import { AuthProvider } from "@/context/AuthContext";
-import { PostHogProvider } from "posthog-js/react";
+import dynamic from "next/dynamic";
+import { PHProvider } from "./providers";
+
+const PostHogPageView = dynamic(
+  () => import("../components/PostHogComponents/PostHogPageView"),
+  {
+    ssr: false,
+  },
+);
 
 // TODO: Replace this with the fonts that designers provide.
 const geistSans = localFont({
@@ -17,10 +25,6 @@ export const metadata: Metadata = {
   description: "A template for WDB projects!",
 };
 
-const postHogOptions = {
-  api_host: process.env.REACT_APP_PUBLIC_POSTHOG_HOST,
-};
-
 export default function RootLayout({
   children,
 }: {
@@ -29,16 +33,14 @@ export default function RootLayout({
   return (
     <html lang="en">
       <AuthProvider>
-        <PostHogProvider
-          apiKey={process.env.REACT_APP_PUBLIC_POSTHOG_KEY}
-          options={postHogOptions}
-        >
-          <SwitchContextProvider>
+        <SwitchContextProvider>
+          <PHProvider>
             <body className={`${geistSans.variable} antialiased`}>
               {children}
+              <PostHogPageView />
             </body>
-          </SwitchContextProvider>
-        </PostHogProvider>
+          </PHProvider>
+        </SwitchContextProvider>
       </AuthProvider>
     </html>
   );

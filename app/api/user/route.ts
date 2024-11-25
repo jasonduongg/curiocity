@@ -6,8 +6,7 @@ import {
   DeleteItemCommand,
 } from "@aws-sdk/client-dynamodb";
 import { marshall, unmarshall } from "@aws-sdk/util-dynamodb";
-import posthog from "posthog-js";
-import { init_posthog } from "../posthog";
+import { PostHog } from "posthog-node";
 
 dotenv.config();
 
@@ -24,8 +23,10 @@ export type User = {
   lastLoggedIn: string;
 };
 
-// Init analytics
-init_posthog();
+// Initialize the PostHog client
+const posthog = new PostHog(process.env.NEXT_PUBLIC_POSTHOG_KEY || "", {
+  host: process.env.NEXT_PUBLIC_POSTHOG_HOST, // Ensure this points to your PostHog host
+});
 
 const getCurrentTime = () => {
   const now = new Date();
@@ -55,8 +56,14 @@ export const putUser = async (inputData: User) => {
     );
 
     // create posthog event for user created
-    posthog.capture("new_user_created", {
-      $set_once: { created_at: getCurrentTime() },
+    posthog.capture({
+      distinctId: inputData.id, // Unique identifier for the user
+      event: "User Created", // Event name
+      properties: {
+        email: inputData.email,
+        name: inputData.name,
+        createdAt: getCurrentTime(),
+      },
     });
 
     return inputData;
