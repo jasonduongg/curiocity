@@ -3,6 +3,7 @@ import localFont from "next/font/local";
 import "./globals.css";
 import { SwitchContextProvider } from "@/context/SwitchContext";
 import { AuthProvider } from "@/context/AuthContext";
+import { PostHogProvider } from "posthog-js/react";
 
 // TODO: Replace this with the fonts that designers provide.
 const geistSans = localFont({
@@ -16,20 +17,29 @@ export const metadata: Metadata = {
   description: "A template for WDB projects!",
 };
 
+const postHogOptions = {
+  api_host: process.env.REACT_APP_PUBLIC_POSTHOG_HOST,
+};
+
 export default function RootLayout({
-  children, 
+  children,
 }: {
   children: React.ReactNode;
 }) {
   return (
     <html lang="en">
       <AuthProvider>
-        <SwitchContextProvider>
-          <body className={`${geistSans.variable} antialiased`}>
-            {children}
-          </body>
-        </SwitchContextProvider>
-      </AuthProvider> 
+        <PostHogProvider
+          apiKey={process.env.REACT_APP_PUBLIC_POSTHOG_KEY}
+          options={postHogOptions}
+        >
+          <SwitchContextProvider>
+            <body className={`${geistSans.variable} antialiased`}>
+              {children}
+            </body>
+          </SwitchContextProvider>
+        </PostHogProvider>
+      </AuthProvider>
     </html>
   );
 }

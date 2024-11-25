@@ -6,6 +6,8 @@ import {
   DeleteItemCommand,
 } from "@aws-sdk/client-dynamodb";
 import { marshall, unmarshall } from "@aws-sdk/util-dynamodb";
+import posthog from "posthog-js";
+import { init_posthog } from "../posthog";
 
 dotenv.config();
 
@@ -22,6 +24,24 @@ export type User = {
   lastLoggedIn: string;
 };
 
+// Init analytics
+init_posthog();
+
+const getCurrentTime = () => {
+  const now = new Date();
+
+  // Format components of the date
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, "0"); // Months are 0-indexed
+  const day = String(now.getDate()).padStart(2, "0");
+  const hours = String(now.getHours()).padStart(2, "0");
+  const minutes = String(now.getMinutes()).padStart(2, "0");
+  const seconds = String(now.getSeconds()).padStart(2, "0");
+
+  // Combine components into the desired format
+  return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`;
+};
+
 // PUT user object into DynamoDB
 export const putUser = async (inputData: User) => {
   const marshalledData = marshall(inputData);
@@ -33,6 +53,12 @@ export const putUser = async (inputData: User) => {
         Item: marshalledData,
       }),
     );
+
+    // create posthog event for user created
+    posthog.capture("new_user_created", {
+      $set_once: { created_at: getCurrentTime() },
+    });
+
     return inputData;
   } catch (error) {
     console.error("Error putting user:", error);
