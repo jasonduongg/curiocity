@@ -3,6 +3,30 @@ import { NextResponse } from "next/server";
 export const runtime = "edge";
 
 const LLAMA_CLOUD_API_KEY = process.env.LLAMA_CLOUD_API_KEY;
+interface Image {
+  url: string;
+}
+
+interface Page {
+  page: number;
+  text?: string;
+  md?: string;
+  images?: Image[];
+  items?: any[];
+}
+
+interface JobMetadata {
+  credits_used: number;
+  credits_max: number;
+  job_credits_usage: number;
+  job_pages: number;
+  job_is_cache_hit: boolean;
+}
+
+interface ResponseData {
+  pages: Page[];
+  job_metadata: JobMetadata;
+}
 
 export async function POST(req) {
   try {
@@ -30,7 +54,6 @@ export async function POST(req) {
         body: uploadFormData,
       },
     );
-
     if (!uploadResponse.ok) {
       const errorData = await uploadResponse.json();
       throw new Error(`Upload failed: ${errorData.message}`);
@@ -67,6 +90,29 @@ export async function POST(req) {
       }
     }
 
+    const imageResult = await fetch(
+      `https://api.cloud.llamaindex.ai/api/parsing/job/${jobId}/result/json`,
+      {
+        headers: {
+          Authorization: `Bearer ${LLAMA_CLOUD_API_KEY}`,
+          Accept: "text/markdown",
+        },
+      },
+    );
+    if (!imageResult.ok) {
+      const errorData = await imageResult.json();
+      throw new Error(`Result retrieval failed: ${errorData.message}`);
+    }
+    const images = [];
+    const data: ResponseData = await imageResult.json();
+    data.pages.forEach((page) => {
+      if (page.images && page.images.length > 0) {
+        page.images.forEach((image) => {
+          images.push(image);
+        });
+      }
+    });
+
     const resultResponse = await fetch(
       `https://api.cloud.llamaindex.ai//api/v1/parsing/job/${jobId}/result/raw/markdown`,
       {
@@ -84,7 +130,7 @@ export async function POST(req) {
 
     const markdown = await resultResponse.text();
     console.log(markdown);
-    return NextResponse.json({ markdown });
+    return NextResponse.json({ markdown, images });
   } catch (error) {
     console.error("Error processing file:", error.message);
     return NextResponse.json({ error: error.message }, { status: 500 });

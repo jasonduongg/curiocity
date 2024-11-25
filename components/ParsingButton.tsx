@@ -29,6 +29,7 @@ function ParsingButton() {
 
       const data = await response.json();
       console.log("Markdown:", data.markdown);
+      console.log("Images", data.images);
     } catch (error) {
       console.error("Error processing file:", error);
     }
