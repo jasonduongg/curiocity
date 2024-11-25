@@ -101,9 +101,17 @@ export async function POST(request: Request) {
     const inputResourceData = AWS.DynamoDB.Converter.marshall(resource);
     const inputDocumentData = AWS.DynamoDB.Converter.marshall(newDocument);
 
+    const existingResource = await getObject(client, fileHash, resourceTable);
+    if (existingResource.Item) {
+      console.log(
+        "Duplicate resource detected. Skipping putObject for resource.",
+      );
+    } else {
+      await putObject(client, inputResourceData, resourceTable);
+    }
+
     await putObject(client, inputResourceMetaData, resourceMetaTable);
     await putObject(client, inputDocumentData, documentTable);
-    await putObject(client, inputResourceData, resourceTable);
 
     console.log("Successfully updated DynamoDB");
     return new Response(JSON.stringify(newDocument), { status: 200 });
