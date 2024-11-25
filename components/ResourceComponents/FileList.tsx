@@ -37,13 +37,14 @@ export default function FileList({
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [sortBy, setSortBy] = useState<"dateAdded" | "lastOpened">("dateAdded");
   const [fileListKey, setFileListKey] = useState(0); // Key to force re-render
+  const [newFolderName, setNewFolderName] = useState<string>(""); // Folder name input
+  const [isAddingFolder, setIsAddingFolder] = useState<boolean>(false); // Toggle input form
 
   const handleResourceClick = async (
     resourceId: string,
     folderName: string,
   ) => {
     try {
-      // Call API to update the lastOpened timestamp
       await fetch("/api/db/resourcemeta/updateLastOpened", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -54,13 +55,36 @@ export default function FileList({
         }),
       });
 
-      // Update `fileListKey` to force re-render
-      setFileListKey((prevKey) => prevKey + 1);
-
-      // Call the parent callback
+      setFileListKey((prevKey) => prevKey + 1); // Force re-render
       onResourceClickCallBack(resourceId);
     } catch (error) {
       console.error("Error updating lastOpened:", error);
+    }
+  };
+
+  const handleAddFolder = async () => {
+    if (!newFolderName.trim()) return;
+
+    try {
+      await fetch("/api/db/documents/addFolder", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          documentId: currentDocument.id,
+          folderName: newFolderName,
+        }),
+      });
+
+      currentDocument.folders[newFolderName] = {
+        name: newFolderName,
+        resources: [],
+      };
+
+      setFileListKey((prevKey) => prevKey + 1); // Force re-render
+      setNewFolderName("");
+      setIsAddingFolder(false); // Close the input form
+    } catch (error) {
+      console.error("Error adding new folder:", error);
     }
   };
 
@@ -68,11 +92,17 @@ export default function FileList({
     currentDocument.folders,
   ).reduce(
     (acc, [folderName, folderData]) => {
-      const filteredResources = folderData.resources.filter((resource) =>
-        resource.name.toLowerCase().includes(searchQuery.toLowerCase()),
-      );
+      let filteredResources = folderData.resources;
 
-      if (filteredResources.length > 0) {
+      // Apply search query filtering
+      if (searchQuery) {
+        filteredResources = filteredResources.filter((resource) =>
+          resource.name.toLowerCase().includes(searchQuery.toLowerCase()),
+        );
+      }
+
+      // Include folders with no resources if no search query is provided
+      if (filteredResources.length > 0 || !searchQuery) {
         const sortedResources = [...filteredResources];
 
         if (sortBy === "dateAdded") {
@@ -146,6 +176,37 @@ export default function FileList({
             />
           ))}
         </div>
+
+        {!isAddingFolder ? (
+          <button
+            onClick={() => setIsAddingFolder(true)}
+            className="mt-4 rounded-md border-[1px] border-gray-700 bg-gray-800 px-4 py-2 text-sm text-white hover:bg-gray-700"
+          >
+            Add New Folder
+          </button>
+        ) : (
+          <div className="mt-4 flex flex-col items-center gap-2">
+            <input
+              type="text"
+              placeholder="Folder Name"
+              value={newFolderName}
+              onChange={(e) => setNewFolderName(e.target.value)}
+              className="flex-grow rounded-md border-[1px] border-gray-700 bg-gray-800 px-4 py-2 text-sm text-white"
+            />
+            <button
+              onClick={handleAddFolder}
+              className="rounded-md bg-blue-600 px-4 py-2 text-sm text-white hover:bg-blue-500"
+            >
+              Submit
+            </button>
+            <button
+              onClick={() => setIsAddingFolder(false)}
+              className="rounded-md bg-red-600 px-4 py-2 text-sm text-white hover:bg-red-500"
+            >
+              Cancel
+            </button>
+          </div>
+        )}
       </div>
     </DndContext>
   );
