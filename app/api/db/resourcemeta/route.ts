@@ -50,19 +50,16 @@ export async function POST(request: Request) {
     const fileBuffer = Buffer.from(data.file, "base64");
     const fileHash = generateFileHash(fileBuffer);
 
-    //check if file already exists
-    const existingResourceMeta = await getObject(
-      client,
-      fileHash,
-      resourceMetaTable,
-    );
-
-    if (existingResourceMeta.Item) {
-      const resourceMetaData = AWS.DynamoDB.Converter.unmarshall(
-        existingResourceMeta.Item,
-      ) as ResourceMeta;
-      console.log("Duplicate file detected, returning existing metadata.");
-      return new Response(JSON.stringify(resourceMetaData), { status: 200 });
+    // Check if the resource already exists
+    const existingResource = await getObject(client, fileHash, resourceTable);
+    if (existingResource.Item) {
+      console.log(
+        "Duplicate resource detected. Skipping putObject for resource.",
+      );
+      return new Response(
+        JSON.stringify({ msg: "Resource already exists. No changes made." }),
+        { status: 200 },
+      );
     }
 
     //create new metadata if file not duplicate
