@@ -1,4 +1,56 @@
+"use client";
+
+import React, { useState } from "react";
+
 export default function SignUp() {
+  const [formData, setFormData] = useState({
+    name: "",
+    email: "",
+    password: "",
+    passwordConfirmation: "",
+  });
+
+  const [message, setMessage] = useState("");
+  const [error, setError] = useState("");
+
+  // Handle input changes
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setFormData({
+      ...formData,
+      [e.target.id]: e.target.value,
+    });
+  };
+
+  // Handle form submission
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault(); // Prevent default form submission behavior
+    setError("");
+    setMessage("");
+
+    try {
+      console.log("Submitted Form Data:", formData);
+      const response = await fetch("/api/manual-login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(formData),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        setError(errorData.error || "Something went wrong");
+        return;
+      }
+
+      const data = await response.json();
+      setMessage(data.message);
+    } catch (err) {
+      console.error("Error submitting form:", err);
+      setError("Failed to submit. Please try again.");
+    }
+  };
+
   return (
     <div className="flex min-h-screen justify-center bg-bgPrimary">
       <div
@@ -24,31 +76,43 @@ export default function SignUp() {
         </div>
 
         {/* Sign Up Form */}
-        <form className="w-full space-y-5">
+        <form className="w-full space-y-5" onSubmit={handleSubmit}>
           <InputField
             id="name"
             label="Name"
             type="text"
             placeholder="John Doe"
+            value={formData.name}
+            onChange={handleChange}
           />
           <InputField
             id="email"
             label="Email"
             type="email"
             placeholder="johndoe@gmail.com"
+            value={formData.email}
+            onChange={handleChange}
           />
           <InputField
             id="password"
             label="Password"
             type="password"
             placeholder="••••••••"
+            value={formData.password}
+            onChange={handleChange}
           />
           <InputField
             id="passwordConfirmation"
             label="Password Confirmation"
             type="password"
             placeholder="••••••••"
+            value={formData.passwordConfirmation}
+            onChange={handleChange}
           />
+
+          {/* Success/Error Messages */}
+          {message && <p className="text-green-600">{message}</p>}
+          {error && <p className="text-red-600">{error}</p>}
 
           {/* Buttons */}
           <div className="mt-3 flex flex-col items-center space-y-3">
@@ -88,7 +152,7 @@ export default function SignUp() {
   );
 }
 
-const InputField = ({ id, label, type, placeholder }) => (
+const InputField = ({ id, label, type, placeholder, value, onChange }) => (
   <div className="space-y-1.5">
     <label
       htmlFor={id}
@@ -101,6 +165,8 @@ const InputField = ({ id, label, type, placeholder }) => (
         id={id}
         type={type}
         placeholder={placeholder}
+        value={value}
+        onChange={onChange}
         className="h-full w-full bg-transparent text-textPrimary placeholder-textSecondary focus:outline-none"
       />
     </div>
