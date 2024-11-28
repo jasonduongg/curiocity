@@ -72,14 +72,15 @@ export async function POST(req: NextRequest) {
     const hashedPassword = await bcrypt.hash(password + name, salt);
 
     const userId = uuidv4();
+    const accountCreatedDate = new Date().toISOString();
 
     const userRecord = {
       id: userId,
       email,
       password: hashedPassword,
       image: DEFAULT_PROFILE_IMAGE,
-      username: name, // Use the name field as the username
-      accountCreatedDate: null,
+      username: name,
+      accountCreatedDate,
       accountLastOpenedDate: null,
     };
 
