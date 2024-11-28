@@ -29,7 +29,7 @@ export default function SignUp() {
 
     try {
       console.log("Submitted Form Data:", formData);
-      const response = await fetch("/api/manual-login", {
+      const response = await fetch("/api/manual-signup", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
