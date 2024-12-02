@@ -1,24 +1,23 @@
 import { NextRequest, NextResponse } from "next/server";
-import AWS from "aws-sdk";
+import { DynamoDBDocumentClient, PutCommand } from "@aws-sdk/lib-dynamodb";
+import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
+import { fromEnv } from "@aws-sdk/credential-providers";
 import bcrypt from "bcrypt";
-import { v4 as uuidv4 } from "uuid";
 
-AWS.config.update({
+const dynamoDbClient = new DynamoDBClient({
   region: process.env.S3_UPLOAD_REGION,
-  accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-  secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+  credentials: fromEnv(),
 });
 
-const dynamoDb = new AWS.DynamoDB.DocumentClient();
-const USERS_TABLE = "curiocity-local-login-users";
+const ddbDocClient = DynamoDBDocumentClient.from(dynamoDbClient);
 
-// profile image url (not sure if there is a exsisting image to draw on)
+const USERS_TABLE = "curiocity-local-login-users";
 const DEFAULT_PROFILE_IMAGE =
-  "https://st3.depositphotos.com/6672868/13701/v/450/depositphotos_137014128-stock-illustration-user-profile-icon.jpg"; // Replace with your image URL
+  "https://st3.depositphotos.com/6672868/13701/v/450/depositphotos_137014128-stock-illustration-user-profile-icon.jpg";
 
 const isPasswordValid = (password: string) => {
   const passwordRegex =
-    /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]).{8,}$/;
+    /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>/?]).{8,}$/;
   return passwordRegex.test(password);
 };
 
@@ -68,14 +67,11 @@ export async function POST(req: NextRequest) {
     }
 
     const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(password + email, salt);
 
-    const hashedPassword = await bcrypt.hash(password + name, salt);
-
-    const userId = uuidv4();
     const accountCreatedDate = new Date().toISOString();
 
     const userRecord = {
-      id: userId,
       email,
       password: hashedPassword,
       image: DEFAULT_PROFILE_IMAGE,
@@ -89,7 +85,8 @@ export async function POST(req: NextRequest) {
       Item: userRecord,
     };
 
-    await dynamoDb.put(params).promise();
+    const putCommand = new PutCommand(params);
+    await ddbDocClient.send(putCommand);
 
     return NextResponse.json(
       {
