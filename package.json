@@ -8,7 +8,8 @@
     "start": "next start",
     "lint": "next lint",
     "prepare": "husky",
-    "test": "jest"
+    "test": "jest",
+    "postinstall": "npm rebuild canvas --build-from-source=false"
   },
   "dependencies": {
     "@aws-sdk/client-dynamodb": "^3.674.0",
@@ -101,5 +102,8 @@
   "lint-staged": {
     "*.{js,jsx,ts,tsx}": "eslint",
     "*.{js,jsx,ts,tsx,css,md}": "prettier --write"
-  }
+  },
+  "engines": {
+  "node": "18.x"
+}
 }
