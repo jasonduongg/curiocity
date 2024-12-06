@@ -103,9 +103,3 @@ export async function POST(request: Request) {
     });
   }
 }
-
-// Export an array of supported methods to handle the 405 error
-export const config = {
-  runtime: "nodejs",
-  methods: ["POST"], // Add the POST method explicitly here
-};
