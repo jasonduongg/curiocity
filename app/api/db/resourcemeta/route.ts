@@ -15,7 +15,7 @@ import {
 dotenv.config();
 
 const client = new DynamoDBClient({ region: "us-west-1" });
-const documentTable = process.env.DOCUMENT_TABLE || "";
+export const documentTable = process.env.DOCUMENT_TABLE || "";
 export const resourceMetaTable = process.env.RESOURCEMETA_TABLE || "";
 export const resourceTable = process.env.RESOURCE_TABLE || "";
 
@@ -28,7 +28,7 @@ export async function POST(request: Request) {
   try {
     console.log("POST request received");
     const data = await request.json();
-
+    console.log(data);
     const requiredFields = [
       "documentId",
       "name",

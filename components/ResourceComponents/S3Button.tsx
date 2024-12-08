@@ -8,7 +8,6 @@ import { Document } from "@/types/types";
 
 interface S3ButtonProps {
   currentDocument: Document;
-  onResourceUpload?: () => void; // Callback to refresh the document on upload
   onCancel: () => void;
   onResourceUploadCallBack: () => void;
 }
@@ -38,6 +37,31 @@ const S3Button: React.FC<S3ButtonProps> = ({
     }
   };
 
+  const extractText = async (file: File): Promise<string | null> => {
+    const formData = new FormData();
+    formData.append("myFile", file);
+
+    try {
+      const response = await fetch("/api/resource_parsing", {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(
+          `Server error: ${response.statusText} - ${JSON.stringify(errorData)}`,
+        );
+      }
+
+      const { markdown } = await response.json();
+      console.log(`Extracted Markdown for ${file.name}:`, markdown);
+      return markdown;
+    } catch (error) {
+      console.error(`Error extracting text from ${file.name}:`, error.message);
+      return null;
+    }
+  };
   const handleUploadAll = async () => {
     if (fileQueue.length === 0) {
       alert("No files selected for upload.");
@@ -58,8 +82,13 @@ const S3Button: React.FC<S3ButtonProps> = ({
 
         const fileBase64 = fileDataUrl.split(",")[1]; // Extract Base64 portion of the data URL
 
-        const { url } = await uploadToS3(file);
+        const parsedText = await extractText(file);
+        if (!parsedText) {
+          console.error(`Failed to parse text for file ${file.name}`);
+          continue;
+        }
 
+        const { url } = await uploadToS3(file);
         await fetch("/api/db/resourcemeta", {
           method: "POST",
           body: JSON.stringify({
@@ -68,6 +97,7 @@ const S3Button: React.FC<S3ButtonProps> = ({
             folderName: folderToSave,
             url,
             file: fileBase64, // Include file content
+            markdown: parsedText, // Save the parsed text
             dateAdded: new Date().toISOString(),
             lastOpened: new Date().toISOString(),
           }),
