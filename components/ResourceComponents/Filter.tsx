@@ -1,8 +1,8 @@
 import React, { useState } from "react";
+import Image from "next/image";
 import SearchImage from "@/assets/filter.png";
 
 interface ButtonProps {
-  label?: string;
   onClick?: () => void;
   type?: "button" | "submit" | "reset";
   disabled?: boolean;
@@ -21,9 +21,14 @@ const Filter: React.FC<ButtonProps> = ({
 }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  const [sortOrder, setSortOrder] = useState<string>("a-z");
-  const [fileTypes, setFileTypes] = useState<string[]>([]);
-  const [dateRange, setDateRange] = useState({ from: "", to: "" });
+  // Default states
+  const defaultSortOrder = "";
+  const defaultFileTypes: string[] = [];
+  const defaultDateRange = { from: "", to: "" };
+
+  const [sortOrder, setSortOrder] = useState<string>(defaultSortOrder);
+  const [fileTypes, setFileTypes] = useState<string[]>(defaultFileTypes);
+  const [dateRange, setDateRange] = useState(defaultDateRange);
 
   const handleButtonClick = () => {
     setIsModalOpen(true);
@@ -45,6 +50,24 @@ const Filter: React.FC<ButtonProps> = ({
     closeModal();
   };
 
+  const handleCancel = () => {
+    // Reset to defaults
+    setSortOrder(defaultSortOrder);
+    setFileTypes(defaultFileTypes);
+    setDateRange(defaultDateRange);
+
+    // Notify parent to show all files (no filters)
+    if (onApplyFilters) {
+      onApplyFilters({
+        sortOrder: defaultSortOrder,
+        fileTypes: defaultFileTypes,
+        dateRange: defaultDateRange,
+      });
+    }
+
+    closeModal();
+  };
+
   const toggleFileType = (type: string) => {
     setFileTypes((prev) =>
       prev.includes(type)
@@ -61,11 +84,7 @@ const Filter: React.FC<ButtonProps> = ({
         type={type}
         disabled={disabled}
       >
-        <img
-          src={SearchImage.src as unknown as string}
-          alt="Search"
-          className="h-5 w-5"
-        />
+        <Image src={SearchImage} alt="Search" className="h-5 w-5" />
       </button>
 
       {isModalOpen && (
@@ -73,6 +92,7 @@ const Filter: React.FC<ButtonProps> = ({
           <div className="w-1/3 rounded-lg bg-white p-6 shadow-lg">
             <h2 className="mb-4 text-xl font-bold">Filter Options</h2>
 
+            {/* Sort */}
             <div className="mb-4">
               <h3 className="mb-2 font-semibold text-gray-700">Sort</h3>
               <div className="flex flex-col space-y-2">
@@ -101,6 +121,7 @@ const Filter: React.FC<ButtonProps> = ({
               </div>
             </div>
 
+            {/* File Type */}
             <div className="mb-4">
               <h3 className="mb-2 font-semibold text-gray-700">File Type</h3>
               <div className="flex flex-wrap gap-4">
@@ -118,6 +139,7 @@ const Filter: React.FC<ButtonProps> = ({
               </div>
             </div>
 
+            {/* Date Range */}
             <div className="mb-4">
               <h3 className="mb-2 font-semibold text-gray-700">Date</h3>
               <div className="flex flex-col space-y-4">
@@ -146,9 +168,10 @@ const Filter: React.FC<ButtonProps> = ({
               </div>
             </div>
 
+            {/* Modal Buttons */}
             <div className="flex justify-end space-x-4">
               <button
-                onClick={closeModal}
+                onClick={handleCancel}
                 className="rounded-md bg-gray-300 px-4 py-2 text-gray-700 hover:bg-gray-400"
               >
                 Cancel

@@ -41,6 +41,7 @@ export default function FileList({
   const [newFolderName, setNewFolderName] = useState<string>("");
   const [isAddingFolder, setIsAddingFolder] = useState<boolean>(false);
 
+  // Filter states
   const [selectedSortOrder, setSelectedSortOrder] = useState<string>("a-z");
   const [selectedFileTypes, setSelectedFileTypes] = useState<string[]>([]);
   const [selectedDateRange, setSelectedDateRange] = useState<{
@@ -112,28 +113,63 @@ export default function FileList({
     (acc, [folderName, folderData]) => {
       let filteredResources = folderData.resources;
 
+      // Apply search query filtering
       if (searchQuery) {
         filteredResources = filteredResources.filter((resource) =>
           resource.name.toLowerCase().includes(searchQuery.toLowerCase()),
         );
       }
 
+      // Filter by file type if any selected
       if (selectedFileTypes.length > 0) {
         filteredResources = filteredResources.filter((resource) =>
           selectedFileTypes.includes(resource.fileType),
         );
       }
 
+      // Filter by date range if specified
       if (selectedDateRange.from || selectedDateRange.to) {
         const fromDate = selectedDateRange.from
-          ? new Date(selectedDateRange.from)
+          ? new Date(selectedDateRange.from + "T00:00:00Z")
           : null;
         const toDate = selectedDateRange.to
-          ? new Date(selectedDateRange.to)
+          ? new Date(selectedDateRange.to + "T23:59:59Z")
           : null;
 
         filteredResources = filteredResources.filter((resource) => {
           const resourceDate = new Date(resource.dateAdded);
+
+          console.log(
+            "Resource Name:",
+            resource.name,
+            "| FromDate:",
+            fromDate,
+            "| ToDate:",
+            toDate,
+            "| ResourceDate String:",
+            resource.dateAdded,
+            "| ResourceDate:",
+            resourceDate,
+          );
+
+          if (isNaN(resourceDate.getTime())) {
+            console.warn(
+              "Invalid date for resource:",
+              resource.name,
+              resource.dateAdded,
+            );
+            return false;
+          }
+
+          if (isNaN(resourceDate.getTime())) {
+            console.warn(
+              "Invalid date for resource:",
+              resource.name,
+              resource.dateAdded,
+            );
+            return false;
+          }
+
           if (fromDate && resourceDate < fromDate) return false;
           if (toDate && resourceDate > toDate) return false;
           return true;
@@ -149,6 +185,7 @@ export default function FileList({
       if (filteredResources.length > 0 || noFiltersApplied) {
         const sortedResources = [...filteredResources];
 
+        // Sort by date if required
         if (sortBy === "dateAdded") {
           sortedResources.sort(
             (a, b) =>
@@ -162,6 +199,7 @@ export default function FileList({
           );
         }
 
+        // Apply alphabetical sorting from Filter modal
         if (selectedSortOrder === "a-z") {
           sortedResources.sort((a, b) => a.name.localeCompare(b.name));
         } else if (selectedSortOrder === "z-a") {
