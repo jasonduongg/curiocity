@@ -1,5 +1,6 @@
 import NextAuth, { NextAuthOptions } from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
+const API_BASE_URL = process.env.NEXTAUTH_URL || "http://localhost:3000";
 
 const GOOGLE_ID = process.env.GOOGLE_ID;
 const GOOGLE_SECRET = process.env.GOOGLE_SECRET;
@@ -51,7 +52,7 @@ const options: NextAuthOptions = {
 
       try {
         const checkResponse = await fetch(
-          `http://localhost:3000/api/user?id=${userId}`,
+          `${API_BASE_URL}/api/user?id=${userId}`,
           {
             method: "GET",
             headers: { "Content-Type": "application/json" },
@@ -59,7 +60,7 @@ const options: NextAuthOptions = {
         );
 
         if (checkResponse.ok) {
-          const updateResponse = await fetch(`http://localhost:3000/api/user`, {
+          const updateResponse = await fetch(`${API_BASE_URL}/api/user`, {
             method: "PUT",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
@@ -79,7 +80,7 @@ const options: NextAuthOptions = {
           console.log("User's lastLoggedIn field successfully updated");
           return true;
         } else if (checkResponse.status === 404) {
-          const createResponse = await fetch(`http://localhost:3000/api/user`, {
+          const createResponse = await fetch(`${API_BASE_URL}/api/user`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(userData),
@@ -109,7 +110,7 @@ const options: NextAuthOptions = {
 
       try {
         const response = await fetch(
-          `http://localhost:3000/api/user?id=${token.sub}`,
+          `${API_BASE_URL}/api/user?id=${token.sub}`,
           {
             method: "GET",
             headers: { "Content-Type": "application/json" },

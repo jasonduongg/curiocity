@@ -1,59 +1,63 @@
-// components/TableFolder.tsx
-
-import React, { useState } from "react";
+import React from "react";
+import { useDroppable } from "@dnd-kit/core";
+import { FolderData, ResourceMeta } from "@/types/types";
 import TableRow from "@/components/ResourceComponents/TableRow";
-import { FileIcon } from "@radix-ui/react-icons";
-import { Resource } from "@/types/types";
-
-interface FolderData {
-  name: string;
-  resources: Resource[];
-}
 
 interface TableFolderProps {
-  folderName: string;
   folderData: FolderData;
-  onResource: (resource: Resource) => void;
-  currentResource: Resource | null;
-  showUploadForm: boolean; // Add showUploadForm prop
+  isExpanded: boolean; // Receive expanded state
+  onToggle: () => void; // Handle folder toggle
+  onResourceClickCallBack: (resourceId: string) => void;
+  onResourceMoveCallBack: (
+    resourceId: string,
+    sourceFolder: string,
+    targetFolder: string,
+  ) => void;
+  currentResourceMeta: ResourceMeta | null;
 }
 
-export default function TableFolder({
-  folderName,
+function TableFolder({
   folderData,
-  onResource,
-  currentResource,
-  showUploadForm,
+  isExpanded,
+  onToggle,
+  onResourceClickCallBack,
+  currentResourceMeta,
 }: TableFolderProps) {
-  const [isExpanded, setIsExpanded] = useState(false);
-
-  const handleFolderClick = () => {
-    setIsExpanded(!isExpanded);
-  };
+  const { setNodeRef, isOver } = useDroppable({
+    id: folderData.name,
+    data: { targetFolderName: folderData.name },
+  });
 
   return (
     <div className="mb-2">
       <div
-        className="cursor-pointer rounded-lg border-[1px] border-zinc-700 px-2 py-1 transition duration-300 hover:bg-gray-700"
-        onClick={handleFolderClick}
+        ref={setNodeRef}
+        className={`flex cursor-pointer items-center rounded-lg border-[1px] border-zinc-700 px-2 py-1 transition duration-300 hover:bg-gray-700 ${
+          isOver ? "bg-accentPrimary" : ""
+        }`}
+        onClick={onToggle} // Use onToggle for expanding/collapsing
       >
-        <p className="text-sm font-semibold text-textPrimary">{folderName}</p>
+        <span
+          className={`mr-2 transform transition-transform ${
+            isExpanded ? "rotate-90" : "rotate-0"
+          }`}
+        >
+          ▶
+        </span>
+        <p className="text-sm font-semibold text-textPrimary">
+          {folderData.name}
+        </p>
       </div>
+
       {isExpanded && (
-        <div className="pt-1">
+        <div className="pl-4 pt-1">
           {folderData.resources.map((resource) => (
             <TableRow
               key={resource.id}
-              icon={FileIcon}
-              iconColor="white"
-              title={resource.name}
-              dateAdded={resource.dateAdded || "Unknown"}
-              lastViewed={resource.lastViewed || "Unknown"}
-              id={resource.id}
-              isSelected={
-                currentResource?.id === resource.id && !showUploadForm
-              }
-              onResource={onResource}
+              resource={resource}
+              folderName={folderData.name} // Pass folder name to resource
+              onResourceClickCallBack={onResourceClickCallBack}
+              isSelected={currentResourceMeta?.id === resource.id}
             />
           ))}
         </div>
@@ -61,3 +65,5 @@ export default function TableFolder({
     </div>
   );
 }
+
+export default TableFolder;

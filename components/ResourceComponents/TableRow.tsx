@@ -1,75 +1,81 @@
-import React from "react";
-import { Resource } from "@/types/types";
+import React, { useRef, useState } from "react";
+import { useDraggable } from "@dnd-kit/core";
+import { CSS } from "@dnd-kit/utilities";
+import { ResourceCompressed } from "@/types/types";
 
-interface Props {
-  icon: React.ComponentType<any>;
-  iconColor: string;
-  title: string;
-  dateAdded: string;
-  lastViewed: string;
-  id: string;
-  isSelected: boolean;
-  onResource: (url: Resource, meta: any) => void;
+interface TableRowProps {
+  resource: ResourceCompressed;
+  folderName: string; // Add folderName as a prop
+  isSelected: boolean; // Indicates if the resource is selected
+  onResourceClickCallBack: (resourceId: string) => void;
 }
 
-export default function TableRow({
-  icon: Icon,
-  iconColor,
-  title,
-  dateAdded,
-  lastViewed,
-  id,
+export function TableRow({
+  resource,
+  folderName, // Destructure folderName
   isSelected,
-  onResource,
-}: Props) {
-  console.log(dateAdded, lastViewed);
+  onResourceClickCallBack,
+}: TableRowProps) {
+  const { attributes, listeners, setNodeRef, transform, transition } =
+    useDraggable({
+      id: resource.id, // Unique ID for the draggable item
+      data: { resourceId: resource.id, folderName }, // Include resourceId and folderName
+    });
 
-  const handleClick = async () => {
-    try {
-      // Step 1: Fetch resourceMeta data using resourceId
-      const resourceMetaResponse = await fetch(
-        `/api/db/resourcemeta?resourceId=${id}`,
+  const [isDragging, setIsDragging] = useState(false);
+  const dragStartRef = useRef<{ x: number; y: number } | null>(null);
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition: transition || "transform 0.2s ease",
+    border: isSelected ? "2px solid blue" : "1px solid transparent", // Blue border if selected
+  };
+
+  const handlePointerDown = (event: React.PointerEvent) => {
+    dragStartRef.current = { x: event.clientX, y: event.clientY };
+    setIsDragging(false); // Reset dragging state
+    listeners.onPointerDown?.(event); // Call the draggable listener
+  };
+
+  const handlePointerMove = (event: React.PointerEvent) => {
+    if (dragStartRef.current) {
+      const distance = Math.sqrt(
+        Math.pow(event.clientX - dragStartRef.current.x, 2) +
+          Math.pow(event.clientY - dragStartRef.current.y, 2),
       );
-      if (!resourceMetaResponse.ok) {
-        throw new Error("Failed to fetch resourceMeta");
-      }
-      const resourceMetaData = await resourceMetaResponse.json();
-      console.log("Fetched resourceMeta:", resourceMetaData);
 
-      // Step 2: Use the hash from resourceMeta to fetch the actual resource
-      const resourceResponse = await fetch(
-        `/api/db/resource?hash=${resourceMetaData.hash}`,
-      );
-      if (!resourceResponse.ok) {
-        throw new Error("Failed to fetch resource");
+      if (distance > 5) {
+        setIsDragging(true); // Threshold for detecting drag
       }
-      const resourceData: Resource = await resourceResponse.json();
-      console.log("Fetched resource:", resourceData);
-
-      // Step 3: Pass both resourceData and resourceMetaData to onResource
-      onResource(resourceData, resourceMetaData);
-    } catch (error) {
-      console.error("Error fetching resource data:", error);
     }
+  };
+
+  const handlePointerUp = async (event: React.PointerEvent) => {
+    if (!isDragging) {
+      onResourceClickCallBack(resource.id);
+    }
+
+    dragStartRef.current = null;
+    listeners.onPointerUp?.(event);
   };
 
   return (
     <div
-      className={`flex h-full cursor-pointer items-center gap-2 rounded-lg border px-2 py-1 ${
-        isSelected ? "border-blue-500" : "border-transparent"
-      }`}
-      onClick={handleClick}
+      ref={setNodeRef}
+      style={style}
+      {...attributes}
+      className="flex h-full cursor-pointer items-center gap-2 rounded-lg px-2 py-1 hover:border-blue-500"
+      onPointerDown={handlePointerDown}
+      onPointerMove={handlePointerMove}
+      onPointerUp={handlePointerUp}
     >
-      <div className="h-5 w-5 flex-shrink-0">
-        {Icon && (
-          <Icon className="h-full w-full" style={{ color: iconColor }} />
-        )}
-      </div>
       <div className="flex-grow overflow-hidden">
         <p className="truncate whitespace-nowrap text-sm text-textPrimary">
-          {title}
+          {resource.name}
         </p>
       </div>
     </div>
   );
 }
+
+export default TableRow;
