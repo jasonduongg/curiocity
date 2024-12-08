@@ -1,9 +1,10 @@
 import NextAuth, { NextAuthOptions } from "next-auth";
-import GoogleProvider from "next-auth/providers/google";
 
 const GOOGLE_ID = process.env.GOOGLE_ID;
 const GOOGLE_SECRET = process.env.GOOGLE_SECRET;
 const NEXTAUTH_SECRET = process.env.NEXTAUTH_SECRET;
+
+const API_BASE_URL = process.env.NEXTAUTH_URL || "http://localhost:3000";
 
 if (!GOOGLE_ID || !GOOGLE_SECRET) {
   throw new Error(
@@ -16,25 +17,6 @@ if (!NEXTAUTH_SECRET) {
 }
 
 const options: NextAuthOptions = {
-  providers: [
-    GoogleProvider({
-      clientId: GOOGLE_ID,
-      clientSecret: GOOGLE_SECRET,
-      authorization: {
-        params: {
-          scope: "openid email profile",
-        },
-      },
-      profile(profile) {
-        return {
-          id: profile.sub,
-          name: profile.name || "",
-          email: profile.email || "",
-          image: profile.picture || "",
-        };
-      },
-    }),
-  ],
   callbacks: {
     async signIn({ user, profile }) {
       console.log("signIn callback triggered");
@@ -51,7 +33,7 @@ const options: NextAuthOptions = {
 
       try {
         const checkResponse = await fetch(
-          `http://localhost:3000/api/user?id=${userId}`,
+          `${API_BASE_URL}/api/user?id=${userId}`,
           {
             method: "GET",
             headers: { "Content-Type": "application/json" },
@@ -59,7 +41,7 @@ const options: NextAuthOptions = {
         );
 
         if (checkResponse.ok) {
-          const updateResponse = await fetch(`http://localhost:3000/api/user`, {
+          const updateResponse = await fetch(`${API_BASE_URL}/api/user`, {
             method: "PUT",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
@@ -79,7 +61,7 @@ const options: NextAuthOptions = {
           console.log("User's lastLoggedIn field successfully updated");
           return true;
         } else if (checkResponse.status === 404) {
-          const createResponse = await fetch(`http://localhost:3000/api/user`, {
+          const createResponse = await fetch(`${API_BASE_URL}/api/user`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(userData),
@@ -102,14 +84,13 @@ const options: NextAuthOptions = {
       }
     },
     async session({ session, token }) {
-      // Attach user id from token to the session
       if (token?.sub) {
         session.user.id = token.sub;
       }
 
       try {
         const response = await fetch(
-          `http://localhost:3000/api/user?id=${token.sub}`,
+          `${API_BASE_URL}/api/user?id=${token.sub}`,
           {
             method: "GET",
             headers: { "Content-Type": "application/json" },
@@ -131,19 +112,7 @@ const options: NextAuthOptions = {
 
       return session;
     },
-    async jwt({ token, user }) {
-      // Attach user id to the token on initial sign-in
-      if (user) {
-        token.sub = user.id;
-      }
-      return token;
-    },
   },
-  pages: {
-    signIn: "/report-home",
-    signOut: "/login",
-  },
-  secret: NEXTAUTH_SECRET,
 };
 
 const handler = NextAuth(options);
