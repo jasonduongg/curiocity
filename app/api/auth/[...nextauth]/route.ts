@@ -1,10 +1,10 @@
 import NextAuth, { NextAuthOptions } from "next-auth";
+import GoogleProvider from "next-auth/providers/google";
+const API_BASE_URL = process.env.NEXTAUTH_URL || "http://localhost:3000";
 
 const GOOGLE_ID = process.env.GOOGLE_ID;
 const GOOGLE_SECRET = process.env.GOOGLE_SECRET;
 const NEXTAUTH_SECRET = process.env.NEXTAUTH_SECRET;
-
-const API_BASE_URL = process.env.NEXTAUTH_URL || "http://localhost:3000";
 
 if (!GOOGLE_ID || !GOOGLE_SECRET) {
   throw new Error(
@@ -17,6 +17,25 @@ if (!NEXTAUTH_SECRET) {
 }
 
 const options: NextAuthOptions = {
+  providers: [
+    GoogleProvider({
+      clientId: GOOGLE_ID,
+      clientSecret: GOOGLE_SECRET,
+      authorization: {
+        params: {
+          scope: "openid email profile",
+        },
+      },
+      profile(profile) {
+        return {
+          id: profile.sub,
+          name: profile.name || "",
+          email: profile.email || "",
+          image: profile.picture || "",
+        };
+      },
+    }),
+  ],
   callbacks: {
     async signIn({ user, profile }) {
       console.log("signIn callback triggered");
@@ -84,6 +103,7 @@ const options: NextAuthOptions = {
       }
     },
     async session({ session, token }) {
+      // Attach user id from token to the session
       if (token?.sub) {
         session.user.id = token.sub;
       }
@@ -112,7 +132,19 @@ const options: NextAuthOptions = {
 
       return session;
     },
+    async jwt({ token, user }) {
+      // Attach user id to the token on initial sign-in
+      if (user) {
+        token.sub = user.id;
+      }
+      return token;
+    },
   },
+  pages: {
+    signIn: "/report-home",
+    signOut: "/login",
+  },
+  secret: NEXTAUTH_SECRET,
 };
 
 const handler = NextAuth(options);
