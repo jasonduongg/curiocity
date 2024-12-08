@@ -1,8 +1,47 @@
 "use client";
 
-import { signIn } from "next-auth/react";
+import { useState } from "react";
+import { useRouter } from "next/navigation";
 
 export default function Login() {
+  const [formData, setFormData] = useState({ email: "", password: "" });
+  const [error, setError] = useState("");
+  const router = useRouter();
+
+  // Handle input changes
+  const handleChange = (e) => {
+    setFormData({ ...formData, [e.target.id]: e.target.value });
+  };
+
+  // Handle form submission
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError("");
+
+    try {
+      const response = await fetch("/api/manual-login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(formData),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        setError(data.error || "Something went wrong");
+        return;
+      }
+
+      // Redirect to the desired page on successful login
+      router.push("/report-home");
+    } catch (err) {
+      console.error("Error during login:", err);
+      setError("Failed to log in. Please try again.");
+    }
+  };
+
   return (
     <div className="flex min-h-screen justify-center bg-bgPrimary">
       <div
@@ -26,19 +65,26 @@ export default function Login() {
         </div>
 
         {/* Login Form */}
-        <form className="w-full space-y-5">
+        <form className="w-full space-y-5" onSubmit={handleSubmit}>
           <InputField
             id="email"
             label="Email"
             type="email"
             placeholder="johndoe@gmail.com"
+            value={formData.email}
+            onChange={handleChange}
           />
           <InputField
             id="password"
             label="Password"
             type="password"
             placeholder="••••••••"
+            value={formData.password}
+            onChange={handleChange}
           />
+
+          {/* Error Message */}
+          {error && <p className="text-red-600">{error}</p>}
 
           {/* Login Button */}
           <div className="space-y-3">
@@ -74,7 +120,7 @@ export default function Login() {
   );
 }
 
-const InputField = ({ id, label, type, placeholder }) => (
+const InputField = ({ id, label, type, placeholder, value, onChange }) => (
   <div className="space-y-1.5">
     <label
       htmlFor={id}
@@ -87,6 +133,8 @@ const InputField = ({ id, label, type, placeholder }) => (
         id={id}
         type={type}
         placeholder={placeholder}
+        value={value}
+        onChange={onChange}
         className="h-full w-full bg-transparent text-textPrimary placeholder-textSecondary focus:outline-none"
       />
     </div>
