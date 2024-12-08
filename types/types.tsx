@@ -1,6 +1,3 @@
-// src/types/types.ts
-
-// Resource type
 export interface Resource {
   id: string;
   markdown: string;
@@ -12,6 +9,7 @@ export interface ResourceCompressed {
   id: string;
   dateAdded: string;
   lastOpened: string;
+  fileType: string;
 }
 
 export interface FolderData {
@@ -23,7 +21,7 @@ export interface Document {
   id: string;
   name: string;
   text: string;
-  folders: Array<FolderData>;
+  folders: Record<string, FolderData>;
   dateAdded: string;
   lastOpened: string;
   tags: Array<string>;

@@ -56,22 +56,23 @@ export type Folder = {
 
 // send json object to dynamodb
 export const putObject = async (client: any, inputData: any, table: string) => {
-  const res = await client
-    .send(
+  try {
+    const res = await client.send(
       new PutItemCommand({
         TableName: table,
         Item: inputData as any,
       }),
-    )
-    .then((data: any) => {
-      return data;
-    })
-    .catch((error: any) => {
-      console.log("error", error);
-      throw new Error("Could not put the item");
+    );
+    return res;
+  } catch (error: any) {
+    console.error("Failed to put the item in the table.", {
+      tableName: table,
+      inputData,
+      errorMessage: error.message,
+      errorStack: error.stack,
     });
-
-  return res;
+    throw new Error(`Could not put the item into table: ${table}`);
+  }
 };
 
 // get json object from dynamodb

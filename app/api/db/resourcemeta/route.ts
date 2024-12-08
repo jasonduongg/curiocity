@@ -4,7 +4,6 @@ import { v4 as uuidv4 } from "uuid";
 import AWS from "aws-sdk";
 import crypto from "crypto";
 import { putObject, getObject, deleteObject } from "../route";
-
 import {
   Resource,
   Document,
@@ -19,15 +18,25 @@ const documentTable = process.env.DOCUMENT_TABLE || "";
 export const resourceMetaTable = process.env.RESOURCEMETA_TABLE || "";
 export const resourceTable = process.env.RESOURCE_TABLE || "";
 
-// Function to generate MD5 hash of a file
 const generateFileHash = (fileBuffer: Buffer): string => {
   return crypto.createHash("md5").update(fileBuffer).digest("hex");
 };
+
+function inferFileType(nameOrUrl: string): string {
+  const lower = nameOrUrl.toLowerCase();
+  if (lower.endsWith(".pdf")) return "PDF";
+  if (lower.endsWith(".doc") || lower.endsWith(".docx")) return "Word";
+  if (lower.endsWith(".xls") || lower.endsWith(".xlsx")) return "Excel";
+  if (lower.endsWith(".ppt") || lower.endsWith(".pptx")) return "PowerPoint";
+  if (lower.startsWith("http")) return "Link";
+  return "Other";
+}
 
 export async function POST(request: Request) {
   try {
     console.log("POST request received");
     const data = await request.json();
+    console.log("Incoming data:", data);
 
     const requiredFields = [
       "documentId",
@@ -63,11 +72,16 @@ export async function POST(request: Request) {
       documentId: data.documentId,
     };
 
+    const determinedFileType =
+      data.fileType || inferFileType(data.name || data.url);
+    console.log("Determined fileType:", determinedFileType);
+
     const resourceMetaCompressed: ResourceCompressed = {
       id: resourceMetaId,
       name: data.name,
       lastOpened: data.lastOpened,
       dateAdded: data.dateAdded,
+      fileType: determinedFileType,
     };
 
     const resource: Resource = {
@@ -102,11 +116,7 @@ export async function POST(request: Request) {
     const inputDocumentData = AWS.DynamoDB.Converter.marshall(newDocument);
 
     const existingResource = await getObject(client, fileHash, resourceTable);
-    if (existingResource.Item) {
-      console.log(
-        "Duplicate resource detected. Skipping putObject for resource.",
-      );
-    } else {
+    if (!existingResource.Item) {
       await putObject(client, inputResourceData, resourceTable);
     }
 
