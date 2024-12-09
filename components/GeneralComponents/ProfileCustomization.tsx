@@ -14,6 +14,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { useForm, SubmitHandler, FieldValues } from "react-hook-form";
+import ResetPasswordButton from "./ResetPasswordButton";
 
 // Define the form values type
 interface ChangeUserFormValues extends FieldValues {
@@ -233,6 +234,10 @@ export default function ProfileCustomization({ onProfileUpdate }) {
                 </button>
               </form>
             </Form>
+
+            <div className="mt-8">
+              <ResetPasswordButton />
+            </div>
           </div>
         </div>
       )}

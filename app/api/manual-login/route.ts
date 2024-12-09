@@ -7,6 +7,7 @@ import {
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
 import { fromEnv } from "@aws-sdk/credential-providers";
 import bcrypt from "bcrypt";
+import { v4 as uuidv4 } from "uuid";
 
 const dynamoDbClient = new DynamoDBClient({
   region: process.env.S3_UPLOAD_REGION,
@@ -66,6 +67,10 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // Generate a session ID
+    const sessionId = uuidv4();
+
+    // Update the user's last opened date
     userRecord.accountLastOpenedDate = new Date().toISOString();
 
     const updateParams = {
@@ -75,13 +80,29 @@ export async function POST(req: NextRequest) {
 
     await ddbDocClient.send(new PutCommand(updateParams));
 
-    return NextResponse.json(
-      {
-        message: "User signed in successfully",
-        user: { email: userRecord.email, username: userRecord.username },
-      },
-      { status: 200 },
-    );
+    // Create cookies for session ID and email
+    const responsePayload = {
+      message: "User signed in successfully",
+      user: { email: userRecord.email, username: userRecord.username },
+    };
+
+    const nextResponse = NextResponse.json(responsePayload, { status: 200 });
+
+    nextResponse.cookies.set("sessionId", sessionId, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      maxAge: 60 * 60 * 24, // 1 day in seconds
+      path: "/",
+    });
+
+    nextResponse.cookies.set("email", email, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      maxAge: 60 * 60 * 24, // 1 day in seconds
+      path: "/",
+    });
+
+    return nextResponse;
   } catch (error) {
     console.error("Error signing in user:", error);
     return NextResponse.json(
