@@ -12,8 +12,8 @@ import { PostHog } from "posthog-node";
 
 dotenv.config();
 
-const client = new DynamoDBClient({ region: "us-west-1" });
-const tableName = process.env.DOCUMENT_TABLE || "";
+export const client = new DynamoDBClient({ region: "us-west-1" });
+export const tableName = process.env.DOCUMENT_TABLE || "";
 export const maxDuration = 60;
 export const dynamic = "force-dynamic";
 
@@ -192,6 +192,15 @@ export async function PUT(request: Request) {
       tableName,
     );
 
+    posthog.capture({
+      distinctId: data.ownerID, // Unique identifier for the obj
+      event: "Document Update Successful", // Event name
+      properties: {
+        id: data.id,
+        timeStamp: getCurrentTime(),
+      },
+    });
+
     console.log("Updated object: ", res);
   }
 
@@ -222,7 +231,17 @@ export async function POST(request: Request) {
   const inputData = AWS.DynamoDB.Converter.marshall(Item);
   console.log("marshal data: ", inputData);
 
-  await putObject(client, inputData, tableName);
+  await putObject(client, inputData, tableName).catch(() => {
+    posthog.capture({
+      distinctId: data.ownerID, // Unique identifier for the user
+      event: "Document Creation Failed", // Event name
+      properties: {
+        documentId: Item.id,
+        name: Item.name,
+        timeStamp: getCurrentTime(),
+      },
+    });
+  });
 
   // create posthog event for doc created
   posthog.capture({
@@ -231,7 +250,7 @@ export async function POST(request: Request) {
     properties: {
       documentId: Item.id,
       name: Item.name,
-      createdAt: getCurrentTime(),
+      timeStamp: getCurrentTime(),
     },
   });
 
@@ -250,17 +269,27 @@ export async function DELETE(request: Request) {
 
   console.log("posthog delete: ", updatedObj);
 
+  await deleteObject(client, data.id, tableName).catch(() => {
+    posthog.capture({
+      distinctId: updatedObj.ownerID, // Unique identifier for the user
+      event: "Document Delete Failed", // Event name
+      properties: {
+        documentId: data.id,
+        name: updatedObj.name,
+        timeStamp: getCurrentTime(),
+      },
+    });
+  });
+
   posthog.capture({
     distinctId: updatedObj.ownerID, // Unique identifier for the user
     event: "Document Deleted", // Event name
     properties: {
       documentId: data.id,
       name: updatedObj.name,
-      createdAt: getCurrentTime(),
+      timeStamp: getCurrentTime(),
     },
   });
-
-  await deleteObject(client, data.id, tableName);
 
   return Response.json({ msg: "success" });
 }

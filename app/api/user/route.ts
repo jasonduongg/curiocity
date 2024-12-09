@@ -28,7 +28,7 @@ const posthog = new PostHog(process.env.NEXT_PUBLIC_POSTHOG_KEY || "", {
   host: process.env.NEXT_PUBLIC_POSTHOG_HOST, // Ensure this points to your PostHog host
 });
 
-const getCurrentTime = () => {
+export const getCurrentTime = () => {
   const now = new Date();
 
   // Format components of the date
@@ -55,17 +55,6 @@ export const putUser = async (inputData: User) => {
       }),
     );
 
-    // create posthog event for user created
-    posthog.capture({
-      distinctId: inputData.id, // Unique identifier for the user
-      event: "User Created", // Event name
-      properties: {
-        email: inputData.email,
-        name: inputData.name,
-        createdAt: getCurrentTime(),
-      },
-    });
-
     return inputData;
   } catch (error) {
     console.error("Error putting user:", error);
@@ -89,6 +78,7 @@ export const getUser = async (id: string) => {
         },
       }),
     );
+
     return data.Item ? (unmarshall(data.Item) as User) : null;
   } catch (error) {
     console.error("Error getting user:", error);
@@ -106,8 +96,23 @@ export const deleteUser = async (id: string) => {
         Key: { id: { S: id } },
       }),
     );
+    posthog.capture({
+      distinctId: id, // Unique identifier for the user
+      event: "User Delete Successful", // Event name
+      properties: {
+        id: id,
+        timeStamp: getCurrentTime(),
+      },
+    });
     console.log("User successfully deleted");
   } catch (error) {
+    posthog.capture({
+      distinctId: id, // Unique identifier for the user
+      event: "User Delete Failed", // Event name
+      properties: {
+        timeStamp: getCurrentTime(),
+      },
+    });
     console.error("Error deleting user:", error);
     throw new Error("Could not delete the user");
   }
@@ -162,11 +167,31 @@ export async function POST(request: Request) {
 
   try {
     await putUser(newUser);
+    // create posthog event for user created
+    posthog.capture({
+      distinctId: id, // Unique identifier for the user
+      event: "User Created", // Event name
+      properties: {
+        email: email,
+        name: name,
+        timeStamp: getCurrentTime(),
+      },
+    });
+
     return new Response(JSON.stringify(newUser), {
       status: 201,
       headers: { "Content-Type": "application/json" },
     });
   } catch (error) {
+    posthog.capture({
+      distinctId: id, // Unique identifier for the user
+      event: "User Creation Failed", // Event name
+      properties: {
+        email: email,
+        name: name,
+        timeStamp: getCurrentTime(),
+      },
+    });
     console.error("Error creating user:", error);
     return new Response("Internal Server Error", { status: 500 });
   }
@@ -196,11 +221,27 @@ export async function PUT(request: Request) {
 
   try {
     await putUser(updatedUser);
+    posthog.capture({
+      distinctId: data.id, // Unique identifier for the user
+      event: "User Update Successful", // Event name
+      properties: {
+        id: data.id,
+        timeStamp: getCurrentTime(),
+      },
+    });
     return new Response(JSON.stringify(updatedUser), {
       status: 200,
       headers: { "Content-Type": "application/json" },
     });
   } catch (error) {
+    posthog.capture({
+      distinctId: data.id, // Unique identifier for the user
+      event: "User Update Failed", // Event name
+      properties: {
+        id: data.id,
+        timeStamp: getCurrentTime(),
+      },
+    });
     console.error("Error updating user:", error);
     return new Response("Internal Server Error", { status: 500 });
   }

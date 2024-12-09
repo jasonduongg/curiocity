@@ -1,9 +1,6 @@
-import PostHogPageView from "@/components/PostHogComponents/PostHogPageView";
-
 export default function Home() {
   return (
     <div className="flex h-screen flex-col space-y-4">
-      <PostHogPageView />
       <h1 className="text-2xl">Curiocity x WDB</h1>
       <div className="bg-gray-200">
         <h2> Components to integrate </h2>

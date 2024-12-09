@@ -13,7 +13,38 @@ export default function NavBar() {
   const router = useRouter();
 
   const handleSignOut = async () => {
-    await signOut({ redirect: false });
+    await signOut({ redirect: false })
+      .then(() => {
+        console.log(session, "logout attempt");
+
+        // posthog
+        if (session && session.user) {
+          fetch("/api/analytics", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              event: "Sign Out Successful",
+              id: session?.user.id,
+              properties: {},
+            }),
+          });
+        }
+      })
+      .catch(() => {
+        // posthog
+        if (session && session.user) {
+          fetch("/api/analytics", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              event: "Sign Out Failed",
+              id: session?.user.id,
+              properties: {},
+            }),
+          });
+        }
+      });
+
     router.push("/login");
   };
 
