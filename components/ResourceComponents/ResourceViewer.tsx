@@ -6,6 +6,7 @@ import remarkGfm from "remark-gfm";
 import NotesEditor from "@/components/ResourceComponents/NotesEditor";
 import EditButton from "@/components/GeneralComponents/EditButton";
 import NameEditor from "@/components/ResourceComponents/NameEditor";
+import Image from "next/image";
 
 export interface ResourceViewerProps {
   resourceMeta: ResourceMeta;
@@ -134,9 +135,11 @@ export default function ResourceViewer({
         ) : resource.url.toLowerCase().endsWith(".pdf") ? (
           <iframe src={resource.url} className="h-full w-full border-none" />
         ) : /\.(jpeg|jpg|png|gif)$/i.test(resource.url) ? (
-          <img
+          <Image
             src={resource.url}
-            className="max-h-full max-w-full object-contain"
+            alt="Resource image"
+            fill
+            className="bject-contain"
           />
         ) : resource.url.toLowerCase().endsWith(".html") ? (
           <iframe
