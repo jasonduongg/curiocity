@@ -141,7 +141,7 @@ export default function TestPage() {
   return (
     <section className="h-screen overscroll-contain bg-bgPrimary">
       <div className="flex h-full w-full flex-col items-start justify-start overflow-hidden">
-        <NavBar />
+        <NavBar onLogoClick={handleBack} />
         <ResizablePanelGroup direction="horizontal" className="flex-grow px-8">
           <ResizablePanel>
             <div className="h-full w-full max-w-full gap-4 overflow-hidden bg-bgPrimary p-4">

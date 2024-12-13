@@ -7,7 +7,11 @@ import logoIconSmall from "@/assets/logo.png";
 import { GearIcon } from "@radix-ui/react-icons";
 import ProfileCustomization from "./ProfileCustomization";
 
-export default function NavBar() {
+interface NavBarProps {
+  onLogoClick?: () => void;
+}
+
+export default function NavBar({ onLogoClick }: NavBarProps) {
   const [profileVersion, setProfileVersion] = useState(0); // Track profile updates
   const { data: session } = useSession();
   const router = useRouter();
@@ -21,7 +25,7 @@ export default function NavBar() {
     <div className="h-18 w-full px-8">
       <div className="flex h-full items-center justify-between py-2">
         <div className="flex h-full items-center">
-          <div className="relative h-14 w-14 p-2">
+          <div className="relative h-14 w-14 p-2" onClick={onLogoClick}>
             <Image src={logoIconSmall} alt="Logo" />
           </div>
           <p className="text-4xl font-extrabold italic text-textPrimary">
