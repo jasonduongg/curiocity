@@ -37,8 +37,6 @@ export default function NavBar({ onLogoClick }: NavBarProps) {
         <div className="flex h-full items-center gap-4">
           {session && session.user && (
             <div className="flex items-center space-x-2">
-              <p className="text-sm text-textPrimary">{session.user.name}</p>
-              <p className="text-sm text-textPrimary">{session.user.id}</p>
               {session.user.image && (
                 <div key={profileVersion} className="relative h-8 w-8">
                   <Image
