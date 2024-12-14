@@ -53,7 +53,7 @@
     "papaparse": "^5.4.1",
     "pdf-parse": "^1.1.1",
     "pdfjs-dist": "^3.11.174",
-    "posthog-js": "^1.188.0",
+    "posthog-js": "^1.200.1",
     "posthog-node": "^4.2.3",
     "quill": "^2.0.2",
     "react": "^18",

@@ -1,13 +1,13 @@
-import NextAuth, { NextAuthOptions } from "next-auth";
-import GoogleProvider from "next-auth/providers/google";
-import { getCurrentTime } from "../../user/route";
-import { PostHog } from "posthog-node";
+import NextAuth, { NextAuthOptions } from 'next-auth';
+import GoogleProvider from 'next-auth/providers/google';
+import { getCurrentTime } from '../../user/route';
+import { PostHog } from 'posthog-node';
 
-// Initialize the PostHog client
-const posthog = new PostHog(process.env.NEXT_PUBLIC_POSTHOG_KEY || "", {
-  host: process.env.NEXT_PUBLIC_POSTHOG_HOST, // Ensure this points to your PostHog host
+const API_BASE_URL = process.env.NEXTAUTH_URL || 'http://localhost:3000';
+
+const posthog = new PostHog(process.env.NEXT_PUBLIC_POSTHOG_KEY || '', {
+  host: process.env.NEXT_PUBLIC_POSTHOG_HOST,
 });
-
 
 const GOOGLE_ID = process.env.GOOGLE_ID;
 const GOOGLE_SECRET = process.env.GOOGLE_SECRET;
@@ -107,17 +107,25 @@ const options: NextAuthOptions = {
 
         posthog.capture({
           distinctId: userData.id, // Unique identifier for the user
-          event: "User Login1 Successful", // Event name
+          event: 'User Login1 Successful', // Event name
+          properties: {
+            id: userData.id,
+            timeStamp: getCurrentTime(),
+          },
+        });
+        console.log({
+          distinctId: userData.id,
+          event: 'User Login1 Successful', // Event name
           properties: {
             id: userData.id,
             timeStamp: getCurrentTime(),
           },
         });
       } catch (error) {
-        console.error("Error during user sign-in process:", error);
+        console.error('Error during user sign-in process:', error);
         posthog.capture({
           distinctId: userData.id, // Unique identifier for the user
-          event: "User Login Failed", // Event name
+          event: 'User Login Failed', // Event name
           properties: {
             id: userData.id,
             timeStamp: getCurrentTime(),
@@ -148,8 +156,6 @@ const options: NextAuthOptions = {
 
         const userData = await response.json();
         session.user = { ...session.user, ...userData };
-
-        console.log('Fetched user data attached to session:', userData);
       } catch (error) {
         console.error('Error fetching user data from API:', error);
       }

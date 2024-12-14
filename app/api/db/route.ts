@@ -12,8 +12,8 @@ import { PostHog } from 'posthog-node';
 
 dotenv.config();
 
-export const client = new DynamoDBClient({ region: "us-west-1" });
-export const tableName = process.env.DOCUMENT_TABLE || ""
+export const client = new DynamoDBClient({ region: 'us-west-1' });
+export const tableName = process.env.DOCUMENT_TABLE || '';
 export const maxDuration = 60;
 export const dynamic = 'force-dynamic';
 
@@ -194,27 +194,24 @@ export async function PUT(request: Request) {
 
     posthog.capture({
       distinctId: data.ownerID, // Unique identifier for the obj
-      event: "Document Update Successful", // Event name
+      event: 'Document Update Successful', // Event name
       properties: {
         id: data.id,
         timeStamp: getCurrentTime(),
       },
     });
 
-    console.log("Updated object: ", res);
+    console.log('Updated object: ', res);
   }
 
   return Response.json({});
 }
 
 export async function POST(request: Request) {
-  console.log('call create dynamodb');
+  console.log('Call create DynamoDB');
   const data = await request.json();
 
-  console.log(data);
-
   const defaultFolder = { name: 'General', resources: [] };
-
   const Item: Document = {
     id: uuidv4(),
     name: data.name,
@@ -228,39 +225,33 @@ export async function POST(request: Request) {
 
   const inputData = AWS.DynamoDB.Converter.marshall(Item);
 
-  await putObject(client, inputData, tableName).catch(() => {
+  try {
+    await putObject(client, inputData, tableName);
+
     posthog.capture({
-      distinctId: data.ownerID, // Unique identifier for the user
-      event: "Document Creation Failed", // Event name
+      distinctId: data.ownerID,
+      event: 'Document Created',
+      properties: {
+        documentId: Item.id,
+        name: Item.name,
+        createdAt: getCurrentTime(),
+      },
+    });
+    console.log('PostHog event captured for document creation');
+  } catch (error) {
+    console.error('Error creating document:', error);
+    posthog.capture({
+      distinctId: data.ownerID,
+      event: 'Document Creation Failed',
       properties: {
         documentId: Item.id,
         name: Item.name,
         timeStamp: getCurrentTime(),
       },
     });
-  });
+  }
 
-  posthog.capture({
-    distinctId: data.ownerID,
-    event: 'Document Created',
-    properties: {
-      documentId: Item.id,
-      name: Item.name,
-      createdAt: getCurrentTime(),
-    },
-  });
-  console.log('Event sent:', {
-    distinctId: data.ownerID,
-    event: 'Document Created',
-    properties: {
-      documentId: Item.id,
-      name: Item.name,
-      timeStamp: getCurrentTime(),
-    },
-  });
-
-  console.log('Put new object ');
-
+  await posthog.flush(); // Ensure events are flushed
   return Response.json(Item);
 }
 
@@ -277,7 +268,7 @@ export async function DELETE(request: Request) {
   await deleteObject(client, data.id, tableName).catch(() => {
     posthog.capture({
       distinctId: updatedObj.ownerID, // Unique identifier for the user
-      event: "Document Delete Failed", // Event name
+      event: 'Document Delete Failed', // Event name
       properties: {
         documentId: data.id,
         name: updatedObj.name,
@@ -296,5 +287,5 @@ export async function DELETE(request: Request) {
     },
   });
 
-  return Response.json({ msg: "success" });
+  return Response.json({ msg: 'success' });
 }

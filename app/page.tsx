@@ -1,10 +1,10 @@
-import PostHogPageView from '@/components/PostHogComponents/PostHogPageView';
+import PostHogPageView from '@/components/PostHogComponents/PostHogPageViewer';
 
 export default function Home() {
   return (
     <div className=''>
-      {' '}
-      <PostHogPageView />
+      Middleware Failed If you see this
+      <PostHogPageView></PostHogPageView>
     </div>
   );
 }
