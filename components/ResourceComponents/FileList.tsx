@@ -8,6 +8,7 @@ import {
 import TableFolder from "@/components/ResourceComponents/TableFolder";
 import { Document, ResourceMeta, FolderData } from "@/types/types";
 import TextInput from "../GeneralComponents/TextInput";
+import Filter from "@/components/ResourceComponents/Filter";
 
 interface FileListProps {
   currentDocument: Document;
@@ -36,9 +37,17 @@ export default function FileList({
 
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [sortBy, setSortBy] = useState<"dateAdded" | "lastOpened">("dateAdded");
-  const [fileListKey, setFileListKey] = useState(0); // Key to force re-render
-  const [newFolderName, setNewFolderName] = useState<string>(""); // Folder name input
-  const [isAddingFolder, setIsAddingFolder] = useState<boolean>(false); // Toggle input form
+  const [fileListKey, setFileListKey] = useState(0);
+  const [newFolderName, setNewFolderName] = useState<string>("");
+  const [isAddingFolder, setIsAddingFolder] = useState<boolean>(false);
+
+  // Filter states
+  const [selectedSortOrder, setSelectedSortOrder] = useState<string>("a-z");
+  const [selectedFileTypes, setSelectedFileTypes] = useState<string[]>([]);
+  const [selectedDateRange, setSelectedDateRange] = useState<{
+    from: string;
+    to: string;
+  }>({ from: "", to: "" });
 
   const handleResourceClick = async (
     resourceId: string,
@@ -55,7 +64,7 @@ export default function FileList({
         }),
       });
 
-      setFileListKey((prevKey) => prevKey + 1); // Force re-render
+      setFileListKey((prevKey) => prevKey + 1);
       onResourceClickCallBack(resourceId);
     } catch (error) {
       console.error("Error updating lastOpened:", error);
@@ -80,12 +89,22 @@ export default function FileList({
         resources: [],
       };
 
-      setFileListKey((prevKey) => prevKey + 1); // Force re-render
+      setFileListKey((prevKey) => prevKey + 1);
       setNewFolderName("");
-      setIsAddingFolder(false); // Close the input form
+      setIsAddingFolder(false);
     } catch (error) {
       console.error("Error adding new folder:", error);
     }
+  };
+
+  const handleFilterApply = (filters: {
+    sortOrder: string;
+    fileTypes: string[];
+    dateRange: { from: string; to: string };
+  }) => {
+    setSelectedSortOrder(filters.sortOrder);
+    setSelectedFileTypes(filters.fileTypes);
+    setSelectedDateRange(filters.dateRange);
   };
 
   const filteredAndSortedFolders = Object.entries(
@@ -101,10 +120,72 @@ export default function FileList({
         );
       }
 
-      // Include folders with no resources if no search query is provided
-      if (filteredResources.length > 0 || !searchQuery) {
+      // Filter by file type if any selected
+      if (selectedFileTypes.length > 0) {
+        filteredResources = filteredResources.filter((resource) =>
+          selectedFileTypes.includes(resource.fileType),
+        );
+      }
+
+      // Filter by date range if specified
+      if (selectedDateRange.from || selectedDateRange.to) {
+        const fromDate = selectedDateRange.from
+          ? new Date(selectedDateRange.from + "T00:00:00Z")
+          : null;
+        const toDate = selectedDateRange.to
+          ? new Date(selectedDateRange.to + "T23:59:59Z")
+          : null;
+
+        filteredResources = filteredResources.filter((resource) => {
+          const resourceDate = new Date(resource.dateAdded);
+
+          console.log(
+            "Resource Name:",
+            resource.name,
+            "| FromDate:",
+            fromDate,
+            "| ToDate:",
+            toDate,
+            "| ResourceDate String:",
+            resource.dateAdded,
+            "| ResourceDate:",
+            resourceDate,
+          );
+
+          if (isNaN(resourceDate.getTime())) {
+            console.warn(
+              "Invalid date for resource:",
+              resource.name,
+              resource.dateAdded,
+            );
+            return false;
+          }
+
+          if (isNaN(resourceDate.getTime())) {
+            console.warn(
+              "Invalid date for resource:",
+              resource.name,
+              resource.dateAdded,
+            );
+            return false;
+          }
+
+          if (fromDate && resourceDate < fromDate) return false;
+          if (toDate && resourceDate > toDate) return false;
+          return true;
+        });
+      }
+
+      const noFiltersApplied =
+        !searchQuery &&
+        selectedFileTypes.length === 0 &&
+        !selectedDateRange.from &&
+        !selectedDateRange.to;
+
+      if (filteredResources.length > 0 || noFiltersApplied) {
         const sortedResources = [...filteredResources];
 
+        // Sort by date if required
         if (sortBy === "dateAdded") {
           sortedResources.sort(
             (a, b) =>
@@ -118,16 +199,19 @@ export default function FileList({
           );
         }
 
+        // Apply alphabetical sorting from Filter modal
+        if (selectedSortOrder === "a-z") {
+          sortedResources.sort((a, b) => a.name.localeCompare(b.name));
+        } else if (selectedSortOrder === "z-a") {
+          sortedResources.sort((a, b) => b.name.localeCompare(a.name));
+        }
+
         acc[folderName] = { ...folderData, resources: sortedResources };
       }
       return acc;
     },
     {} as Record<string, FolderData>,
   );
-
-  const handleSortChange = (newSortBy: "dateAdded" | "lastOpened") => {
-    setSortBy(newSortBy);
-  };
 
   return (
     <DndContext sensors={sensors}>
@@ -137,20 +221,21 @@ export default function FileList({
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
         />
+        <Filter onApplyFilters={handleFilterApply} />
         <div className="flex gap-2 pb-2 pt-2">
           <button
             className={`rounded-sm px-1.5 py-0.5 text-xs font-medium ${
-              sortBy === "dateAdded" ? "bg-gray-700" : "bg-gray-200"
+              sortBy === "dateAdded" ? "bg-gray-700 text-white" : "bg-gray-200"
             }`}
-            onClick={() => handleSortChange("dateAdded")}
+            onClick={() => setSortBy("dateAdded")}
           >
             Sort by Date Added
           </button>
           <button
             className={`rounded-sm px-1.5 py-0.5 text-xs font-medium ${
-              sortBy === "lastOpened" ? "bg-gray-700" : "bg-gray-200"
+              sortBy === "lastOpened" ? "bg-gray-700 text-white" : "bg-gray-200"
             }`}
-            onClick={() => handleSortChange("lastOpened")}
+            onClick={() => setSortBy("lastOpened")}
           >
             Sort by Last Opened
           </button>
