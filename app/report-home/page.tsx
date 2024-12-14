@@ -15,7 +15,6 @@ import {
 } from "@/components/ui/resizable";
 
 import { Document } from "@/types/types";
-import PostHogPageView from "@/components/PostHogComponents/PostHogPageView";
 
 export default function TestPage() {
   const { data: session } = useSession();
@@ -141,7 +140,6 @@ export default function TestPage() {
 
   return (
     <section className="h-screen overscroll-contain bg-bgPrimary">
-      <PostHogPageView />
       <div className="flex h-full w-full flex-col items-start justify-start overflow-hidden">
         <NavBar />
         <ResizablePanelGroup direction="horizontal" className="flex-grow px-8">
