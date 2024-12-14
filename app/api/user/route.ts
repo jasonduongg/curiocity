@@ -6,6 +6,7 @@ import {
   DeleteItemCommand,
 } from "@aws-sdk/client-dynamodb";
 import { marshall, unmarshall } from "@aws-sdk/util-dynamodb";
+import { PostHog } from "posthog-node";
 
 dotenv.config();
 
@@ -22,6 +23,26 @@ export type User = {
   lastLoggedIn: string;
 };
 
+// Initialize the PostHog client
+const posthog = new PostHog(process.env.NEXT_PUBLIC_POSTHOG_KEY || "", {
+  host: process.env.NEXT_PUBLIC_POSTHOG_HOST, // Ensure this points to your PostHog host
+});
+
+const getCurrentTime = () => {
+  const now = new Date();
+
+  // Format components of the date
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, "0"); // Months are 0-indexed
+  const day = String(now.getDate()).padStart(2, "0");
+  const hours = String(now.getHours()).padStart(2, "0");
+  const minutes = String(now.getMinutes()).padStart(2, "0");
+  const seconds = String(now.getSeconds()).padStart(2, "0");
+
+  // Combine components into the desired format
+  return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`;
+};
+
 // PUT user object into DynamoDB
 export const putUser = async (inputData: User) => {
   const marshalledData = marshall(inputData);
@@ -33,6 +54,18 @@ export const putUser = async (inputData: User) => {
         Item: marshalledData,
       }),
     );
+
+    // create posthog event for user created
+    posthog.capture({
+      distinctId: inputData.id, // Unique identifier for the user
+      event: "User Created", // Event name
+      properties: {
+        email: inputData.email,
+        name: inputData.name,
+        createdAt: getCurrentTime(),
+      },
+    });
+
     return inputData;
   } catch (error) {
     console.error("Error putting user:", error);

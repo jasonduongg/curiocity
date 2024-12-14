@@ -1,3 +1,10 @@
+import PostHogPageView from '@/components/PostHogComponents/PostHogPageView';
+
 export default function Home() {
-  return <div className="">redirect using middleware</div>;
+  return (
+    <div className=''>
+      {' '}
+      <PostHogPageView />
+    </div>
+  );
 }

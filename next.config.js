@@ -2,9 +2,9 @@
 module.exports = {
   images: {
     domains: [
-      "lh3.googleusercontent.com",
-      "wdb-curiocity-bucket.s3.amazonaws.com", // Global S3 URL
-      "wdb-curiocity-bucket.s3.us-west-1.amazonaws.com", // Regional S3 URL
+      'lh3.googleusercontent.com',
+      'wdb-curiocity-bucket.s3.amazonaws.com', // Global S3 URL
+      'wdb-curiocity-bucket.s3.us-west-1.amazonaws.com', // Regional S3 URL
     ],
   },
   experimental: {
@@ -14,7 +14,7 @@ module.exports = {
   webpack: (config) => {
     config.module.rules.push({
       test: /pdf\.worker\.(min\.)?js$/,
-      type: "asset/resource",
+      type: 'asset/resource',
     });
     return config;
   },

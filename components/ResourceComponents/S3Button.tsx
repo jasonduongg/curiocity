@@ -1,10 +1,10 @@
-"use client";
+'use client';
 
-import React, { useState, useRef } from "react";
-import { useS3Upload } from "next-s3-upload";
-import { FaCheckCircle, FaTrash, FaArrowLeft } from "react-icons/fa";
-import FolderDropdown from "@/components/ResourceComponents/FolderSelectionDropdown";
-import { Document } from "@/types/types";
+import React, { useState, useRef } from 'react';
+import { useS3Upload } from 'next-s3-upload';
+import { FaCheckCircle, FaTrash, FaArrowLeft } from 'react-icons/fa';
+import FolderDropdown from '@/components/ResourceComponents/FolderSelectionDropdown';
+import { Document } from '@/types/types';
 
 interface S3ButtonProps {
   currentDocument: Document;
@@ -17,9 +17,9 @@ const S3Button: React.FC<S3ButtonProps> = ({
   onCancel,
   onResourceUploadCallBack,
 }) => {
-  const [selectedFolder, setSelectedFolder] = useState<string>("");
+  const [selectedFolder, setSelectedFolder] = useState<string>('');
   const [isNewFolder, setIsNewFolder] = useState(false);
-  const [newFolderName, setNewFolderName] = useState<string>("");
+  const [newFolderName, setNewFolderName] = useState<string>('');
   const [fileQueue, setFileQueue] = useState<File[]>([]);
   const [uploadedFiles, setUploadedFiles] = useState<Record<string, boolean>>(
     {},
@@ -39,11 +39,11 @@ const S3Button: React.FC<S3ButtonProps> = ({
 
   const extractText = async (file: File): Promise<string | null> => {
     const formData = new FormData();
-    formData.append("myFile", file);
+    formData.append('myFile', file);
 
     try {
-      const response = await fetch("/api/resource_parsing", {
-        method: "POST",
+      const response = await fetch('/api/resource_parsing', {
+        method: 'POST',
         body: formData,
       });
 
@@ -64,7 +64,7 @@ const S3Button: React.FC<S3ButtonProps> = ({
   };
   const handleUploadAll = async () => {
     if (fileQueue.length === 0) {
-      alert("No files selected for upload.");
+      alert('No files selected for upload.');
       return;
     }
 
@@ -80,7 +80,7 @@ const S3Button: React.FC<S3ButtonProps> = ({
           fileReader.onerror = (error) => reject(error);
         });
 
-        const fileBase64 = fileDataUrl.split(",")[1]; // Extract Base64 portion of the data URL
+        const fileBase64 = fileDataUrl.split(',')[1]; // Extract Base64 portion of the data URL
 
         const parsedText = await extractText(file);
         if (!parsedText) {
@@ -89,8 +89,8 @@ const S3Button: React.FC<S3ButtonProps> = ({
         }
 
         const { url } = await uploadToS3(file);
-        await fetch("/api/db/resourcemeta", {
-          method: "POST",
+        await fetch('/api/db/resourcemeta', {
+          method: 'POST',
           body: JSON.stringify({
             documentId: currentDocument.id,
             name: file.name,
@@ -101,7 +101,7 @@ const S3Button: React.FC<S3ButtonProps> = ({
             dateAdded: new Date().toISOString(),
             lastOpened: new Date().toISOString(),
           }),
-          headers: { "Content-Type": "application/json" },
+          headers: { 'Content-Type': 'application/json' },
         });
 
         setUploadedFiles((prev) => ({ ...prev, [file.name]: true }));
@@ -117,74 +117,74 @@ const S3Button: React.FC<S3ButtonProps> = ({
   };
 
   return (
-    <div className="flex h-full flex-col">
-      <div className="flex items-center space-x-2 p-2">
-        <p className="text-sm text-white">Select Folder:</p>
+    <div className='flex h-full flex-col'>
+      <div className='flex items-center space-x-2 p-2'>
+        <p className='text-sm text-white'>Select Folder:</p>
         {!isNewFolder ? (
           <FolderDropdown
             possibleFolders={Object.keys(currentDocument.folders)}
             selectedFolder={selectedFolder}
             onFolderChange={(folderName) => {
               setSelectedFolder(folderName);
-              setIsNewFolder(folderName === "Enter New Folder Name");
+              setIsNewFolder(folderName === 'Enter New Folder Name');
             }}
           />
         ) : (
           <>
             <button
               onClick={() => setIsNewFolder(false)}
-              className="rounded-md p-1 text-white hover:bg-gray-700"
+              className='rounded-md p-1 text-white hover:bg-gray-700'
             >
               <FaArrowLeft />
             </button>
             <input
-              type="text"
-              placeholder="Enter new folder name"
+              type='text'
+              placeholder='Enter new folder name'
               value={newFolderName}
               onChange={(e) => setNewFolderName(e.target.value)}
-              className="w-full rounded-lg border border-zinc-700 bg-transparent px-2 py-1 text-sm text-white outline-none focus:border-white"
+              className='w-full rounded-lg border border-zinc-700 bg-transparent px-2 py-1 text-sm text-white outline-none focus:border-white'
             />
           </>
         )}
         <button
           onClick={() => fileInputRef.current?.click()}
-          className="whitespace-nowrap rounded-md border border-zinc-700 bg-transparent px-2 py-1 text-sm text-white hover:bg-gray-700"
+          className='whitespace-nowrap rounded-md border border-zinc-700 bg-transparent px-2 py-1 text-sm text-white hover:bg-gray-700'
         >
           Select Files
         </button>
       </div>
 
       <input
-        type="file"
+        type='file'
         multiple
         onChange={handleFileChange}
-        className="hidden"
+        className='hidden'
         ref={fileInputRef}
       />
 
-      <div className="h-[30%] flex-grow overflow-y-auto">
-        <div className="flex h-full items-center justify-center overflow-y-auto rounded-xl border border-zinc-700 p-2">
+      <div className='h-[30%] flex-grow overflow-y-auto'>
+        <div className='flex h-full items-center justify-center overflow-y-auto rounded-xl border border-zinc-700 p-2'>
           {fileQueue.length === 0 ? (
-            <p className="text-gray-400">No files selected</p>
+            <p className='text-gray-400'>No files selected</p>
           ) : (
-            <ul className="list-disc text-white">
+            <ul className='list-disc text-white'>
               {fileQueue.map((file, index) => (
                 <div
                   key={index}
-                  className="mb-2 flex items-center rounded-lg border-[1px] border-zinc-700"
+                  className='mb-2 flex items-center rounded-lg border-[1px] border-zinc-700'
                 >
-                  <p className="flex-1 whitespace-nowrap px-2 py-1 text-sm">
+                  <p className='flex-1 whitespace-nowrap px-2 py-1 text-sm'>
                     {file.name}
                   </p>
                   {isUploading ? (
                     uploadedFiles[file.name] ? (
-                      <FaCheckCircle className="mx-2 text-green-500" />
+                      <FaCheckCircle className='mx-2 text-green-500' />
                     ) : (
-                      <div className="ml-2 h-4 w-4" />
+                      <div className='ml-2 h-4 w-4' />
                     )
                   ) : (
                     <button
-                      className="mx-2 text-red-500 hover:text-red-400"
+                      className='mx-2 text-red-500 hover:text-red-400'
                       onClick={() =>
                         setFileQueue((prevQueue) =>
                           prevQueue.filter((f) => f.name !== file.name),
@@ -202,16 +202,16 @@ const S3Button: React.FC<S3ButtonProps> = ({
         </div>
       </div>
 
-      <div className="flex space-x-2 py-2">
+      <div className='flex space-x-2 py-2'>
         <button
           onClick={handleUploadAll}
-          className="w-full rounded-md border-[1px] border-zinc-700 px-2 py-1 text-sm text-white hover:bg-blue-900"
+          className='w-full rounded-md border-[1px] border-zinc-700 px-2 py-1 text-sm text-white hover:bg-blue-900'
         >
           Upload All Files
         </button>
         <button
           onClick={onCancel}
-          className="w-full rounded-md border-[1px] border-zinc-700 px-2 py-1 text-sm text-white hover:bg-red-900"
+          className='w-full rounded-md border-[1px] border-zinc-700 px-2 py-1 text-sm text-white hover:bg-red-900'
         >
           Cancel
         </button>
