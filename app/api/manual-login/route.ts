@@ -21,7 +21,7 @@ export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
     const { email, password } = body;
-    console.log("Received Sign In Body:", body);
+    // console.log("Received Sign In Body:", body);d
 
     if (!email) {
       return NextResponse.json({ error: "Email is required" }, { status: 400 });
