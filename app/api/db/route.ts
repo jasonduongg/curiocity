@@ -1,20 +1,41 @@
-import dotenv from "dotenv";
+import dotenv from 'dotenv';
 import {
   DynamoDBClient,
   GetItemCommand,
   PutItemCommand,
   DeleteItemCommand,
-} from "@aws-sdk/client-dynamodb";
-import { v4 as uuidv4 } from "uuid";
-import AWS from "aws-sdk";
-import { resourceMetaTable } from "./resourcemeta/route";
+} from '@aws-sdk/client-dynamodb';
+import { v4 as uuidv4 } from 'uuid';
+import AWS from 'aws-sdk';
+import { resourceMetaTable } from './resourcemeta/route';
+import { PostHog } from 'posthog-node';
 
 dotenv.config();
 
-const client = new DynamoDBClient({ region: "us-west-1" });
-const tableName = process.env.DOCUMENT_TABLE || "";
+export const client = new DynamoDBClient({ region: 'us-west-1' });
+export const tableName = process.env.DOCUMENT_TABLE || '';
 export const maxDuration = 60;
-export const dynamic = "force-dynamic";
+export const dynamic = 'force-dynamic';
+
+// Initialize the PostHog client
+const posthog = new PostHog(process.env.NEXT_PUBLIC_POSTHOG_KEY || '', {
+  host: process.env.NEXT_PUBLIC_POSTHOG_HOST, // Ensure this points to your PostHog host
+});
+
+const getCurrentTime = () => {
+  const now = new Date();
+
+  // Format components of the date
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, '0'); // Months are 0-indexed
+  const day = String(now.getDate()).padStart(2, '0');
+  const hours = String(now.getHours()).padStart(2, '0');
+  const minutes = String(now.getMinutes()).padStart(2, '0');
+  const seconds = String(now.getSeconds()).padStart(2, '0');
+
+  // Combine components into the desired format
+  return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`;
+};
 
 export type Resource = {
   id: string;
@@ -89,7 +110,7 @@ export const getObject = async (client: any, id: any, table: string) => {
     .then((data: any) => data)
     .catch((error: any) => {
       console.log(error);
-      throw new Error("Could not retrieve the item");
+      throw new Error('Could not retrieve the item');
     });
 
   return res;
@@ -108,8 +129,10 @@ export const deleteObject = async (client: any, id: any, table: string) => {
     // if is document obj, recursively delete all resource metadata as well
     if (table === tableName) {
       const obj = await getObject(client, id, table);
-      for (const folder in obj.folders) {
-        for (const resource in obj.folders[folder].resources) {
+      const updatedObj = AWS.DynamoDB.Converter.unmarshall(obj.Item);
+
+      for (const folder in updatedObj.folders) {
+        for (const resource in updatedObj.folders[folder].resources) {
           await deleteObject(client, resource, resourceMetaTable);
         }
       }
@@ -119,25 +142,25 @@ export const deleteObject = async (client: any, id: any, table: string) => {
     const command = new DeleteItemCommand(params);
     const data = await client.send(command);
 
-    console.log("Item successfully deleted");
+    console.log('Item successfully deleted');
     return data; // Return the delete operation's response data
   } catch (error) {
-    console.error("Error deleting item:", error);
-    throw new Error("Could not delete the item");
+    console.error('Error deleting item:', error);
+    throw new Error('Could not delete the item');
   }
 };
 
 export async function GET(request: Request) {
-  console.log("call get dynamodb");
+  console.log('call get dynamodb');
   const url = new URL(request.url);
-  const id = url.searchParams.get("id"); // Retrieves the 'id' query parameter
+  const id = url.searchParams.get('id'); // Retrieves the 'id' query parameter
 
   const item = await getObject(client, id, tableName);
   return Response.json(item.Item);
 }
 
 export async function PUT(request: Request) {
-  console.log("call put dynamodb");
+  console.log('call put dynamodb');
   const data = await request.json();
 
   console.log(data);
@@ -147,21 +170,21 @@ export async function PUT(request: Request) {
     const dynamoItem = await getObject(client, data.id, tableName);
 
     if (!dynamoItem?.Item) {
-      console.log("here");
-      throw new Error("Could not retrieve the item");
+      console.log('here');
+      throw new Error('Could not retrieve the item');
     }
 
-    console.log("retrieved put item: ", dynamoItem.Item);
+    console.log('retrieved put item: ', dynamoItem.Item);
 
     const updatedObj = AWS.DynamoDB.Converter.unmarshall(dynamoItem.Item);
     for (const key in data) {
-      if (key !== "resources") {
+      if (key !== 'resources') {
         // don't overwrite resources
         updatedObj[key] = data[key];
       }
     }
 
-    console.log("updatedObj", updatedObj);
+    console.log('updatedObj', updatedObj);
 
     // put the updated object to the db
     const res = await putObject(
@@ -170,48 +193,100 @@ export async function PUT(request: Request) {
       tableName,
     );
 
-    console.log("Updated object: ", res);
+    posthog.capture({
+      distinctId: data.ownerID, // Unique identifier for the obj
+      event: 'Document Update Successful', // Event name
+      properties: {
+        id: data.id,
+        timeStamp: getCurrentTime(),
+      },
+    });
+
+    console.log('Updated object: ', res);
   }
 
   return Response.json({});
 }
 
 export async function POST(request: Request) {
-  console.log("call create dynamodb");
+  console.log('Call create DynamoDB');
   const data = await request.json();
 
-  console.log(data);
-
-  const defaultFolder = { name: "General", resources: [] };
-
+  const defaultFolder = { name: 'General', resources: [] };
   const Item: Document = {
     id: uuidv4(),
     name: data.name,
     folders: { General: defaultFolder },
-    text: data?.text || "",
+    text: data?.text || '',
     dateAdded: data.dateAdded,
-    ownerID: data?.ownerID || "jason",
-    lastOpened: data?.lastOpened || "now",
+    ownerID: data?.ownerID || 'jason',
+    lastOpened: data?.lastOpened || 'now',
     tags: [],
   };
 
-  console.log(Item);
-
   const inputData = AWS.DynamoDB.Converter.marshall(Item);
-  console.log("marshal data: ", inputData);
 
-  await putObject(client, inputData, tableName);
+  try {
+    await putObject(client, inputData, tableName);
 
-  console.log("Put new object ");
+    posthog.capture({
+      distinctId: data.ownerID,
+      event: 'Document Created',
+      properties: {
+        documentId: Item.id,
+        name: Item.name,
+        createdAt: getCurrentTime(),
+      },
+    });
+    console.log('PostHog event captured for document creation');
+  } catch (error) {
+    console.error('Error creating document:', error);
+    posthog.capture({
+      distinctId: data.ownerID,
+      event: 'Document Creation Failed',
+      properties: {
+        documentId: Item.id,
+        name: Item.name,
+        timeStamp: getCurrentTime(),
+      },
+    });
+  }
 
+  await posthog.flush(); // Ensure events are flushed
   return Response.json(Item);
 }
 
 export async function DELETE(request: Request) {
   const data = await request.json();
-  console.log("call delete dynamodb: ", data.id);
+  console.log('call delete dynamodb: ', data.id);
 
-  await deleteObject(client, data.id, tableName);
+  // create posthog event for doc deleted
+  const obj = await getObject(client, data.id, tableName);
+  const updatedObj = AWS.DynamoDB.Converter.unmarshall(obj.Item);
 
-  return Response.json({ msg: "success" });
+  console.log('posthog delete: ', updatedObj);
+
+  await deleteObject(client, data.id, tableName).catch(() => {
+    posthog.capture({
+      distinctId: updatedObj.ownerID, // Unique identifier for the user
+      event: 'Document Delete Failed', // Event name
+      properties: {
+        documentId: data.id,
+        name: updatedObj.name,
+        timeStamp: getCurrentTime(),
+      },
+    });
+  });
+
+  posthog.capture({
+    distinctId: updatedObj.ownerID, // Unique identifier for the user
+    event: 'Document Deleted', // Event name
+    properties: {
+      documentId: data.id,
+      name: updatedObj.name,
+      timeStamp: getCurrentTime(),
+    },
+  });
+
+  return Response.json({ msg: 'success' });
 }
