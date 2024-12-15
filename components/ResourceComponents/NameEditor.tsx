@@ -1,50 +1,50 @@
-import { useState, useEffect } from "react";
-import { ResourceMeta } from "@/types/types";
+import { useState, useEffect } from 'react';
+import { useCurrentDocument, useCurrentResource } from '@/context/AppContext';
 
-interface NameEditorProps {
-  initialName: string;
-  resourceMeta: ResourceMeta;
-  onNameChangeCallBack: (documentId: string) => void;
-}
+export default function NameEditor() {
+  const { currentResourceMeta, setCurrentResourceMeta, fetchResourceMeta } =
+    useCurrentResource();
+  const { currentDocument, fetchDocument } = useCurrentDocument();
 
-export default function NameEditor({
-  initialName,
-  resourceMeta,
-  onNameChangeCallBack,
-}: NameEditorProps) {
   const [isEditing, setIsEditing] = useState(false);
-  const [resourceName, setResourceName] = useState(initialName);
+  const [resourceName, setResourceName] = useState('');
 
   useEffect(() => {
-    setResourceName(initialName);
-  }, [initialName]);
+    if (currentResourceMeta?.name) {
+      setResourceName(currentResourceMeta.name);
+    }
+  }, [currentResourceMeta]);
 
   const handleSave = async () => {
-    if (!resourceMeta || !resourceName.trim()) {
-      alert("Resource name cannot be empty.");
+    if (!currentResourceMeta || !resourceName.trim()) {
+      alert('Resource name cannot be empty.');
       return;
     }
 
     try {
       const response = await fetch(`/api/db/resourcemeta/name`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          id: resourceMeta.id,
+          id: currentResourceMeta.id,
           name: resourceName,
-          documentId: resourceMeta.documentId,
+          documentId: currentResourceMeta.documentId,
         }),
       });
 
       if (!response.ok) {
-        throw new Error("Failed to update resource name.");
+        throw new Error('Failed to update resource name.');
       }
 
       setIsEditing(false); // Exit editing mode
-      onNameChangeCallBack(resourceMeta.documentId);
+
+      // Update the resource meta in context
+      const resourceMeta = await fetchResourceMeta(currentResourceMeta.id);
+      setCurrentResourceMeta(resourceMeta);
+      await fetchDocument(currentDocument.id);
     } catch (error) {
-      console.error("Error updating resource name:", error);
-      alert("Failed to update resource name.");
+      console.error('Error updating resource name:', error);
+      alert('Failed to update resource name.');
     }
   };
 
@@ -63,15 +63,15 @@ export default function NameEditor({
       value={resourceName}
       onChange={(e) => setResourceName(e.target.value)}
       onBlur={handleBlur}
-      onKeyDown={(e) => e.key === "Enter" && handleSave()}
-      className="rounded-md border-[1px] border-zinc-700 bg-transparent p-1 text-white outline-none focus:ring-0"
+      onKeyDown={(e) => e.key === 'Enter' && handleSave()}
+      className='rounded-md border-[1px] border-zinc-700 bg-transparent p-1 text-white outline-none focus:ring-0'
     />
   ) : (
     <p
       onDoubleClick={handleDoubleClick}
-      className="text-md cursor-pointer font-bold text-white"
+      className='text-md cursor-pointer font-bold text-white'
     >
-      {resourceName || "Untitled Resource"}
+      {resourceName || 'Untitled Resource'}
     </p>
   );
 }

@@ -86,7 +86,7 @@ export const putObject = async (client: any, inputData: any, table: string) => {
     );
     return res;
   } catch (error: any) {
-    console.error("Failed to put the item in the table.", {
+    console.error('Failed to put the item in the table.', {
       tableName: table,
       inputData,
       errorMessage: error.message,
@@ -173,8 +173,6 @@ export async function PUT(request: Request) {
       console.log('here');
       throw new Error('Could not retrieve the item');
     }
-
-    console.log('retrieved put item: ', dynamoItem.Item);
 
     const updatedObj = AWS.DynamoDB.Converter.unmarshall(dynamoItem.Item);
     for (const key in data) {

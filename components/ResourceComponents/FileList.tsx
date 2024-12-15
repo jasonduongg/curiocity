@@ -33,16 +33,23 @@ export default function FileList() {
 
   useEffect(() => {
     if (currentDocument?.folders) {
-      setExpandedFolders(
+      setExpandedFolders((prev) =>
         Object.fromEntries(
           Object.keys(currentDocument.folders).map((folderName) => [
             folderName,
-            false,
+            prev[folderName] || false,
           ]),
         ),
       );
     }
   }, [currentDocument]);
+
+  const handleToggleFolder = (folderName: string) => {
+    setExpandedFolders((prev) => ({
+      ...prev,
+      [folderName]: !prev[folderName], // Toggle state
+    }));
+  };
 
   const handleAddFolder = async () => {
     if (!newFolderName.trim() || !currentDocument) return;
@@ -85,6 +92,8 @@ export default function FileList() {
   ).reduce(
     (acc, [folderName, folderData]) => {
       let filteredResources = folderData.resources;
+
+      console.log(filteredResources);
 
       if (searchQuery) {
         filteredResources = filteredResources.filter((resource) =>
@@ -164,15 +173,10 @@ export default function FileList() {
           <div>
             {Object.entries(filteredAndSortedFolders).map(([key, folder]) => (
               <TableFolder
-                key={key} // Simplified the key for uniqueness, as `key` is already a unique folder identifier
-                folderData={folder} // Pass the folder data
-                isExpanded={!!expandedFolders[key]} // Ensure a boolean value for expanded state
-                onToggle={() =>
-                  setExpandedFolders((prev) => ({
-                    ...prev,
-                    [key]: !prev[key], // Toggle the expansion state for the clicked folder
-                  }))
-                }
+                key={key}
+                folderData={folder}
+                isExpanded={!!expandedFolders[key]}
+                onToggle={() => handleToggleFolder(folder.name)}
               />
             ))}
           </div>

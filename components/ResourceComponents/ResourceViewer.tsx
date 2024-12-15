@@ -1,19 +1,19 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { useCurrentResource } from '@/context/AppContext'; // Replace with the correct context import
+import TextEditor from '@/components/DocumentComponents/TextEditor';
+import { useCurrentResource } from '@/context/AppContext';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import NotesEditor from '@/components/ResourceComponents/NotesEditor';
-import EditButton from '@/components/GeneralComponents/EditButton';
-import NameEditor from '@/components/ResourceComponents/NameEditor';
 import Image from 'next/image';
+import NameEditor from './NameEditor';
 
 const ResourceViewer: React.FC = () => {
   const { currentResourceMeta, setCurrentResourceMeta } = useCurrentResource();
   const [viewMode, setViewMode] = useState<'URL' | 'Text'>('URL');
   const [csvData, setCsvData] = useState<string[][] | null>(null);
-  const [showEditor, setShowEditor] = useState(false);
+  const [showEditor, setShowEditor] = useState(false); // Initialize as false
   const [resource, setResource] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -84,45 +84,41 @@ const ResourceViewer: React.FC = () => {
 
   return (
     <div className='flex h-full w-full flex-col overflow-hidden p-2'>
-      <div className='mb-2 flex h-12 items-center justify-between'>
-        <div className='flex flex-col'>
-          <NameEditor
-            initialName={currentResourceMeta?.name || ''}
-            resourceMeta={currentResourceMeta}
-            onNameChange={() =>
-              setCurrentResourceMeta({
-                ...currentResourceMeta,
-                name: 'New Name',
-              })
-            }
-          />
-          {!showEditor && (
-            <div className='flex flex-row'>
-              <p className='whitespace-nowrap pr-1 text-xs font-semibold text-white'>
-                Document Notes
-              </p>
-              <EditButton
-                onClick={() => setShowEditor(!showEditor)}
-                tooltip='Edit Resource Notes'
-              />
-            </div>
-          )}
+      <div className='mb-4 flex items-center justify-between'>
+        <div className='mb-2 flex h-12 items-center justify-between'>
+          <div className='flex flex-col'>
+            <NameEditor />
+            {/* {!showEditor && (
+              <div className='flex flex-row'>
+                <p className='whitespace-nowrap pr-1 text-xs font-semibold text-white'>
+                  Document Notes
+                </p>
+                <EditButton
+                  onClick={() => setShowEditor(!showEditor)}
+                  tooltip='Edit Resource Notes'
+                />
+              </div>
+            )}
+          </div>
+          <div className='flex items-center space-x-2'>
+            <label className='text-sm text-white'>View as {viewMode}</label>
+            <Switch
+              checked={viewMode === 'Text'}
+              onCheckedChange={(checked) =>
+                setViewMode(checked ? 'Text' : 'URL')
+              }
+            /> */}
+          </div>
         </div>
-        <div className='flex items-center space-x-2'>
-          <label className='text-sm text-white'>View as {viewMode}</label>
-          <Switch
-            checked={viewMode === 'Text'}
-            onCheckedChange={(checked) => setViewMode(checked ? 'Text' : 'URL')}
-          />
-        </div>
+        <button
+          onClick={() => setShowEditor((prev) => !prev)}
+          className='rounded-md border-[1px] border-zinc-700 px-4 py-2 text-sm text-white hover:bg-blue-700'
+        >
+          {showEditor ? 'Close Notes Editor' : 'Open Notes Editor'}
+        </button>
       </div>
 
-      {showEditor && (
-        <NotesEditor
-          resourceMeta={currentResourceMeta}
-          handleBack={() => setShowEditor(false)}
-        />
-      )}
+      {showEditor && <NotesEditor handleBack={() => setShowEditor(false)} />}
 
       <div className='flex-grow overflow-hidden'>
         {viewMode === 'Text' ? (

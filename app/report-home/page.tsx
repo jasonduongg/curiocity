@@ -32,6 +32,8 @@ export default function ReportHome() {
     setViewingDocument,
   } = useCurrentDocument();
 
+  const { setCurrentResource, setCurrentResourceMeta } = useCurrentResource();
+
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   // Fetch documents on session or sort order change
@@ -53,6 +55,8 @@ export default function ReportHome() {
     fetchDocuments();
     setViewingDocument(false);
     setCurrentDocument(null);
+    setCurrentResourceMeta(null);
+    setCurrentResource(null);
   };
 
   // Show unauthenticated state
@@ -86,7 +90,6 @@ export default function ReportHome() {
             </div>
           </ResizablePanel>
 
-          {/* File Viewer Panel */}
           <ResizableHandle withHandle={true} className='my-4' />
           <ResizablePanel>
             <div className='h-full w-full p-4'>
@@ -98,7 +101,6 @@ export default function ReportHome() {
         </ResizablePanelGroup>
       </div>
 
-      {/* Create Report Modal */}
       {isModalOpen && (
         <NameYourReport
           onSave={handleSaveNewReport}

@@ -48,9 +48,7 @@ function inferFileType(nameOrUrl: string): string {
 
 export async function POST(request: Request) {
   try {
-    console.log('POST request received');
     const data = await request.json();
-    console.log('Incoming data:', data);
     const requiredFields = [
       'documentId',
       'name',

@@ -9,7 +9,7 @@ import FileList from '@/components/ResourceComponents/FileList';
 
 const FileViewer: React.FC = () => {
   const { currentDocument } = useCurrentDocument();
-  const { currentResourceMeta, setCurrentResourceMeta } = useCurrentResource();
+  const { currentResourceMeta } = useCurrentResource();
 
   const [showUploadForm, setShowUploadForm] = useState(false);
 
@@ -38,10 +38,13 @@ const FileViewer: React.FC = () => {
             <p>No resources selected</p>
           </div>
         ) : !showUploadForm && currentResourceMeta ? (
-          <div></div>
+          <ResourceViewer />
         ) : (
-          // <ResourceViewer />
-          <S3Button />
+          <S3Button
+            onBack={() => {
+              setShowUploadForm(false);
+            }}
+          />
         )}
       </div>
 

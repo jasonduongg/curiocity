@@ -6,7 +6,12 @@ import FolderDropdown from '@/components/ResourceComponents/FolderSelectionDropd
 import { useCurrentResource } from '@/context/AppContext';
 import { useCurrentDocument } from '@/context/AppContext';
 
-const S3Button = () => {
+interface S3ButtonProps {
+  onBack: () => void; // Callback function for "Cancel" button
+}
+
+const S3Button = ({ onBack }: S3ButtonProps) => {
+  // need to create new use Context called for global states such as loading, showS3,etc
   const { uploadResource } = useCurrentResource();
   const { currentDocument, fetchDocument } = useCurrentDocument();
 
@@ -147,7 +152,7 @@ const S3Button = () => {
           Upload All Files
         </button>
         <button
-          onClick={() => {}}
+          onClick={onBack}
           className='w-full rounded-md border-[1px] border-zinc-700 px-2 py-1 text-sm text-white hover:bg-red-900'
         >
           Cancel
