@@ -7,15 +7,13 @@ import { signIn } from 'next-auth/react';
 export default function Login() {
   const [formData, setFormData] = useState({ email: '', password: '' });
   const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false); // Add loading state for buttons
+  const [loading, setLoading] = useState(false);
   const router = useRouter();
 
-  // Handle input changes
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.id]: e.target.value });
   };
 
-  // Handle manual login form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
@@ -33,7 +31,6 @@ export default function Login() {
         return;
       }
 
-      // Redirect to the desired page on successful login
       router.push('/report-home');
     } catch (err) {
       console.error('Error during login:', err);

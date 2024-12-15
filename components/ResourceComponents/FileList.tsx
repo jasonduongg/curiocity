@@ -192,13 +192,14 @@ export default function FileList({
   return (
     <DndContext sensors={sensors}>
       <div className='flex h-full w-full flex-col overflow-auto'>
-        <TextInput
-          placeholder='Search Resources'
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-        />
-        {/* Filter with onApplyFilters callback */}
-        <Filter onApplyFilters={handleFilterApply} />
+        <div className='flex w-full justify-center px-4'>
+          <TextInput
+            placeholder='Search Resources'
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
+          <Filter onApplyFilters={handleFilterApply} />
+        </div>
 
         {/* Removed old sort buttons since sorting is now done via the modal */}
 
