@@ -28,7 +28,7 @@ export default function SignUp() {
     setMessage('');
 
     try {
-      console.log('Submitted Form Data:', formData);
+      
       const response = await fetch('/api/manual-signup', {
         method: 'POST',
         headers: {

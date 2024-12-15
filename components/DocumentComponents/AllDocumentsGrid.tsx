@@ -20,7 +20,7 @@ export default function AllDocumentGrid({
   toggleSortOrder,
   isSortedByLastOpened,
 }: AllDocumentGridProps) {
-  console.log(allDocuments);
+  
   const [searchQuery, setSearchQuery] = useState("");
 
   const filteredDocuments = allDocuments.filter(

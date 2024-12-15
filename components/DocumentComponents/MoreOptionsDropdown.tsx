@@ -23,7 +23,7 @@ const MoreOptionsDropdown: React.FC<MoreOptionsDropdownProps> = ({
 
   const handleEdit = (e: React.MouseEvent) => {
     e.stopPropagation(); // Prevents event bubbling
-    console.log(`Edit document with ID: ${documentId}`);
+    
   };
 
   const handleDeleteClick = (e: React.MouseEvent) => {

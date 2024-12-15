@@ -29,12 +29,12 @@ export default function ResetPasswordButton() {
   });
 
   const handleOpenModal = () => {
-    console.log("Opening reset password modal...");
+    
     setIsModalOpen(true);
   };
 
   const handleCloseModal = () => {
-    console.log("Closing reset password modal...");
+    
     formMethods.reset();
     setIsModalOpen(false);
   };

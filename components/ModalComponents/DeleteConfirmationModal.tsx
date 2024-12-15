@@ -17,7 +17,7 @@ const DeleteConfirmationModal: React.FC<DeleteProps> = ({
 }) => {
   const handleDelete = (e: React.MouseEvent) => {
     e.stopPropagation(); // Prevents event propagation to parent
-    console.log("File deleted: ", documentId);
+    
     // API call for deletion
     fetch("/api/db", {
       method: "DELETE",
@@ -27,7 +27,7 @@ const DeleteConfirmationModal: React.FC<DeleteProps> = ({
     })
       .then((r) => r.json())
       .then((res) => {
-        console.log(res, documentId);
+        
         refreshState(); // Refresh state after deletion
         onClose(); // Close modal
       })

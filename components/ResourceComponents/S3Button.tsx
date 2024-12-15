@@ -55,7 +55,7 @@ const S3Button: React.FC<S3ButtonProps> = ({
       }
 
       const { markdown } = await response.json();
-      console.log(`Extracted Markdown for ${file.name}:`, markdown);
+      
       return markdown;
     } catch (error) {
       console.error(`Error extracting text from ${file.name}:`, error.message);

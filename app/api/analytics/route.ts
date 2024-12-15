@@ -16,7 +16,7 @@ export async function POST(request: Request) {
   if (data && data.id && data.event && data.properties) {
     data.properties.timeStamp = getCurrentTime();
     data.properties.id = data.id;
-    console.log("call analytics: ", data.id, data.event, data.properties);
+    
 
     posthog.capture({
       distinctId: data.id, // Unique identifier for the user
