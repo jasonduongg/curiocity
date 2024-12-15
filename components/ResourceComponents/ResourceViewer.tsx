@@ -11,11 +11,13 @@ import Image from 'next/image';
 export interface ResourceViewerProps {
   resourceMeta: ResourceMeta;
   onNameChangeCallBack: (documentId: string) => void;
+  resetResource: boolean;
 }
 
 export default function ResourceViewer({
   resourceMeta,
   onNameChangeCallBack,
+  resetResource,
 }: ResourceViewerProps) {
   const [viewMode, setViewMode] = useState<'URL' | 'Text'>('URL');
   const [csvData, setCsvData] = useState<string[][] | null>(null);
@@ -69,6 +71,14 @@ export default function ResourceViewer({
       setCsvData(null);
     }
   }, [resource]);
+
+  useEffect(() => {
+    if (resetResource) {
+      setResource(null);
+      setCsvData(null);
+      setIsLoading(false);
+    }
+  }, [resetResource]);
 
   if (isLoading) {
     return (

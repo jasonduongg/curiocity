@@ -25,6 +25,7 @@ export default function TestPage() {
     undefined,
   );
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [resetResource, setResetResource] = useState(false);
 
   console.log('Session', session);
 
@@ -103,6 +104,8 @@ export default function TestPage() {
     fetchDocuments();
     setViewingDocument(false);
     setCurrentDocument(undefined);
+    setResetResource(true); // Trigger resourceViewer reset
+    setTimeout(() => setResetResource(false), 0); // Reset back to false after clearing  };
   };
 
   const handleCreateNewReport = () => {
@@ -193,6 +196,7 @@ export default function TestPage() {
                   onResourceMoveCallBack={resourceMoveCallBack}
                   onResourceUploadCallBack={resourcUploadCallBack}
                   onResourceClickForward={fetchSingleDocument}
+                  resetResource={resetResource}
                 />
               </div>
             </div>
