@@ -7,7 +7,7 @@ import {
 } from '@aws-sdk/client-dynamodb';
 import { v4 as uuidv4 } from 'uuid';
 import AWS from 'aws-sdk';
-import { resourceMetaTable } from './resourcemeta/route';
+import { resourceMetaTable } from '../resourcemeta/route';
 import { PostHog } from 'posthog-node';
 
 dotenv.config();
@@ -86,7 +86,7 @@ export const putObject = async (client: any, inputData: any, table: string) => {
     );
     return res;
   } catch (error: any) {
-    console.error("Failed to put the item in the table.", {
+    console.error('Failed to put the item in the table.', {
       tableName: table,
       inputData,
       errorMessage: error.message,

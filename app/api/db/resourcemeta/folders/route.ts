@@ -1,16 +1,16 @@
-import dotenv from "dotenv";
-import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
-import AWS from "aws-sdk";
-import { getObject, putObject, Document } from "../../route";
+import dotenv from 'dotenv';
+import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
+import AWS from 'aws-sdk';
+import { getObject, putObject, Document } from '../../document/route';
 
 dotenv.config();
 
-const client = new DynamoDBClient({ region: "us-west-1" });
-const documentTable = process.env.DOCUMENT_TABLE || "";
+const client = new DynamoDBClient({ region: 'us-west-1' });
+const documentTable = process.env.DOCUMENT_TABLE || '';
 
 export async function PUT(request: Request) {
   try {
-    console.log("PUT request to move resource between folders received");
+    console.log('PUT request to move resource between folders received');
 
     const data = await request.json();
     const { documentId, resourceId, sourceFolderName, targetFolderName } = data;
@@ -18,11 +18,11 @@ export async function PUT(request: Request) {
     // Validate input
     if (!documentId || !resourceId || !sourceFolderName || !targetFolderName) {
       console.error(
-        "Missing required fields: documentId, resourceId, sourceFolderName, targetFolderName",
+        'Missing required fields: documentId, resourceId, sourceFolderName, targetFolderName',
       );
       return new Response(
         JSON.stringify({
-          err: "Missing required fields: documentId, resourceId, sourceFolderName, targetFolderName",
+          err: 'Missing required fields: documentId, resourceId, sourceFolderName, targetFolderName',
         }),
         { status: 400 },
       );
@@ -31,8 +31,8 @@ export async function PUT(request: Request) {
     // Retrieve the document
     const document = await getObject(client, documentId, documentTable);
     if (!document.Item) {
-      console.error("Document not found with ID:", documentId);
-      return new Response(JSON.stringify({ err: "Document not found" }), {
+      console.error('Document not found with ID:', documentId);
+      return new Response(JSON.stringify({ err: 'Document not found' }), {
         status: 404,
       });
     }
@@ -44,8 +44,8 @@ export async function PUT(request: Request) {
     // Validate folders and find the resource
     const sourceFolder = existingDocument.folders[sourceFolderName];
     if (!sourceFolder) {
-      console.error("Source folder not found:", sourceFolderName);
-      return new Response(JSON.stringify({ err: "Source folder not found" }), {
+      console.error('Source folder not found:', sourceFolderName);
+      return new Response(JSON.stringify({ err: 'Source folder not found' }), {
         status: 404,
       });
     }
@@ -58,7 +58,7 @@ export async function PUT(request: Request) {
         `Resource with ID: ${resourceId} not found in source folder: ${sourceFolderName}`,
       );
       return new Response(
-        JSON.stringify({ err: "Resource not found in source folder" }),
+        JSON.stringify({ err: 'Resource not found in source folder' }),
         { status: 404 },
       );
     }
@@ -83,16 +83,16 @@ export async function PUT(request: Request) {
     const inputDocument = AWS.DynamoDB.Converter.marshall(updatedDocument);
     await putObject(client, inputDocument, documentTable);
 
-    console.log("Document updated successfully");
+    console.log('Document updated successfully');
     return new Response(
-      JSON.stringify({ msg: "Resource moved successfully" }),
+      JSON.stringify({ msg: 'Resource moved successfully' }),
       {
         status: 200,
       },
     );
   } catch (error) {
-    console.error("Error in PUT request to move resource:", error);
-    return new Response(JSON.stringify({ err: "Internal server error" }), {
+    console.error('Error in PUT request to move resource:', error);
+    return new Response(JSON.stringify({ err: 'Internal server error' }), {
       status: 500,
     });
   }
