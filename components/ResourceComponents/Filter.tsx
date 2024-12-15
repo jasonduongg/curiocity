@@ -182,19 +182,14 @@ const Filter: React.FC<ButtonProps> = ({
                     {type}
                   </label>
                 ))}
-                      {isSelected && (
-                        <button
-                          type='button'
-                          onClick={() => toggleFileType(type)}
-                          className='ml-1 text-sm text-red-500 hover:text-red-700'
-                          title='Remove this file type'
-                        >
-                          ×
-                        </button>
-                      )}
-                    </div>
-                  );
-                })}
+                <button
+                  type='button'
+                  onClick={() => toggleFileType(type)}
+                  className='ml-1 text-sm text-red-500 hover:text-red-700'
+                  title='Remove this file type'
+                >
+                  ×
+                </button>
               </div>
             </div>
 

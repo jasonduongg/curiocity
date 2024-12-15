@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { signIn } from 'next-auth/react';
+import Link from 'next/link'; // Ensure you import Link from next/link
 
 export default function Login() {
   const [formData, setFormData] = useState({ email: '', password: '' });
@@ -64,43 +65,25 @@ export default function Login() {
 
         {/* Login Form */}
         <form className='w-full space-y-5' onSubmit={handleSubmit}>
-          <div className='space-y-1.5'>
-            <label
-              htmlFor='email'
-              className='block text-[14px] font-medium text-textPrimary'
-            >
-              Email
-            </label>
-            <div className='flex h-10 w-full items-center rounded-lg bg-[#64516E]/20 px-3 py-1.5'>
-              <input
-                id='email'
-                type='email'
-                placeholder='johndoe@gmail.com'
-                value={formData.email}
-                onChange={handleChange}
-                className='h-full w-full bg-transparent text-textPrimary placeholder-textSecondary focus:outline-none'
-              />
-            </div>
-          </div>
+          {/* Email Input */}
+          <InputField
+            id='email'
+            label='Email'
+            type='email'
+            placeholder='johndoe@gmail.com'
+            value={formData.email}
+            onChange={handleChange}
+          />
 
-          <div className='space-y-1.5'>
-            <label
-              htmlFor='password'
-              className='block text-[14px] font-medium text-textPrimary'
-            >
-              Password
-            </label>
-            <div className='flex h-10 w-full items-center rounded-lg bg-[#64516E]/20 px-3 py-1.5'>
-              <input
-                id='password'
-                type='password'
-                placeholder='••••••••'
-                value={formData.password}
-                onChange={handleChange}
-                className='h-full w-full bg-transparent text-textPrimary placeholder-textSecondary focus:outline-none'
-              />
-            </div>
-          </div>
+          {/* Password Input */}
+          <InputField
+            id='password'
+            label='Password'
+            type='password'
+            placeholder='••••••••'
+            value={formData.password}
+            onChange={handleChange}
+          />
 
           {/* Error Message */}
           {error && <p className='text-center text-red-600'>{error}</p>}
@@ -110,11 +93,10 @@ export default function Login() {
             <div className='flex justify-center'>
               <button
                 type='submit'
-                className='h-[40px] w-[320px] rounded-lg bg-[rgba(100,81,110,0.6)] py-2.5 text-white transition-colors duration-200 hover:bg-[rgba(100,81,110,0.8)]' ${
+                className={`h-[40px] w-[320px] rounded-lg bg-[rgba(100,81,110,0.6)] py-2.5 text-white transition-colors duration-200 hover:bg-[rgba(100,81,110,0.8)] ${
                   loading ? 'cursor-not-allowed opacity-50' : ''
                 }`}
                 disabled={loading}
-
               >
                 {loading ? 'Logging In...' : 'Log In'}
               </button>
@@ -133,30 +115,7 @@ export default function Login() {
             </div>
 
             {/* Links Section */}
-            <div className='space-y-3 text-center'>
-              <p className='pt-1.5 text-[14px] text-textPrimary'>
-                <span className='underline decoration-textPrimary underline-offset-2'>
-                  Don’t have an account?
-                </span>{' '}
-                <a
-                  href='/signup'
-                  className='text-textSecondary underline decoration-textSecondary underline-offset-2'
-                >
-                  Sign-Up
-                </a>
-              </p>
-              <p className='pt-1.5 text-[14px] text-textPrimary'>
-                <span className='underline decoration-textPrimary underline-offset-2'>
-                  Forgot Password?
-                </span>{' '}
-                <a
-                  href='#'
-                  className='text-textSecondary underline decoration-textSecondary underline-offset-2'
-                >
-                  Reset Password
-                </a>
-              </p>
-            </div>
+            <LinksSection />
           </div>
         </form>
       </div>
@@ -194,12 +153,14 @@ const LinksSection = () => (
 
 const LinkItem = ({ text, linkText, href }) => (
   <p className='pt-1.5 text-[14px] text-textPrimary'>
-    <span className='decoration-textPrimary underline-offset-2'>{text}</span>{' '}
-    <a
+    <span className='underline decoration-textPrimary underline-offset-2'>
+      {text}
+    </span>{' '}
+    <Link
       href={href}
       className='text-textSecondary underline decoration-textSecondary underline-offset-2'
     >
       {linkText}
-    </a>
+    </Link>
   </p>
 );

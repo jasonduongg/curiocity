@@ -55,9 +55,7 @@ export default function TagComponent({
           onClick={handleCancel}
           className='flex h-6 w-6 items-center justify-center rounded-full bg-gray-800 text-white duration-200 hover:bg-red-500 focus:outline-none'
           aria-label='Cancel adding tag'
-        >
-          ✕
-        </button>
+        ></button>
       </div>
     ) : (
       <div

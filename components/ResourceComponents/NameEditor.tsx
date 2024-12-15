@@ -1,5 +1,5 @@
-import { useState, useEffect } from "react";
-import { ResourceMeta } from "@/types/types";
+import { useState, useEffect } from 'react';
+import { ResourceMeta } from '@/types/types';
 
 interface NameEditorProps {
   initialName: string;
@@ -21,14 +21,14 @@ export default function NameEditor({
 
   const handleSave = async () => {
     if (!resourceMeta || !resourceName.trim()) {
-      alert("Resource name cannot be empty.");
+      alert('Resource name cannot be empty.');
       return;
     }
 
     try {
       const response = await fetch(`/api/db/resourcemeta/name`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           id: resourceMeta.id,
           name: resourceName,
@@ -37,14 +37,14 @@ export default function NameEditor({
       });
 
       if (!response.ok) {
-        throw new Error("Failed to update resource name.");
+        throw new Error('Failed to update resource name.');
       }
 
       setIsEditing(false); // Exit editing mode
       onNameChangeCallBack(resourceMeta.documentId);
     } catch (error) {
-      console.error("Error updating resource name:", error);
-      alert("Failed to update resource name.");
+      console.error('Error updating resource name:', error);
+      alert('Failed to update resource name.');
     }
   };
 
@@ -63,15 +63,15 @@ export default function NameEditor({
       value={resourceName}
       onChange={(e) => setResourceName(e.target.value)}
       onBlur={handleBlur}
-      onKeyDown={(e) => e.key === "Enter" && handleSave()}
-      className="rounded-md border-[1px] border-zinc-700 bg-transparent p-1 text-white outline-none focus:ring-0"
+      onKeyDown={(e) => e.key === 'Enter' && handleSave()}
+      className='rounded-md border-[1px] border-zinc-700 bg-transparent p-1 text-white outline-none focus:ring-0'
     />
   ) : (
     <p
       onDoubleClick={handleDoubleClick}
-      className="text-md cursor-pointer font-bold text-white"
+      className='text-md cursor-pointer font-bold text-white'
     >
-      {resourceName || "Untitled Resource"}
+      {resourceName || 'Untitled Resource'}
     </p>
   );
 }

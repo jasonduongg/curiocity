@@ -2,11 +2,11 @@ import {
   DynamoDBClient,
   GetItemCommand,
   UpdateItemCommand,
-} from "@aws-sdk/client-dynamodb";
-import AWS from "aws-sdk";
+} from '@aws-sdk/client-dynamodb';
+import AWS from 'aws-sdk';
 
-const client = new DynamoDBClient({ region: "us-west-1" });
-const documentTable = process.env.DOCUMENT_TABLE || "";
+const client = new DynamoDBClient({ region: 'us-west-1' });
+const documentTable = process.env.DOCUMENT_TABLE || '';
 
 export async function POST(request: Request) {
   try {
@@ -15,7 +15,7 @@ export async function POST(request: Request) {
     if (!documentId || !folderName) {
       return new Response(
         JSON.stringify({
-          error: "documentId and folderName are required",
+          error: 'documentId and folderName are required',
         }),
         { status: 400 },
       );
@@ -33,7 +33,7 @@ export async function POST(request: Request) {
     const documentData = await client.send(getCommand);
 
     if (!documentData.Item) {
-      return new Response(JSON.stringify({ error: "Document not found" }), {
+      return new Response(JSON.stringify({ error: 'Document not found' }), {
         status: 404,
       });
     }
@@ -42,7 +42,7 @@ export async function POST(request: Request) {
 
     // Check if the folder already exists
     if (document.folders && document.folders[folderName]) {
-      return new Response(JSON.stringify({ error: "Folder already exists" }), {
+      return new Response(JSON.stringify({ error: 'Folder already exists' }), {
         status: 400,
       });
     }
@@ -60,9 +60,9 @@ export async function POST(request: Request) {
       Key: {
         id: { S: documentId },
       },
-      UpdateExpression: "SET folders = :folders",
+      UpdateExpression: 'SET folders = :folders',
       ExpressionAttributeValues: {
-        ":folders": { M: AWS.DynamoDB.Converter.marshall(document.folders) },
+        ':folders': { M: AWS.DynamoDB.Converter.marshall(document.folders) },
       },
     };
 
@@ -71,14 +71,14 @@ export async function POST(request: Request) {
 
     return new Response(
       JSON.stringify({
-        message: "Folder added successfully",
+        message: 'Folder added successfully',
         updatedFolders: document.folders,
       }),
       { status: 200 },
     );
   } catch (error) {
-    console.error("Error adding folder:", error);
-    return new Response(JSON.stringify({ error: "Internal server error" }), {
+    console.error('Error adding folder:', error);
+    return new Response(JSON.stringify({ error: 'Internal server error' }), {
       status: 500,
     });
   }

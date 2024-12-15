@@ -1,14 +1,14 @@
-import { useState } from "react";
-import { Button } from "@/components/ui/button";
+import { useState } from 'react';
+import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
   DropdownMenuTrigger,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
-} from "@/components/ui/dropdown-menu";
+} from '@/components/ui/dropdown-menu';
 
-import DeleteConfirmationModal from "../ModalComponents/DeleteConfirmationModal";
+import DeleteConfirmationModal from '../ModalComponents/DeleteConfirmationModal';
 
 interface MoreOptionsDropdownProps {
   documentId?: string;
@@ -46,15 +46,15 @@ const MoreOptionsDropdown: React.FC<MoreOptionsDropdownProps> = ({
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button
-            variant="ghost"
-            className="h-8 w-8 p-0 text-white"
+            variant='ghost'
+            className='h-8 w-8 p-0 text-white'
             onClick={(e) => e.stopPropagation()} // Prevent opening document when menu is clicked
           >
-            <span className="sr-only">Open menu</span>
+            <span className='sr-only'>Open menu</span>
             ...
           </Button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent className="w-48">
+        <DropdownMenuContent className='w-48'>
           <DropdownMenuItem onClick={handleEdit}>Edit</DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuItem onClick={handleDeleteClick}>
@@ -66,7 +66,7 @@ const MoreOptionsDropdown: React.FC<MoreOptionsDropdownProps> = ({
       {/* Delete Confirmation Modal */}
       {isDeleteModalOpen && (
         <DeleteConfirmationModal
-          documentId={documentId || ""}
+          documentId={documentId || ''}
           refreshState={handleDeleteComplete}
           isOpen={isDeleteModalOpen}
           onClose={handleModalClose}

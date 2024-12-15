@@ -187,7 +187,6 @@ export default function FileList({
       if (filteredResources.length > 0 || noFiltersApplied) {
         const sortedResources = [...filteredResources];
 
-
         // Sort by date if required
         if (sortBy === 'dateAdded') {
           sortedResources.sort(

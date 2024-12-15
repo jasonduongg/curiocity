@@ -1,12 +1,12 @@
 // components/AuthButton.tsx
-"use client";
+'use client';
 
-import { useSession, signIn, signOut } from "next-auth/react";
+import { useSession, signIn, signOut } from 'next-auth/react';
 
 const AuthButton: React.FC = () => {
   const { data: session, status } = useSession();
 
-  if (status === "loading") {
+  if (status === 'loading') {
     return <button disabled>Loading...</button>;
   }
 
@@ -22,7 +22,7 @@ const AuthButton: React.FC = () => {
   return (
     <div>
       <p>Not signed in</p>
-      <button onClick={() => signIn("google")}>Sign in with Google</button>
+      <button onClick={() => signIn('google')}>Sign in with Google</button>
     </div>
   );
 };

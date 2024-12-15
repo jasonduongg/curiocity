@@ -1,21 +1,21 @@
-import dotenv from "dotenv";
-import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
-import AWS from "aws-sdk";
-import { ResourceMeta, putObject, getObject } from "../../route";
+import dotenv from 'dotenv';
+import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
+import AWS from 'aws-sdk';
+import { ResourceMeta, putObject, getObject } from '../../route';
 
 dotenv.config();
 
-const client = new DynamoDBClient({ region: "us-west-1" });
-export const resourceMetaTable = process.env.RESOURCEMETA_TABLE || "";
+const client = new DynamoDBClient({ region: 'us-west-1' });
+export const resourceMetaTable = process.env.RESOURCEMETA_TABLE || '';
 
 // **GET API: Fetch notes for a given resourceMeta ID**
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
-    const id = searchParams.get("id");
+    const id = searchParams.get('id');
 
     if (!id) {
-      return new Response(JSON.stringify({ err: "Missing resourceMeta ID" }), {
+      return new Response(JSON.stringify({ err: 'Missing resourceMeta ID' }), {
         status: 400,
       });
     }
@@ -24,7 +24,7 @@ export async function GET(request: Request) {
     const resourceMeta = await getObject(client, id, resourceMetaTable);
 
     if (!resourceMeta.Item) {
-      return new Response(JSON.stringify({ err: "ResourceMeta not found" }), {
+      return new Response(JSON.stringify({ err: 'ResourceMeta not found' }), {
         status: 404,
       });
     }
@@ -34,12 +34,12 @@ export async function GET(request: Request) {
     ) as ResourceMeta;
 
     return new Response(
-      JSON.stringify({ notes: resourceMetaData.notes || "" }),
+      JSON.stringify({ notes: resourceMetaData.notes || '' }),
       { status: 200 },
     );
   } catch (error) {
-    console.error("Error in GET Notes API:", error);
-    return new Response(JSON.stringify({ err: "Internal server error" }), {
+    console.error('Error in GET Notes API:', error);
+    return new Response(JSON.stringify({ err: 'Internal server error' }), {
       status: 500,
     });
   }
@@ -51,9 +51,9 @@ export async function PUT(request: Request) {
     const data = await request.json();
     const { id, notes } = data;
 
-    if (!id || typeof notes !== "string") {
+    if (!id || typeof notes !== 'string') {
       return new Response(
-        JSON.stringify({ err: "Missing or invalid parameters" }),
+        JSON.stringify({ err: 'Missing or invalid parameters' }),
         { status: 400 },
       );
     }
@@ -62,7 +62,7 @@ export async function PUT(request: Request) {
     const resourceMeta = await getObject(client, id, resourceMetaTable);
 
     if (!resourceMeta.Item) {
-      return new Response(JSON.stringify({ err: "ResourceMeta not found" }), {
+      return new Response(JSON.stringify({ err: 'ResourceMeta not found' }), {
         status: 404,
       });
     }
@@ -81,12 +81,12 @@ export async function PUT(request: Request) {
     const input = AWS.DynamoDB.Converter.marshall(updatedResourceMeta);
     await putObject(client, input, resourceMetaTable);
 
-    return new Response(JSON.stringify({ msg: "Notes updated successfully" }), {
+    return new Response(JSON.stringify({ msg: 'Notes updated successfully' }), {
       status: 200,
     });
   } catch (error) {
-    console.error("Error in PUT Notes API:", error);
-    return new Response(JSON.stringify({ err: "Internal server error" }), {
+    console.error('Error in PUT Notes API:', error);
+    return new Response(JSON.stringify({ err: 'Internal server error' }), {
       status: 500,
     });
   }
@@ -99,7 +99,7 @@ export async function DELETE(request: Request) {
     const { id } = data;
 
     if (!id) {
-      return new Response(JSON.stringify({ err: "Missing resourceMeta ID" }), {
+      return new Response(JSON.stringify({ err: 'Missing resourceMeta ID' }), {
         status: 400,
       });
     }
@@ -108,7 +108,7 @@ export async function DELETE(request: Request) {
     const resourceMeta = await getObject(client, id, resourceMetaTable);
 
     if (!resourceMeta.Item) {
-      return new Response(JSON.stringify({ err: "ResourceMeta not found" }), {
+      return new Response(JSON.stringify({ err: 'ResourceMeta not found' }), {
         status: 404,
       });
     }
@@ -120,19 +120,19 @@ export async function DELETE(request: Request) {
     // Clear the notes
     const updatedResourceMeta = {
       ...existingResourceMeta,
-      notes: "",
+      notes: '',
       updatedAt: new Date().toISOString(),
     };
 
     const input = AWS.DynamoDB.Converter.marshall(updatedResourceMeta);
     await putObject(client, input, resourceMetaTable);
 
-    return new Response(JSON.stringify({ msg: "Notes cleared successfully" }), {
+    return new Response(JSON.stringify({ msg: 'Notes cleared successfully' }), {
       status: 200,
     });
   } catch (error) {
-    console.error("Error in DELETE Notes API:", error);
-    return new Response(JSON.stringify({ err: "Internal server error" }), {
+    console.error('Error in DELETE Notes API:', error);
+    return new Response(JSON.stringify({ err: 'Internal server error' }), {
       status: 500,
     });
   }

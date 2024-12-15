@@ -1,8 +1,8 @@
-"use client";
+'use client';
 
-import React, { useState, useEffect } from "react";
-import TextEditor from "@/components/DocumentComponents/TextEditor";
-import { ResourceMeta } from "@/types/types";
+import React, { useState, useEffect } from 'react';
+import TextEditor from '@/components/DocumentComponents/TextEditor';
+import { ResourceMeta } from '@/types/types';
 
 interface NotesEditorProps {
   resourceMeta: ResourceMeta;
@@ -30,10 +30,10 @@ const NotesEditor: React.FC<NotesEditorProps> = ({
           throw new Error(`Failed to fetch notes: ${response.statusText}`);
         }
         const data = await response.json();
-        setNotes(data.notes || ""); // Fallback to an empty string if no notes exist
+        setNotes(data.notes || ''); // Fallback to an empty string if no notes exist
       } catch (err) {
         console.error(err);
-        setError("Failed to load notes. Please try again.");
+        setError('Failed to load notes. Please try again.');
       } finally {
         setIsLoading(false);
       }
@@ -45,25 +45,25 @@ const NotesEditor: React.FC<NotesEditorProps> = ({
   // Render loading/error states
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center">
-        <p className="text-gray-500">Loading notes...</p>
+      <div className='flex items-center justify-center'>
+        <p className='text-gray-500'>Loading notes...</p>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="flex items-center justify-center">
-        <p className="text-red-500">{error}</p>
+      <div className='flex items-center justify-center'>
+        <p className='text-red-500'>{error}</p>
       </div>
     );
   }
 
   // Render the TextEditor once notes are loaded
   return (
-    <div className="flex flex-col py-2 text-white">
+    <div className='flex flex-col py-2 text-white'>
       <TextEditor
-        mode="mini"
+        mode='mini'
         source={{ ...resourceMeta, notes }} // Pass fetched notes to TextEditor
         generalCallback={handleBack}
       />

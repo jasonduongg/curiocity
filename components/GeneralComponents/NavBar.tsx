@@ -1,5 +1,4 @@
 'use client';
-import { useState } from 'react';
 import Image from 'next/image';
 import { signOut, useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
@@ -69,7 +68,7 @@ export default function NavBar({ onLogoClick }: NavBarProps) {
           {session && session.user && (
             <div className='flex items-center space-x-2'>
               {session.user.image && (
-                <div key={profileVersion} className='relative h-8 w-8'>
+                <div className='relative h-8 w-8'>
                   <Image
                     src={session.user.image}
                     alt='User Avatar'

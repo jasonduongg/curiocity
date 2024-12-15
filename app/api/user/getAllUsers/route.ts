@@ -1,10 +1,10 @@
-import { DynamoDBClient, ScanCommand } from "@aws-sdk/client-dynamodb";
-import AWS from "aws-sdk";
-import { NextResponse } from "next/server";
+import { DynamoDBClient, ScanCommand } from '@aws-sdk/client-dynamodb';
+import AWS from 'aws-sdk';
+import { NextResponse } from 'next/server';
 
 // Initialize DynamoDB client
-const client = new DynamoDBClient({ region: "us-west-1" });
-const tableName = process.env.USER_TABLE_NAME || "";
+const client = new DynamoDBClient({ region: 'us-west-1' });
+const tableName = process.env.USER_TABLE_NAME || '';
 
 // Function to get all entries with all attributes
 const getAllEntries = async () => {
@@ -23,8 +23,8 @@ const getAllEntries = async () => {
 
     return items;
   } catch (error) {
-    console.error("Error retrieving all entries:", error);
-    throw new Error("Could not retrieve entries");
+    console.error('Error retrieving all entries:', error);
+    throw new Error('Could not retrieve entries');
   }
 };
 

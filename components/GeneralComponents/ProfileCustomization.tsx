@@ -230,7 +230,6 @@ export default function ProfileCustomization({
 
                 <button
                   type='submit'
-
                   className='w-full rounded-md bg-gray-800 py-2 font-semibold text-white duration-200 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2'
                 >
                   Update Profile

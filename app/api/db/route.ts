@@ -86,7 +86,7 @@ export const putObject = async (client: any, inputData: any, table: string) => {
     );
     return res;
   } catch (error: any) {
-    console.error("Failed to put the item in the table.", {
+    console.error('Failed to put the item in the table.', {
       tableName: table,
       inputData,
       errorMessage: error.message,
