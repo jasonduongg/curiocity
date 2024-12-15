@@ -211,7 +211,10 @@ const S3Button: React.FC<S3ButtonProps> = ({
         </button>
         <button
           onClick={onCancel}
-          className='w-full rounded-md border-[1px] border-zinc-700 px-2 py-1 text-sm text-white hover:bg-red-900'
+          disabled={isUploading}
+          className={`w-full rounded-md border-[1px] border-zinc-700 px-2 py-1 text-sm text-white ${
+            isUploading ? 'cursor-not-allowed opacity-50' : 'hover:bg-red-900'
+          }`}
         >
           Cancel
         </button>
