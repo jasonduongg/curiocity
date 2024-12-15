@@ -70,7 +70,7 @@ export default function AllDocumentGrid({
 
       {/* Document Grid */}
       <div className='h-full flex-grow overflow-hidden px-8 py-4'>
-        <div className='h-full overflow-y-auto'>
+        <div className='scrollbar h-full overflow-y-auto'>
           <div className='grid grid-cols-[repeat(auto-fill,minmax(200px,235px))] gap-x-6 gap-y-6'>
             {filteredDocuments.map((item, index) => (
               <GridItem

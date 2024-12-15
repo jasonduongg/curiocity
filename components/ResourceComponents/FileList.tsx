@@ -276,20 +276,22 @@ export default function FileList({
               placeholder='Folder Name'
               value={newFolderName}
               onChange={(e) => setNewFolderName(e.target.value)}
-              className='flex-grow rounded-md border-[1px] border-gray-700 bg-gray-800 px-4 py-2 text-sm text-white'
+              className='w-full rounded-md border border-gray-700 bg-gray-800 px-4 py-2 text-sm text-white outline-none focus:outline-none focus:ring-0'
             />
-            <button
-              onClick={handleAddFolder}
-              className='rounded-md bg-blue-600 px-4 py-2 text-sm text-white hover:bg-blue-500'
-            >
-              Submit
-            </button>
-            <button
-              onClick={() => setIsAddingFolder(false)}
-              className='rounded-md bg-red-600 px-4 py-2 text-sm text-white hover:bg-red-500'
-            >
-              Cancel
-            </button>
+            <div className='flex w-full gap-2'>
+              <button
+                onClick={handleAddFolder}
+                className='flex-1 rounded-md bg-gray-800 px-4 py-2 text-sm text-white duration-200 hover:bg-blue-500'
+              >
+                Submit
+              </button>
+              <button
+                onClick={() => setIsAddingFolder(false)}
+                className='flex-1 rounded-md bg-gray-800 px-4 py-2 text-sm text-white duration-200 hover:bg-red-500'
+              >
+                Cancel
+              </button>
+            </div>
           </div>
         )}
       </div>
