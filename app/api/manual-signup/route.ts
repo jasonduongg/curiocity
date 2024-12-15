@@ -4,6 +4,8 @@ import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
 import { fromEnv } from '@aws-sdk/credential-providers';
 import bcrypt from 'bcrypt';
 
+const API_BASE_URL = process.env.NEXTAUTH_URL || 'http://localhost:3000';
+
 const dynamoDbClient = new DynamoDBClient({
   region: process.env.S3_UPLOAD_REGION,
   credentials: fromEnv(),
@@ -12,13 +14,20 @@ const dynamoDbClient = new DynamoDBClient({
 const ddbDocClient = DynamoDBDocumentClient.from(dynamoDbClient);
 
 const USERS_TABLE = 'curiocity-local-login-users';
-const DEFAULT_PROFILE_IMAGE =
-  'https://st3.depositphotos.com/6672868/13701/v/450/depositphotos_137014128-stock-illustration-user-profile-icon.jpg';
-
 const isPasswordValid = (password: string) => {
   const passwordRegex =
     /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>/?]).{8,}$/;
   return passwordRegex.test(password);
+};
+
+// Define the User type outside the function
+export type User = {
+  id: string;
+  name: string;
+  email: string;
+  image: string;
+  accountCreated: string;
+  lastLoggedIn: string;
 };
 
 export async function POST(req: NextRequest) {
@@ -66,18 +75,13 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const salt = await bcrypt.genSalt(10);
-    const hashedPassword = await bcrypt.hash(password + email, salt);
-
-    const accountCreatedDate = new Date().toISOString();
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const userId = crypto.randomUUID();
 
     const userRecord = {
       email,
       password: hashedPassword,
-      image: DEFAULT_PROFILE_IMAGE,
-      username: name,
-      accountCreatedDate,
-      accountLastOpenedDate: null,
+      userId,
     };
 
     const params = {
@@ -87,6 +91,29 @@ export async function POST(req: NextRequest) {
 
     const putCommand = new PutCommand(params);
     await ddbDocClient.send(putCommand);
+
+    // Send additional user data to another API endpoint if necessary
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/user`, {
+        method: 'POST', // Fixed typo in method
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id: userId,
+          name,
+          email,
+          accountCreated: new Date().toISOString(),
+          lastLoggedIn: null,
+        }),
+      });
+
+      if (!response.ok) {
+        console.error('Error sending user data:', response.statusText);
+      } else {
+        console.log('User data sent successfully to API');
+      }
+    } catch (error) {
+      console.error('Error sending user data:', error);
+    }
 
     return NextResponse.json(
       {
