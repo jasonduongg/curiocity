@@ -7,13 +7,48 @@ import logoIconSmall from "@/assets/logo.png";
 import { GearIcon } from "@radix-ui/react-icons";
 import ProfileCustomization from "./ProfileCustomization";
 
-export default function NavBar() {
+interface NavBarProps {
+  onLogoClick?: () => void;
+}
+
+export default function NavBar({ onLogoClick }: NavBarProps) {
   const [profileVersion, setProfileVersion] = useState(0); // Track profile updates
   const { data: session } = useSession();
   const router = useRouter();
 
   const handleSignOut = async () => {
-    await signOut({ redirect: false });
+    await signOut({ redirect: false })
+      .then(() => {
+        console.log(session, "logout attempt");
+
+        // posthog
+        if (session && session.user) {
+          fetch("/api/analytics", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              event: "Sign Out Successful",
+              id: session?.user.id,
+              properties: {},
+            }),
+          });
+        }
+      })
+      .catch(() => {
+        // posthog
+        if (session && session.user) {
+          fetch("/api/analytics", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              event: "Sign Out Failed",
+              id: session?.user.id,
+              properties: {},
+            }),
+          });
+        }
+      });
+
     router.push("/login");
   };
 
@@ -21,7 +56,7 @@ export default function NavBar() {
     <div className="h-18 w-full px-8">
       <div className="flex h-full items-center justify-between py-2">
         <div className="flex h-full items-center">
-          <div className="relative h-14 w-14 p-2">
+          <div className="relative h-14 w-14 p-2" onClick={onLogoClick}>
             <Image src={logoIconSmall} alt="Logo" />
           </div>
           <p className="text-4xl font-extrabold italic text-textPrimary">
@@ -33,8 +68,6 @@ export default function NavBar() {
         <div className="flex h-full items-center gap-4">
           {session && session.user && (
             <div className="flex items-center space-x-2">
-              <p className="text-sm text-textPrimary">{session.user.name}</p>
-              <p className="text-sm text-textPrimary">{session.user.id}</p>
               {session.user.image && (
                 <div key={profileVersion} className="relative h-8 w-8">
                   <Image

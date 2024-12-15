@@ -10,32 +10,41 @@ import {
   Document,
   ResourceMeta,
   ResourceCompressed,
-} from "@/types/types";
+} from '@/types/types';
 
 dotenv.config();
 
-const client = new DynamoDBClient({ region: "us-west-1" });
-export const documentTable = process.env.DOCUMENT_TABLE || "";
-export const resourceMetaTable = process.env.RESOURCEMETA_TABLE || "";
-export const resourceTable = process.env.RESOURCE_TABLE || "";
+const client = new DynamoDBClient({ region: 'us-west-1' });
+export const documentTable = process.env.DOCUMENT_TABLE || '';
+export const resourceMetaTable = process.env.RESOURCEMETA_TABLE || '';
+export const resourceTable = process.env.RESOURCE_TABLE || '';
 
-// Function to generate MD5 hash of a file
 const generateFileHash = (fileBuffer: Buffer): string => {
-  return crypto.createHash("md5").update(fileBuffer).digest("hex");
+  return crypto.createHash('md5').update(fileBuffer).digest('hex');
 };
+
+function inferFileType(nameOrUrl: string): string {
+  const lower = nameOrUrl.toLowerCase();
+  if (lower.endsWith(".pdf")) return "PDF";
+  if (lower.endsWith(".doc") || lower.endsWith(".docx")) return "Word";
+  if (lower.endsWith(".xls") || lower.endsWith(".xlsx")) return "Excel";
+  if (lower.endsWith(".ppt") || lower.endsWith(".pptx")) return "PowerPoint";
+  if (lower.startsWith("http")) return "Link";
+  return "Other";
+}
 
 export async function POST(request: Request) {
   try {
-    console.log("POST request received");
+    console.log('POST request received');
     const data = await request.json();
-    console.log(data);
+    console.log("Incoming data:", data);
     const requiredFields = [
-      "documentId",
-      "name",
-      "folderName",
-      "file",
-      "url",
-      "dateAdded",
+      'documentId',
+      'name',
+      'folderName',
+      'file',
+      'url',
+      'dateAdded',
     ];
     for (const field of requiredFields) {
       if (!data[field]) {
@@ -47,7 +56,7 @@ export async function POST(request: Request) {
       }
     }
 
-    const fileBuffer = Buffer.from(data.file, "base64");
+    const fileBuffer = Buffer.from(data.file, 'base64');
     const fileHash = generateFileHash(fileBuffer);
 
     const resourceMetaId = uuidv4();
@@ -57,28 +66,33 @@ export async function POST(request: Request) {
       name: data.name,
       lastOpened: data.lastOpened,
       dateAdded: data.dateAdded,
-      notes: data.notes || "",
-      summary: data.summary || "",
+      notes: data.notes || '',
+      summary: data.summary || '',
       tags: data.tags || [],
       documentId: data.documentId,
     };
+
+    const determinedFileType =
+      data.fileType || inferFileType(data.name || data.url);
+    console.log("Determined fileType:", determinedFileType);
 
     const resourceMetaCompressed: ResourceCompressed = {
       id: resourceMetaId,
       name: data.name,
       lastOpened: data.lastOpened,
       dateAdded: data.dateAdded,
+      fileType: determinedFileType,
     };
 
     const resource: Resource = {
       id: fileHash,
-      markdown: data.markdown || "",
+      markdown: data.markdown || '',
       url: data.url,
     };
 
     const document = await getObject(client, data.documentId, documentTable);
     if (!document.Item) {
-      return new Response(JSON.stringify({ err: "Document not found" }), {
+      return new Response(JSON.stringify({ err: 'Document not found' }), {
         status: 404,
       });
     }
@@ -102,22 +116,19 @@ export async function POST(request: Request) {
     const inputDocumentData = AWS.DynamoDB.Converter.marshall(newDocument);
 
     const existingResource = await getObject(client, fileHash, resourceTable);
-    if (existingResource.Item) {
-      console.log(
-        "Duplicate resource detected. Skipping putObject for resource.",
-      );
-    } else {
+    
+    if (!existingResource.Item) {
       await putObject(client, inputResourceData, resourceTable);
     }
 
     await putObject(client, inputResourceMetaData, resourceMetaTable);
     await putObject(client, inputDocumentData, documentTable);
 
-    console.log("Successfully updated DynamoDB");
+    console.log('Successfully updated DynamoDB');
     return new Response(JSON.stringify(newDocument), { status: 200 });
   } catch (error) {
-    console.error("Error in POST request:", error);
-    return new Response(JSON.stringify({ err: "Internal server error" }), {
+    console.error('Error in POST request:', error);
+    return new Response(JSON.stringify({ err: 'Internal server error' }), {
       status: 500,
     });
   }
@@ -126,17 +137,17 @@ export async function POST(request: Request) {
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
-    const id = searchParams.get("resourceId");
+    const id = searchParams.get('resourceId');
 
     if (!id) {
-      return new Response(JSON.stringify({ err: "Missing resourceId" }), {
+      return new Response(JSON.stringify({ err: 'Missing resourceId' }), {
         status: 400,
       });
     }
 
     const resourceMeta = await getObject(client, id, resourceMetaTable);
     if (!resourceMeta.Item) {
-      return new Response(JSON.stringify({ err: "ResourceMeta not found" }), {
+      return new Response(JSON.stringify({ err: 'ResourceMeta not found' }), {
         status: 404,
       });
     }
@@ -147,8 +158,8 @@ export async function GET(request: Request) {
 
     return new Response(JSON.stringify(resourceMetaData), { status: 200 });
   } catch (error) {
-    console.error("Error in GET request:", error);
-    return new Response(JSON.stringify({ err: "Internal server error" }), {
+    console.error('Error in GET request:', error);
+    return new Response(JSON.stringify({ err: 'Internal server error' }), {
       status: 500,
     });
   }
@@ -158,10 +169,10 @@ export async function DELETE(request: Request) {
   try {
     const data = await request.json();
     await deleteObject(client, data.id, resourceMetaTable);
-    return new Response(JSON.stringify({ msg: "success" }), { status: 200 });
+    return new Response(JSON.stringify({ msg: 'success' }), { status: 200 });
   } catch (error) {
-    console.error("Error in DELETE request:", error);
-    return new Response(JSON.stringify({ err: "Internal server error" }), {
+    console.error('Error in DELETE request:', error);
+    return new Response(JSON.stringify({ err: 'Internal server error' }), {
       status: 500,
     });
   }
@@ -173,14 +184,14 @@ export async function PUT(request: Request) {
     const { id, name, notes, summary, tags } = data;
 
     if (!id) {
-      return new Response(JSON.stringify({ err: "Missing resourceMeta ID" }), {
+      return new Response(JSON.stringify({ err: 'Missing resourceMeta ID' }), {
         status: 400,
       });
     }
 
     const resourceMeta = await getObject(client, id, resourceMetaTable);
     if (!resourceMeta.Item) {
-      return new Response(JSON.stringify({ err: "ResourceMeta not found" }), {
+      return new Response(JSON.stringify({ err: 'ResourceMeta not found' }), {
         status: 404,
       });
     }
@@ -203,8 +214,8 @@ export async function PUT(request: Request) {
 
     return new Response(JSON.stringify(updatedResourceMeta), { status: 200 });
   } catch (error) {
-    console.error("Error in PUT request:", error);
-    return new Response(JSON.stringify({ err: "Internal server error" }), {
+    console.error('Error in PUT request:', error);
+    return new Response(JSON.stringify({ err: 'Internal server error' }), {
       status: 500,
     });
   }

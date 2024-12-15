@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest, NextResponse } from 'next/server';
 import {
   DynamoDBDocumentClient,
   GetCommand,
@@ -16,21 +16,21 @@ const dynamoDbClient = new DynamoDBClient({
 
 const ddbDocClient = DynamoDBDocumentClient.from(dynamoDbClient);
 
-const USERS_TABLE = "curiocity-local-login-users";
+const USERS_TABLE = 'curiocity-local-login-users';
 
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
     const { email, password } = body;
-    console.log("Received Sign In Body:", body);
+    // console.log("Received Sign In Body:", body);d
 
     if (!email) {
-      return NextResponse.json({ error: "Email is required" }, { status: 400 });
+      return NextResponse.json({ error: 'Email is required' }, { status: 400 });
     }
 
     if (!password) {
       return NextResponse.json(
-        { error: "Password is required" },
+        { error: 'Password is required' },
         { status: 400 },
       );
     }
@@ -48,7 +48,7 @@ export async function POST(req: NextRequest) {
 
     if (!userRecord) {
       return NextResponse.json(
-        { error: "Invalid email or password" },
+        { error: 'Invalid email or password' },
         { status: 401 },
       );
     }
@@ -62,7 +62,7 @@ export async function POST(req: NextRequest) {
 
     if (!isPasswordMatch) {
       return NextResponse.json(
-        { error: "Invalid email or password" },
+        { error: 'Invalid email or password' },
         { status: 401 },
       );
     }
@@ -104,9 +104,9 @@ export async function POST(req: NextRequest) {
 
     return nextResponse;
   } catch (error) {
-    console.error("Error signing in user:", error);
+    console.error('Error signing in user:', error);
     return NextResponse.json(
-      { error: "Internal Server Error" },
+      { error: 'Internal Server Error' },
       { status: 500 },
     );
   }

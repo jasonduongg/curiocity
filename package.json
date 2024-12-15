@@ -53,6 +53,8 @@
     "papaparse": "^5.4.1",
     "pdf-parse": "^1.1.1",
     "pdfjs-dist": "^3.11.174",
+    "posthog-js": "^1.200.1",
+    "posthog-node": "^4.2.3",
     "quill": "^2.0.2",
     "react": "^18",
     "react-dom": "^18",
@@ -110,6 +112,6 @@
     "*.{js,jsx,ts,tsx,css,md}": "prettier --write"
   },
   "engines": {
-  "node": "18.x"
-}
+    "node": "18.x"
+  }
 }

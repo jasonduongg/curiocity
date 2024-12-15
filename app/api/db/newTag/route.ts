@@ -1,5 +1,12 @@
 import { NextResponse } from "next/server";
 import AWS from "aws-sdk";
+import { PostHog } from "posthog-node";
+import { getCurrentTime } from "../../user/route";
+
+// Initialize the PostHog client
+const posthog = new PostHog(process.env.NEXT_PUBLIC_POSTHOG_KEY || "", {
+  host: process.env.NEXT_PUBLIC_POSTHOG_HOST, // Ensure this points to your PostHog host
+});
 
 const dynamoDB = new AWS.DynamoDB({
   region: "us-west-1", // Replace with your region
@@ -60,9 +67,19 @@ export async function PUT(request: Request) {
 
     await dynamoDB.putItem(updateParams).promise();
 
+    posthog.capture({
+      distinctId: unmarshalledDoc.ownerID, // Unique identifier for the obj
+      event: "Tags Updated", // Event name
+      properties: {
+        id: documentId,
+        timeStamp: getCurrentTime(),
+      },
+    });
+
     return NextResponse.json({ message: "Tag added successfully." });
   } catch (error) {
     console.error("Error adding tag:", error);
+
     return NextResponse.json(
       { error: "Failed to add tag to document." },
       { status: 500 },

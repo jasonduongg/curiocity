@@ -1,6 +1,6 @@
-import { NextResponse } from "next/server";
+import { NextResponse } from 'next/server';
 
-export const runtime = "edge";
+export const runtime = 'edge';
 
 const LLAMA_CLOUD_API_KEY = process.env.LLAMA_CLOUD_API_KEY;
 
@@ -15,24 +15,24 @@ interface ResponseData {
 export async function POST(req) {
   try {
     const formData = await req.formData();
-    const file = formData.get("myFile");
+    const file = formData.get('myFile');
 
     if (!file) {
-      return NextResponse.json({ error: "No file uploaded" }, { status: 400 });
+      return NextResponse.json({ error: 'No file uploaded' }, { status: 400 });
     }
 
     const fileBlob =
       file instanceof Blob ? file : new Blob([file], { type: file.type });
 
     const uploadFormData = new FormData();
-    uploadFormData.append("file", fileBlob, file.name);
+    uploadFormData.append('file', fileBlob, file.name);
 
     const uploadResponse = await fetch(
-      "https://api.cloud.llamaindex.ai/api/parsing/upload",
+      'https://api.cloud.llamaindex.ai/api/parsing/upload',
       {
-        method: "POST",
+        method: 'POST',
         headers: {
-          Accept: "application/json",
+          Accept: 'application/json',
           Authorization: `Bearer ${LLAMA_CLOUD_API_KEY}`,
         },
         body: uploadFormData,
@@ -47,13 +47,13 @@ export async function POST(req) {
     const jobId = uploadResult.id;
     console.log(jobId);
 
-    let jobStatus = "";
-    while (jobStatus !== "SUCCESS") {
+    let jobStatus = '';
+    while (jobStatus !== 'SUCCESS') {
       const statusResponse = await fetch(
         `https://api.cloud.llamaindex.ai//api/v1/parsing/job/${jobId}`,
         {
           headers: {
-            Accept: "application/json",
+            Accept: 'application/json',
             Authorization: `Bearer ${LLAMA_CLOUD_API_KEY}`,
           },
         },
@@ -67,19 +67,19 @@ export async function POST(req) {
       const statusResult = await statusResponse.json();
       jobStatus = statusResult.status;
 
-      if (jobStatus === "ERROR") {
-        throw new Error("Parsing job failed.");
-      } else if (jobStatus !== "COMPLETED") {
+      if (jobStatus === 'ERROR') {
+        throw new Error('Parsing job failed.');
+      } else if (jobStatus !== 'COMPLETED') {
         await new Promise((resolve) => setTimeout(resolve, 2000));
       }
     }
-    console.log("reached1");
+    console.log('reached1');
     const imageResult = await fetch(
       `https://api.cloud.llamaindex.ai/api/parsing/job/${jobId}/result/json`,
       {
         headers: {
           Authorization: `Bearer ${LLAMA_CLOUD_API_KEY}`,
-          Accept: "text/markdown",
+          Accept: 'text/markdown',
         },
       },
     );
@@ -96,17 +96,17 @@ export async function POST(req) {
         });
       }
     });
-    console.log("reached2_LOLL");
+    console.log('reached2_LOLL');
     const resultResponse = await fetch(
       `https://api.cloud.llamaindex.ai//api/v1/parsing/job/${jobId}/result/raw/markdown`,
       {
         headers: {
           Authorization: `Bearer ${LLAMA_CLOUD_API_KEY}`,
-          Accept: "text/markdown",
+          Accept: 'text/markdown',
         },
       },
     );
-    console.log("reached3");
+    console.log('reached3');
     if (!resultResponse.ok) {
       const errorData = await resultResponse.json();
       throw new Error(`Result retrieval failed: ${errorData.message}`);
@@ -116,7 +116,7 @@ export async function POST(req) {
     console.log(markdown);
     return NextResponse.json({ markdown, images });
   } catch (error) {
-    console.error("Error processing file:", error.message);
+    console.error('Error processing file:', error.message);
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
