@@ -1,15 +1,15 @@
-import dotenv from "dotenv";
-import { DynamoDBClient, UpdateItemCommand } from "@aws-sdk/client-dynamodb"; // Add UpdateItemCommand here
-import AWS from "aws-sdk";
-import { v4 as uuidv4 } from "uuid";
+import dotenv from 'dotenv';
+import { DynamoDBClient, UpdateItemCommand } from '@aws-sdk/client-dynamodb'; // Add UpdateItemCommand here
+import AWS from 'aws-sdk';
+import { v4 as uuidv4 } from 'uuid';
 // import crypto from "crypto";
 
 dotenv.config();
 
 const s3 = new AWS.S3();
-const client = new DynamoDBClient({ region: "us-west-1" });
-const userTable = process.env.USER_TABLE_NAME || "";
-const bucketName = process.env.S3_UPLOAD_BUCKET || "";
+const client = new DynamoDBClient({ region: 'us-west-1' });
+const userTable = process.env.USER_TABLE_NAME || '';
+const bucketName = process.env.S3_UPLOAD_BUCKET || '';
 
 // Helper function to generate MD5 hash
 // const generateFileHash = (fileBuffer: Buffer) => {
@@ -37,16 +37,16 @@ async function putS3Object(
 // The main handler function
 export async function POST(request: Request) {
   try {
-    console.log("upload-photo POST request received");
+    console.log('upload-photo POST request received');
 
     const formData = await request.formData();
-    const userId = formData.get("userId") as string;
-    const file = formData.get("file") as File;
+    const userId = formData.get('userId') as string;
+    const file = formData.get('file') as File;
 
     if (!userId || !file) {
-      console.error("Missing userId or file in the request");
+      console.error('Missing userId or file in the request');
       return new Response(
-        JSON.stringify({ err: "User ID and file are required" }),
+        JSON.stringify({ err: 'User ID and file are required' }),
         { status: 400 },
       );
     }
@@ -63,7 +63,7 @@ export async function POST(request: Request) {
       file.type,
     );
 
-    console.log("Image successfully uploaded to S3:", imageUrl);
+    console.log('Image successfully uploaded to S3:', imageUrl);
 
     // DynamoDB: Update user's image field
     const updateParams = {
@@ -71,22 +71,24 @@ export async function POST(request: Request) {
       Key: {
         id: { S: userId },
       },
-      UpdateExpression: "SET #img = :img",
+      UpdateExpression: 'SET #image = :image',
       ExpressionAttributeNames: {
-        "#img": "image",
+        '#image': 'image',
       },
       ExpressionAttributeValues: {
-        ":img": { S: imageUrl },
+        ':image': { S: imageUrl },
       },
     };
 
+    console.log(updateParams);
+
     await client.send(new UpdateItemCommand(updateParams));
-    console.log("DynamoDB user image URL updated");
+    console.log('DynamoDB user image URL updated');
 
     return new Response(JSON.stringify({ imageUrl }), { status: 200 });
   } catch (error) {
-    console.error("Error in upload-photo POST request:", error);
-    return new Response(JSON.stringify({ err: "Internal server error" }), {
+    console.error('Error in upload-photo POST request:', error);
+    return new Response(JSON.stringify({ err: 'Internal server error' }), {
       status: 500,
     });
   }

@@ -6,8 +6,6 @@ import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
 import { fromEnv } from '@aws-sdk/credential-providers';
 import bcrypt from 'bcrypt';
 
-const API_BASE_URL = process.env.NEXTAUTH_URL || 'http://localhost:3000';
-
 const GOOGLE_ID = process.env.GOOGLE_ID || '';
 const GOOGLE_SECRET = process.env.GOOGLE_SECRET || '';
 const NEXTAUTH_SECRET = process.env.NEXTAUTH_SECRET || '';
@@ -98,27 +96,24 @@ const options: NextAuthOptions = {
   callbacks: {
     async signIn({ user, profile }) {
       if (profile) {
-        // Google Sign-in Logic
         const userId = profile.sub;
         const userData = {
           id: userId,
           name: profile.name,
           email: profile.email,
-          image: user.image,
+          image: user.image || null,
           lastLoggedIn: new Date().toISOString(),
         };
 
         try {
-          const checkResponse = await fetch(
-            `${API_BASE_URL}/api/user?id=${userId}`,
-            {
-              method: 'GET',
-              headers: { 'Content-Type': 'application/json' },
-            },
+          const existingUserResponse = await fetch(
+            `${process.env.NEXTAUTH_URL}/api/user?id=${userId}`,
+            { method: 'GET', headers: { 'Content-Type': 'application/json' } },
           );
 
-          if (checkResponse.ok) {
-            await fetch(`${API_BASE_URL}/api/user`, {
+          if (existingUserResponse.ok) {
+            // Update user last login timestamp
+            await fetch(`${process.env.NEXTAUTH_URL}/api/user`, {
               method: 'PUT',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({
@@ -126,17 +121,16 @@ const options: NextAuthOptions = {
                 lastLoggedIn: userData.lastLoggedIn,
               }),
             });
-            return true;
-          } else if (checkResponse.status === 404) {
-            await fetch(`${API_BASE_URL}/api/user`, {
+          } else if (existingUserResponse.status === 404) {
+            // Create a new user
+            await fetch(`${process.env.NEXTAUTH_URL}/api/user`, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify(userData),
             });
-            return true;
           }
         } catch (error) {
-          console.error('Error during Google sign-in process:', error);
+          console.error('Error syncing Google user data:', error);
           return false;
         }
       }
@@ -148,8 +142,18 @@ const options: NextAuthOptions = {
         token.name = user.name;
         token.email = user.email;
         token.image = user.image;
-        token.accountCreated = user.accountCreated;
-        token.lastLoggedIn = user.lastLoggedIn;
+      } else {
+        // Fetch user data from the database for token refresh
+        const userResponse = await dynamoDbClient.send(
+          new GetCommand({ TableName: USERS_TABLE, Key: { id: token.id } }),
+        );
+        const userRecord = userResponse.Item;
+
+        if (userRecord) {
+          token.name = userRecord.name;
+          token.email = userRecord.email;
+          token.image = userRecord.image;
+        }
       }
       return token;
     },

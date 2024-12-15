@@ -1,33 +1,30 @@
-"use client";
-import { useState } from "react";
-import Image from "next/image";
-import { signOut, useSession } from "next-auth/react";
-import { useRouter } from "next/navigation";
-import logoIconSmall from "@/assets/logo.png";
-import { GearIcon } from "@radix-ui/react-icons";
-import ProfileCustomization from "./ProfileCustomization";
+'use client';
+import Image from 'next/image';
+import { signOut, useSession } from 'next-auth/react';
+import { useRouter } from 'next/navigation';
+import logoIconSmall from '@/assets/logo.png';
+import { GearIcon } from '@radix-ui/react-icons';
+import ProfileCustomization from './ProfileCustomization';
 
 interface NavBarProps {
   onLogoClick?: () => void;
 }
 
 export default function NavBar({ onLogoClick }: NavBarProps) {
-  const [profileVersion, setProfileVersion] = useState(0); // Track profile updates
   const { data: session } = useSession();
   const router = useRouter();
+
+  console.log(session);
 
   const handleSignOut = async () => {
     await signOut({ redirect: false })
       .then(() => {
-        console.log(session, "logout attempt");
-
-        // posthog
-        if (session && session.user) {
-          fetch("/api/analytics", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
+        if (session?.user) {
+          fetch('/api/analytics', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-              event: "Sign Out Successful",
+              event: 'Sign Out Successful',
               id: session?.user.id,
               properties: {},
             }),
@@ -35,13 +32,12 @@ export default function NavBar({ onLogoClick }: NavBarProps) {
         }
       })
       .catch(() => {
-        // posthog
-        if (session && session.user) {
-          fetch("/api/analytics", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
+        if (session?.user) {
+          fetch('/api/analytics', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-              event: "Sign Out Failed",
+              event: 'Sign Out Failed',
               id: session?.user.id,
               properties: {},
             }),
@@ -49,62 +45,55 @@ export default function NavBar({ onLogoClick }: NavBarProps) {
         }
       });
 
-    router.push("/login");
+    router.push('/login');
   };
 
   return (
-    <div className="h-18 w-full px-8">
-      <div className="flex h-full items-center justify-between py-2">
-        <div className="flex h-full items-center">
-          <div className="relative h-14 w-14 p-2" onClick={onLogoClick}>
-            <Image src={logoIconSmall} alt="Logo" />
+    <div className='h-18 w-full px-8'>
+      <div className='flex h-full items-center justify-between py-2'>
+        <div className='flex h-full items-center'>
+          <div className='relative h-14 w-14 p-2' onClick={onLogoClick}>
+            <Image src={logoIconSmall} alt='Logo' />
           </div>
-          <p className="text-4xl font-extrabold italic text-textPrimary">
+          <p className='text-4xl font-extrabold italic text-textPrimary'>
             APEX
           </p>
-          <p className="ml-2 mt-3 text-sm text-textSecondary">v 0.1</p>
+          <p className='ml-2 mt-3 text-sm text-textSecondary'>v 0.1</p>
         </div>
 
-        <div className="flex h-full items-center gap-4">
-          {session && session.user && (
-            <div className="flex items-center space-x-2">
-              {session.user.image && (
-                <div key={profileVersion} className="relative h-8 w-8">
-                  <Image
-                    src={session.user.image}
-                    alt="User Avatar"
-                    layout="fill"
-                    className="rounded-full"
-                  />
-                </div>
-              )}
+        <div className='flex h-full items-center gap-4'>
+          {session?.user?.image && (
+            <div className='relative h-8 w-8'>
+              <img src={session.user.image} />
             </div>
           )}
           <ProfileCustomization
-            onProfileUpdate={() => setProfileVersion((v) => v + 1)}
+            onProfileUpdate={async () => {
+              await router.refresh(); // Reload to reflect the updated session
+            }}
           />
-          <div className="grid h-10 w-10 place-items-center rounded-lg border-2 border-fileBlue">
-            <GearIcon className="h-6 w-6 text-fileBlue" />
+          <div className='grid h-10 w-10 place-items-center rounded-lg border-2 border-fileBlue'>
+            <GearIcon className='h-6 w-6 text-fileBlue' />
           </div>
           <button
             onClick={handleSignOut}
-            className="grid h-10 w-10 place-items-center rounded-lg border-2 border-fileRed"
+            className='grid h-10 w-10 place-items-center rounded-lg border-2 border-fileRed'
           >
             <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="16"
-              height="16"
-              fill="currentColor"
-              className="bi bi-box-arrow-in-right h-6 w-6 text-fileRed"
-              viewBox="0 0 16 16"
+              xmlns='http://www.w3.org/2000/svg'
+              width='16'
+              height='16'
+              fill='currentColor'
+              className='bi bi-box-arrow-in-right h-6 w-6 text-fileRed'
+              viewBox='0 0 16 16'
             >
               <path
-                fillRule="evenodd"
-                d="M6 3.5a.5.5 0 0 1 .5-.5h8a.5.5 0 0 1 .5.5v9a.5.5 0 0 1-.5.5h-8a.5.5 0 0 1-.5-.5v-2a.5.5 0 0 0-1 0v2A1.5 1.5 0 0 0 6.5 14h8a1.5 1.5 0 0 0 1.5-1.5v-9A1.5 1.5 0 0 0 14.5 2h-8A1.5 1.5 0 0 0 5 3.5v2a.5.5 0 0 0 1 0z"
+                fillRule='evenodd'
+                d='M6 3.5a.5.5 0 0 1 .5-.5h8a.5.5 0 0 1 .5.5v9a.5.5 0 0 1-.5.5h-8a.5.5 0 0 1-.5-.5v-2a.5.5 0 0 0-1 0v2A1.5 1.5 0 0 0 6.5 14h8a1.5 1.5 0 0 0 1.5-1.5v-9A1.5 1.5 0 0 0 14.5 2h-8A1.5 1.5 0 0 0 5 3.5v2a.5.5 0 0 0 1 0z'
               />
               <path
-                fillRule="evenodd"
-                d="M11.854 8.354a.5.5 0 0 0 0-.708l-3-3a.5.5 0 1 0-.708.708L10.293 7.5H1.5a.5.5 0 0 0 0 1h8.793l-2.147 2.146a.5.5 0 0 0 .708.708z"
+                fillRule='evenodd'
+                d='M11.854 8.354a.5.5 0 0 0 0-.708l-3-3a.5.5 0 1 0-.708.708L10.293 7.5H1.5a.5.5 0 0 0 0 1h8.793l-2.147 2.146a.5.5 0 0 0 .708.708z'
               />
             </svg>
           </button>
