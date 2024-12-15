@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useS3Upload } from 'next-s3-upload';
 import { FaCheckCircle, FaTrash, FaArrowLeft } from 'react-icons/fa';
 import FolderDropdown from '@/components/ResourceComponents/FolderSelectionDropdown';
@@ -17,7 +17,7 @@ const S3Button: React.FC<S3ButtonProps> = ({
   onCancel,
   onResourceUploadCallBack,
 }) => {
-  const [selectedFolder, setSelectedFolder] = useState<string>('');
+  const [selectedFolder, setSelectedFolder] = useState<string>('General');
   const [isNewFolder, setIsNewFolder] = useState(false);
   const [newFolderName, setNewFolderName] = useState<string>('');
   const [fileQueue, setFileQueue] = useState<File[]>([]);
@@ -27,6 +27,16 @@ const S3Button: React.FC<S3ButtonProps> = ({
   const [isUploading, setIsUploading] = useState(false);
   const { uploadToS3 } = useS3Upload();
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+
+  useEffect(() => {
+    // Ensure "General" folder exists
+    if (!currentDocument.folders['General']) {
+      currentDocument.folders['General'] = {
+        name: 'General',
+        resources: [],
+      };
+    }
+  }, [currentDocument]);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
