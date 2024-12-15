@@ -12,15 +12,15 @@ interface NavBarProps {
 }
 
 export default function NavBar({ onLogoClick }: NavBarProps) {
-  const [profileVersion, setProfileVersion] = useState(0); // Track profile updates
   const { data: session } = useSession();
   const router = useRouter();
+
+  console.log(session);
 
   const handleSignOut = async () => {
     await signOut({ redirect: false })
       .then(() => {
         console.log(session, 'logout attempt');
-
         // posthog
         if (session && session.user) {
           fetch('/api/analytics', {
@@ -81,7 +81,9 @@ export default function NavBar({ onLogoClick }: NavBarProps) {
             </div>
           )}
           <ProfileCustomization
-            onProfileUpdate={() => setProfileVersion((v) => v + 1)}
+            onProfileUpdate={async () => {
+              await router.refresh(); // Reload to reflect the updated session
+            }}
           />
           <div className='grid h-10 w-10 place-items-center rounded-lg border-2 border-fileBlue transition-colors duration-200 hover:bg-gray-700'>
             <GearIcon className='h-6 w-6 text-fileBlue' />

@@ -24,6 +24,7 @@ export default function FileList({
   currentResourceMeta,
 }: FileListProps) {
   const sensors = useSensors(useSensor(PointerSensor));
+
   const [expandedFolders, setExpandedFolders] = useState<{
     [key: string]: boolean;
   }>(
@@ -97,6 +98,7 @@ export default function FileList({
     }
   };
 
+  // Callback for when Filter applies changes
   const handleFilterApply = (filters: {
     sortOrder: string;
     fileTypes: string[];
@@ -185,6 +187,7 @@ export default function FileList({
       if (filteredResources.length > 0 || noFiltersApplied) {
         const sortedResources = [...filteredResources];
 
+
         // Sort by date if required
         if (sortBy === 'dateAdded') {
           sortedResources.sort(
@@ -198,14 +201,12 @@ export default function FileList({
               new Date(a.lastOpened).getTime(),
           );
         }
-
         // Apply alphabetical sorting from Filter modal
         if (selectedSortOrder === 'a-z') {
           sortedResources.sort((a, b) => a.name.localeCompare(b.name));
         } else if (selectedSortOrder === 'z-a') {
           sortedResources.sort((a, b) => b.name.localeCompare(a.name));
         }
-
         acc[folderName] = { ...folderData, resources: sortedResources };
       }
       return acc;
@@ -240,10 +241,13 @@ export default function FileList({
             Sort by Last Opened
           </button>
         </div>
+
+        {/* Removed old sort buttons since sorting is now done via the modal */}
+
         <div key={fileListKey}>
           {Object.entries(filteredAndSortedFolders).map(([key, folder]) => (
             <TableFolder
-              key={`${key}-${sortBy}`}
+              key={`${key}-${selectedSortOrder}`}
               folderData={folder}
               isExpanded={expandedFolders[key]}
               onToggle={() =>

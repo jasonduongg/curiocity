@@ -76,6 +76,18 @@ const Filter: React.FC<ButtonProps> = ({
     );
   };
 
+  const clearSortOrder = () => {
+    setSortOrder(defaultSortOrder);
+  };
+
+  const clearDateFrom = () => {
+    setDateRange({ ...dateRange, from: '' });
+  };
+
+  const clearDateTo = () => {
+    setDateRange({ ...dateRange, to: '' });
+  };
+
   return (
     <>
       <button
@@ -94,7 +106,19 @@ const Filter: React.FC<ButtonProps> = ({
 
             {/* Sort */}
             <div className='mb-4'>
-              <h3 className='mb-2 font-semibold text-gray-700'>Sort</h3>
+              <h3 className='mb-2 font-semibold text-gray-700'>
+                Sort
+                {sortOrder !== defaultSortOrder && (
+                  <button
+                    type='button'
+                    onClick={clearSortOrder}
+                    className='ml-2 text-sm text-red-500 hover:text-red-700'
+                    title='Clear Sort'
+                  >
+                    ×
+                  </button>
+                )}
+              </h3>
               <div className='flex flex-col space-y-2'>
                 <label className='flex items-center'>
                   <input
@@ -118,6 +142,28 @@ const Filter: React.FC<ButtonProps> = ({
                   />
                   Sort Z-A
                 </label>
+                <label className='flex items-center'>
+                  <input
+                    type='radio'
+                    name='sortOrder'
+                    value='dateAdded'
+                    checked={sortOrder === 'dateAdded'}
+                    onChange={() => setSortOrder('dateAdded')}
+                    className='mr-2'
+                  />
+                  Sort by Date Added
+                </label>
+                <label className='flex items-center'>
+                  <input
+                    type='radio'
+                    name='sortOrder'
+                    value='lastOpened'
+                    checked={sortOrder === 'lastOpened'}
+                    onChange={() => setSortOrder('lastOpened')}
+                    className='mr-2'
+                  />
+                  Sort by Last Opened
+                </label>
               </div>
             </div>
 
@@ -136,6 +182,19 @@ const Filter: React.FC<ButtonProps> = ({
                     {type}
                   </label>
                 ))}
+                      {isSelected && (
+                        <button
+                          type='button'
+                          onClick={() => toggleFileType(type)}
+                          className='ml-1 text-sm text-red-500 hover:text-red-700'
+                          title='Remove this file type'
+                        >
+                          ×
+                        </button>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
             </div>
 
@@ -153,6 +212,16 @@ const Filter: React.FC<ButtonProps> = ({
                     }
                     className='flex-1 rounded-md border border-gray-300 px-2 py-1'
                   />
+                  {dateRange.from && (
+                    <button
+                      type='button'
+                      onClick={clearDateFrom}
+                      className='ml-2 text-sm text-red-500 hover:text-red-700'
+                      title='Clear From Date'
+                    >
+                      ×
+                    </button>
+                  )}
                 </label>
                 <label className='flex items-center'>
                   <span className='w-16 text-gray-700'>To:</span>
@@ -164,6 +233,16 @@ const Filter: React.FC<ButtonProps> = ({
                     }
                     className='flex-1 rounded-md border border-gray-300 px-2 py-1'
                   />
+                  {dateRange.to && (
+                    <button
+                      type='button'
+                      onClick={clearDateTo}
+                      className='ml-2 text-sm text-red-500 hover:text-red-700'
+                      title='Clear To Date'
+                    >
+                      ×
+                    </button>
+                  )}
                 </label>
               </div>
             </div>

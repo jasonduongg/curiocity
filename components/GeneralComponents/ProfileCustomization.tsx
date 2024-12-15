@@ -22,13 +22,15 @@ interface ChangeUserFormValues extends FieldValues {
   email: string;
 }
 
-export default function ProfileCustomization({ onProfileUpdate }) {
+export default function ProfileCustomization({
+  onProfileUpdate,
+}: {
+  onProfileUpdate: () => void;
+}) {
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const { data: session, update: updateSession } = useSession(); // Include updateSession function
+  const { data: session, update: updateSession } = useSession();
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [previewImage, setPreviewImage] = useState<string | null>(
-    session?.user?.image || null,
-  );
+  const [previewImage, setPreviewImage] = useState<string | null>(null);
 
   const formMethods = useForm<ChangeUserFormValues>({
     defaultValues: {
@@ -86,7 +88,6 @@ export default function ProfileCustomization({ onProfileUpdate }) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           id: session?.user.id,
-          email: session?.user.email,
           name: data.username,
           image: imageUrl,
         }),
@@ -97,13 +98,12 @@ export default function ProfileCustomization({ onProfileUpdate }) {
       }
 
       console.log('Profile updated successfully');
-
       // Update the session to reflect new profile info
       await updateSession();
 
-      handleCloseModal();
-      onProfileUpdate();
-      setSelectedFile(null);
+      await updateSession(); // Refresh session to reflect updates
+      onProfileUpdate(); // Notify parent of the profile update
+      handleCloseModal(); // Close modal after successful update
     } catch (error) {
       console.error('Error updating profile:', error);
     }
@@ -127,6 +127,7 @@ export default function ProfileCustomization({ onProfileUpdate }) {
       >
         <AvatarIcon className='h-6 w-6 text-fileBlue' />
       </div>
+
       {isModalOpen && (
         <div className='fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-75'>
           <div className='flex h-[48rem] w-[32rem] flex-col rounded-xl border-[1px] border-zinc-700 bg-bgSecondary p-6'>
@@ -229,6 +230,7 @@ export default function ProfileCustomization({ onProfileUpdate }) {
 
                 <button
                   type='submit'
+
                   className='w-full rounded-md bg-gray-800 py-2 font-semibold text-white duration-200 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2'
                 >
                   Update Profile
