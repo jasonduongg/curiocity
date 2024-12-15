@@ -1,14 +1,14 @@
-import React, { useState } from "react";
+import React, { useState } from 'react';
 import {
   DndContext,
   useSensor,
   useSensors,
   PointerSensor,
-} from "@dnd-kit/core";
-import TableFolder from "@/components/ResourceComponents/TableFolder";
-import { Document, ResourceMeta, FolderData } from "@/types/types";
-import TextInput from "../GeneralComponents/TextInput";
-import Filter from "@/components/ResourceComponents/Filter";
+} from '@dnd-kit/core';
+import TableFolder from '@/components/ResourceComponents/TableFolder';
+import { Document, ResourceMeta, FolderData } from '@/types/types';
+import TextInput from '../GeneralComponents/TextInput';
+import Filter from '@/components/ResourceComponents/Filter';
 
 interface FileListProps {
   currentDocument: Document;
@@ -24,6 +24,7 @@ export default function FileList({
   currentResourceMeta,
 }: FileListProps) {
   const sensors = useSensors(useSensor(PointerSensor));
+
   const [expandedFolders, setExpandedFolders] = useState<{
     [key: string]: boolean;
   }>(
@@ -35,28 +36,27 @@ export default function FileList({
     ),
   );
 
-  const [searchQuery, setSearchQuery] = useState<string>("");
-  const [sortBy, setSortBy] = useState<"dateAdded" | "lastOpened">("dateAdded");
+  const [searchQuery, setSearchQuery] = useState<string>('');
   const [fileListKey, setFileListKey] = useState(0);
-  const [newFolderName, setNewFolderName] = useState<string>("");
+  const [newFolderName, setNewFolderName] = useState<string>('');
   const [isAddingFolder, setIsAddingFolder] = useState<boolean>(false);
 
-  // Filter states
-  const [selectedSortOrder, setSelectedSortOrder] = useState<string>("a-z");
+  // States for filters applied by the Filter modal
+  const [selectedSortOrder, setSelectedSortOrder] = useState<string>('a-z'); // "a-z" | "z-a" | "dateAdded" | "lastOpened"
   const [selectedFileTypes, setSelectedFileTypes] = useState<string[]>([]);
   const [selectedDateRange, setSelectedDateRange] = useState<{
     from: string;
     to: string;
-  }>({ from: "", to: "" });
+  }>({ from: '', to: '' });
 
   const handleResourceClick = async (
     resourceId: string,
     folderName: string,
   ) => {
     try {
-      await fetch("/api/db/resourcemeta/updateLastOpened", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+      await fetch('/api/db/resourcemeta/updateLastOpened', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           resourceId,
           documentId: currentDocument.id,
@@ -67,7 +67,7 @@ export default function FileList({
       setFileListKey((prevKey) => prevKey + 1);
       onResourceClickCallBack(resourceId);
     } catch (error) {
-      console.error("Error updating lastOpened:", error);
+      console.error('Error updating lastOpened:', error);
     }
   };
 
@@ -75,9 +75,9 @@ export default function FileList({
     if (!newFolderName.trim()) return;
 
     try {
-      await fetch("/api/db/documents/addFolder", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+      await fetch('/api/db/documents/addFolder', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           documentId: currentDocument.id,
           folderName: newFolderName,
@@ -90,13 +90,14 @@ export default function FileList({
       };
 
       setFileListKey((prevKey) => prevKey + 1);
-      setNewFolderName("");
+      setNewFolderName('');
       setIsAddingFolder(false);
     } catch (error) {
-      console.error("Error adding new folder:", error);
+      console.error('Error adding new folder:', error);
     }
   };
 
+  // Callback for when Filter applies changes
   const handleFilterApply = (filters: {
     sortOrder: string;
     fileTypes: string[];
@@ -130,40 +131,18 @@ export default function FileList({
       // Filter by date range if specified
       if (selectedDateRange.from || selectedDateRange.to) {
         const fromDate = selectedDateRange.from
-          ? new Date(selectedDateRange.from + "T00:00:00Z")
+          ? new Date(selectedDateRange.from + 'T00:00:00Z')
           : null;
         const toDate = selectedDateRange.to
-          ? new Date(selectedDateRange.to + "T23:59:59Z")
+          ? new Date(selectedDateRange.to + 'T23:59:59Z')
           : null;
 
         filteredResources = filteredResources.filter((resource) => {
           const resourceDate = new Date(resource.dateAdded);
 
-          console.log(
-            "Resource Name:",
-            resource.name,
-            "| FromDate:",
-            fromDate,
-            "| ToDate:",
-            toDate,
-            "| ResourceDate String:",
-            resource.dateAdded,
-            "| ResourceDate:",
-            resourceDate,
-          );
-
           if (isNaN(resourceDate.getTime())) {
             console.warn(
-              "Invalid date for resource:",
-              resource.name,
-              resource.dateAdded,
-            );
-            return false;
-          }
-
-          if (isNaN(resourceDate.getTime())) {
-            console.warn(
-              "Invalid date for resource:",
+              'Invalid date for resource:',
               resource.name,
               resource.dateAdded,
             );
@@ -185,25 +164,22 @@ export default function FileList({
       if (filteredResources.length > 0 || noFiltersApplied) {
         const sortedResources = [...filteredResources];
 
-        // Sort by date if required
-        if (sortBy === "dateAdded") {
+        // Apply sorting based on selectedSortOrder from Filter
+        if (selectedSortOrder === 'a-z') {
+          sortedResources.sort((a, b) => a.name.localeCompare(b.name));
+        } else if (selectedSortOrder === 'z-a') {
+          sortedResources.sort((a, b) => b.name.localeCompare(a.name));
+        } else if (selectedSortOrder === 'dateAdded') {
           sortedResources.sort(
             (a, b) =>
               new Date(a.dateAdded).getTime() - new Date(b.dateAdded).getTime(),
           );
-        } else if (sortBy === "lastOpened") {
+        } else if (selectedSortOrder === 'lastOpened') {
           sortedResources.sort(
             (a, b) =>
               new Date(b.lastOpened).getTime() -
               new Date(a.lastOpened).getTime(),
           );
-        }
-
-        // Apply alphabetical sorting from Filter modal
-        if (selectedSortOrder === "a-z") {
-          sortedResources.sort((a, b) => a.name.localeCompare(b.name));
-        } else if (selectedSortOrder === "z-a") {
-          sortedResources.sort((a, b) => b.name.localeCompare(a.name));
         }
 
         acc[folderName] = { ...folderData, resources: sortedResources };
@@ -215,35 +191,21 @@ export default function FileList({
 
   return (
     <DndContext sensors={sensors}>
-      <div className="flex h-full w-full flex-col overflow-auto">
+      <div className='flex h-full w-full flex-col overflow-auto'>
         <TextInput
-          placeholder="Search Resources"
+          placeholder='Search Resources'
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
         />
+        {/* Filter with onApplyFilters callback */}
         <Filter onApplyFilters={handleFilterApply} />
-        <div className="flex gap-2 pb-2 pt-2">
-          <button
-            className={`rounded-sm px-1.5 py-0.5 text-xs font-medium ${
-              sortBy === "dateAdded" ? "bg-gray-700 text-white" : "bg-gray-200"
-            }`}
-            onClick={() => setSortBy("dateAdded")}
-          >
-            Sort by Date Added
-          </button>
-          <button
-            className={`rounded-sm px-1.5 py-0.5 text-xs font-medium ${
-              sortBy === "lastOpened" ? "bg-gray-700 text-white" : "bg-gray-200"
-            }`}
-            onClick={() => setSortBy("lastOpened")}
-          >
-            Sort by Last Opened
-          </button>
-        </div>
+
+        {/* Removed old sort buttons since sorting is now done via the modal */}
+
         <div key={fileListKey}>
           {Object.entries(filteredAndSortedFolders).map(([key, folder]) => (
             <TableFolder
-              key={`${key}-${sortBy}`}
+              key={`${key}-${selectedSortOrder}`}
               folderData={folder}
               isExpanded={expandedFolders[key]}
               onToggle={() =>
@@ -265,28 +227,28 @@ export default function FileList({
         {!isAddingFolder ? (
           <button
             onClick={() => setIsAddingFolder(true)}
-            className="mt-4 rounded-md border-[1px] border-gray-700 bg-gray-800 px-4 py-2 text-sm text-white hover:bg-gray-700"
+            className='mt-4 rounded-md border-[1px] border-gray-700 bg-gray-800 px-4 py-2 text-sm text-white hover:bg-gray-700'
           >
             Add New Folder
           </button>
         ) : (
-          <div className="mt-4 flex flex-col items-center gap-2">
+          <div className='mt-4 flex flex-col items-center gap-2'>
             <input
-              type="text"
-              placeholder="Folder Name"
+              type='text'
+              placeholder='Folder Name'
               value={newFolderName}
               onChange={(e) => setNewFolderName(e.target.value)}
-              className="flex-grow rounded-md border-[1px] border-gray-700 bg-gray-800 px-4 py-2 text-sm text-white"
+              className='flex-grow rounded-md border-[1px] border-gray-700 bg-gray-800 px-4 py-2 text-sm text-white'
             />
             <button
               onClick={handleAddFolder}
-              className="rounded-md bg-blue-600 px-4 py-2 text-sm text-white hover:bg-blue-500"
+              className='rounded-md bg-blue-600 px-4 py-2 text-sm text-white hover:bg-blue-500'
             >
               Submit
             </button>
             <button
               onClick={() => setIsAddingFolder(false)}
-              className="rounded-md bg-red-600 px-4 py-2 text-sm text-white hover:bg-red-500"
+              className='rounded-md bg-red-600 px-4 py-2 text-sm text-white hover:bg-red-500'
             >
               Cancel
             </button>
