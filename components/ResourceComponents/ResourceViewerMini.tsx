@@ -1,4 +1,5 @@
 import { Resource } from "@/types/types";
+import Image from "next/image";
 
 interface ResourceViewerProps {
   resource: Resource | null;
@@ -28,10 +29,11 @@ export default function ResourceViewer({ resource }: ResourceViewerProps) {
             style={{ border: "none" }}
           />
         ) : (
-          <img
+          <Image
             src={resource.url}
-            alt="Resource"
-            className="max-h-full max-w-full object-contain"
+            alt="Resource image"
+            fill
+            className="bject-contain"
           />
         )}
       </div>
