@@ -5,25 +5,33 @@ import TextInput from '@/components/GeneralComponents/TextInput';
 import { useState } from 'react';
 import { useCurrentDocument } from '@/context/AppContext';
 import { useSession } from 'next-auth/react';
-import AWS from 'aws-sdk';
-import { Document } from '@/types/types';
 
 export default function AllDocumentGrid() {
-  const { data: session } = useSession(); // Access session to get user ID
+  const { data: session } = useSession();
 
   const {
     allDocuments,
     setCurrentDocument,
     createDocument,
-    toggleSortOrder,
-    isSortedByLastOpened,
     setViewingDocument,
     fetchDocument,
   } = useCurrentDocument();
 
   const [searchQuery, setSearchQuery] = useState('');
+  const [isSortedByLastOpened, setIsSortedByLastOpened] = useState(false);
 
-  const filteredDocuments = allDocuments.filter(
+  const sortedDocuments = [...allDocuments].sort((a, b) => {
+    const dateA = new Date(isSortedByLastOpened ? b.lastOpened : b.dateAdded);
+    const dateB = new Date(isSortedByLastOpened ? a.lastOpened : a.dateAdded);
+
+    if (isNaN(dateA.getTime()) || isNaN(dateB.getTime())) {
+      console.warn('Invalid date detected', { dateA, dateB });
+    }
+
+    return dateA.getTime() - dateB.getTime();
+  });
+
+  const filteredDocuments = sortedDocuments.filter(
     (doc) =>
       doc.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       doc.text?.toLowerCase().includes(searchQuery.toLowerCase()),
@@ -31,10 +39,14 @@ export default function AllDocumentGrid() {
 
   const handleCreateNewReport = () => {
     if (session?.user?.id) {
-      createDocument('New Report', session.user.id); // Pass user ID
+      createDocument('New Report', session.user.id);
     } else {
       console.error('User ID not found. Please log in.');
     }
+  };
+
+  const toggleSortOrder = () => {
+    setIsSortedByLastOpened((prev) => !prev);
   };
 
   return (

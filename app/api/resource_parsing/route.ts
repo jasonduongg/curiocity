@@ -73,7 +73,7 @@ export async function POST(req) {
         await new Promise((resolve) => setTimeout(resolve, 2000));
       }
     }
-    console.log('reached1');
+
     const imageResult = await fetch(
       `https://api.cloud.llamaindex.ai/api/parsing/job/${jobId}/result/json`,
       {
@@ -96,7 +96,6 @@ export async function POST(req) {
         });
       }
     });
-    console.log('reached2_LOLL');
     const resultResponse = await fetch(
       `https://api.cloud.llamaindex.ai//api/v1/parsing/job/${jobId}/result/raw/markdown`,
       {
@@ -106,14 +105,11 @@ export async function POST(req) {
         },
       },
     );
-    console.log('reached3');
     if (!resultResponse.ok) {
       const errorData = await resultResponse.json();
       throw new Error(`Result retrieval failed: ${errorData.message}`);
     }
-
     const markdown = await resultResponse.text();
-    console.log(markdown);
     return NextResponse.json({ markdown, images });
   } catch (error) {
     console.error('Error processing file:', error.message);

@@ -50,7 +50,7 @@ const TableRow = ({
     <div className='relative flex items-center justify-between rounded-md p-2 hover:bg-gray-100'>
       <p
         className='cursor-pointer truncate bg-red-500 text-sm'
-        onClick={handleResourceClick} // Handle resource click
+        onClick={handleResourceClick}
       >
         {resourceCompressed.name}
       </p>
@@ -68,7 +68,7 @@ const TableRow = ({
                 className='block w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100'
                 onClick={toggleDropdown}
               >
-                Move to...
+                Cancel
               </button>
               <div className='absolute right-0 z-20 mt-2 w-full rounded-md bg-white shadow-md'>
                 {availableFolders

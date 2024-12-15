@@ -11,7 +11,8 @@ import NavBar from '@/components/GeneralComponents/NavBar';
 import DocumentEditor from '@/components/DocumentComponents/DocumentEditor';
 import AllDocumentsGrid from '@/components/DocumentComponents/AllDocumentsGrid';
 
-import AWS from 'aws-sdk';
+import { FaSpinner } from 'react-icons/fa';
+
 import {
   ResizableHandle,
   ResizablePanel,
@@ -36,12 +37,10 @@ export default function ReportHome() {
 
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  // Fetch documents on session or sort order change
   useEffect(() => {
     if (session?.user?.id) fetchDocuments();
   }, [session, isSortedByLastOpened]);
 
-  // Handle creating a document from modal
   const handleSaveNewReport = async (name: string) => {
     if (!session?.user?.id) {
       console.error('User ID not found. Please log in.');
@@ -59,11 +58,12 @@ export default function ReportHome() {
     setCurrentResource(null);
   };
 
-  // Show unauthenticated state
   if (!session?.user) {
     return (
-      <div>
-        <div>Please log in to view your reports.</div>
+      <div className='flex h-screen w-screen items-center justify-center bg-black'>
+        <div className='text-center text-white'>
+          <FaSpinner className='mx-auto mb-4 animate-spin text-6xl' />
+        </div>
       </div>
     );
   }

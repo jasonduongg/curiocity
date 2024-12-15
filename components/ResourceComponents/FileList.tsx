@@ -11,7 +11,6 @@ import TableFolder from '@/components/ResourceComponents/TableFolder';
 import { FolderData } from '@/types/types';
 import TextInput from '../GeneralComponents/TextInput';
 import Filter from '@/components/ResourceComponents/Filter';
-import { useCurrentResource } from '@/context/AppContext';
 import { useCurrentDocument } from '@/context/AppContext';
 
 export default function FileList() {
@@ -47,7 +46,7 @@ export default function FileList() {
   const handleToggleFolder = (folderName: string) => {
     setExpandedFolders((prev) => ({
       ...prev,
-      [folderName]: !prev[folderName], // Toggle state
+      [folderName]: !prev[folderName],
     }));
   };
 
