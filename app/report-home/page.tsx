@@ -1,20 +1,20 @@
-"use client";
+'use client';
 
-import { useEffect, useState } from "react";
-import { useSession } from "next-auth/react"; // Import useSession to access user session
-import NameYourReport from "@/components/DocumentComponents/newPrompt";
-import FileViewer from "@/components/ResourceComponents/FilesViewer";
-import NavBar from "@/components/GeneralComponents/NavBar";
-import DocumentEditor from "@/components/DocumentComponents/DocumentEditor";
-import AllDocumentsGrid from "@/components/DocumentComponents/AllDocumentsGrid";
-import AWS from "aws-sdk";
+import { useEffect, useState } from 'react';
+import { useSession } from 'next-auth/react'; // Import useSession to access user session
+import NameYourReport from '@/components/DocumentComponents/newPrompt';
+import FileViewer from '@/components/ResourceComponents/FilesViewer';
+import NavBar from '@/components/GeneralComponents/NavBar';
+import DocumentEditor from '@/components/DocumentComponents/DocumentEditor';
+import AllDocumentsGrid from '@/components/DocumentComponents/AllDocumentsGrid';
+import AWS from 'aws-sdk';
 import {
   ResizableHandle,
   ResizablePanel,
   ResizablePanelGroup,
-} from "@/components/ui/resizable";
+} from '@/components/ui/resizable';
 
-import { Document } from "@/types/types";
+import { Document } from '@/types/types';
 
 export default function TestPage() {
   const { data: session } = useSession();
@@ -49,7 +49,7 @@ export default function TestPage() {
       ? `/api/db/getAllLastOpened?ownerID=${session.user.id}`
       : `/api/db/getAll?ownerID=${session.user.id}`;
 
-    fetch(endpoint, { method: "GET" })
+    fetch(endpoint, { method: 'GET' })
       .then((r) => r.json())
       .then((data) => {
         setAllDocuments(data);
@@ -63,18 +63,18 @@ export default function TestPage() {
     if (!id) return;
     try {
       const response = await fetch(`/api/db?id=${id}`, {
-        method: "GET",
-        headers: { "Content-Type": "application/json" },
+        method: 'GET',
+        headers: { 'Content-Type': 'application/json' },
       });
 
-      if (!response.ok) throw new Error("Failed to fetch document");
+      if (!response.ok) throw new Error('Failed to fetch document');
       const dynamoResponse = await response.json();
       const unmarshalledData =
         AWS.DynamoDB.Converter.unmarshall(dynamoResponse);
-      console.log("hhere2");
+      console.log('hhere2');
       setCurrentDocument(unmarshalledData);
     } catch (error) {
-      console.error("Error fetching single document:", error);
+      console.error('Error fetching single document:', error);
     }
   };
 
@@ -83,13 +83,13 @@ export default function TestPage() {
     setViewingDocument(true);
     // Update the lastOpened field
     try {
-      await fetch("/api/db/updateLastOpened", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+      await fetch('/api/db/updateLastOpened', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id: id }),
       });
     } catch (error) {
-      console.error("Error updating lastOpened:", error);
+      console.error('Error updating lastOpened:', error);
     }
   };
 
@@ -109,13 +109,13 @@ export default function TestPage() {
 
   const createDocument = (name: string) => {
     if (!session?.user?.id) {
-      console.error("User ID not found. Please log in.");
+      console.error('User ID not found. Please log in.');
       return;
     }
 
     const newDoc = {
       name,
-      text: "",
+      text: '',
       ownerID: session.user.id, // Set the ownerID to the logged-in user’s ID
       dateAdded: new Date().toISOString(),
       lastOpened: new Date().toISOString(),
@@ -123,10 +123,10 @@ export default function TestPage() {
     };
 
     // API call to create a new document in the database
-    fetch("/api/db", {
-      method: "POST",
+    fetch('/api/db', {
+      method: 'POST',
       body: JSON.stringify(newDoc),
-      headers: { "Content-Type": "application/json" },
+      headers: { 'Content-Type': 'application/json' },
     })
       .then((response) => response.json())
       .then((data) => {
@@ -135,27 +135,27 @@ export default function TestPage() {
         setViewingDocument(true); // Open the document in TextEditor
         fetchDocuments(); // Refresh document list
       })
-      .catch((error) => console.error("Error creating document:", error));
+      .catch((error) => console.error('Error creating document:', error));
   };
 
   return (
-    <section className="h-screen overscroll-contain bg-bgPrimary">
-      <div className="flex h-full w-full flex-col items-start justify-start overflow-hidden">
+    <section className='h-screen overscroll-contain bg-bgPrimary'>
+      <div className='flex h-full w-full flex-col items-start justify-start overflow-hidden'>
         <NavBar onLogoClick={handleBack} />
-        <ResizablePanelGroup direction="horizontal" className="flex-grow px-8">
+        <ResizablePanelGroup direction='horizontal' className='flex-grow px-8'>
           <ResizablePanel>
-            <div className="h-full w-full max-w-full gap-4 overflow-hidden bg-bgPrimary p-4">
-              <div className="max-w-1/2 h-full shrink grow basis-1/2 flex-col gap-4 overflow-hidden rounded-xl border-[1px] border-zinc-700">
-                <div className="h-full max-w-full grow flex-col overflow-hidden rounded-lg bg-bgSecondary">
+            <div className='h-full w-full max-w-full gap-4 overflow-hidden bg-bgPrimary p-4'>
+              <div className='max-w-1/2 h-full shrink grow basis-1/2 flex-col gap-4 overflow-hidden rounded-xl border-[1px] border-zinc-700'>
+                <div className='h-full max-w-full grow flex-col overflow-hidden rounded-lg bg-bgSecondary'>
                   {viewingDocument ? (
-                    <div className="h-full">
+                    <div className='h-full'>
                       <DocumentEditor
                         document={currentDocument}
                         handleBack={handleBack}
                       />
                     </div>
                   ) : (
-                    <div className="h-full">
+                    <div className='h-full'>
                       <AllDocumentsGrid
                         allDocuments={allDocuments}
                         onDocumentClick={handleGridItemClick}
@@ -171,11 +171,11 @@ export default function TestPage() {
             </div>
           </ResizablePanel>
 
-          <ResizableHandle withHandle={true} className="my-4" />
+          <ResizableHandle withHandle={true} className='my-4' />
 
           <ResizablePanel>
-            <div className="h-full w-full p-4">
-              <div className="flex h-full flex-col rounded-xl border-[1px] border-zinc-700 bg-bgSecondary">
+            <div className='h-full w-full p-4'>
+              <div className='flex h-full flex-col rounded-xl border-[1px] border-zinc-700 bg-bgSecondary'>
                 <FileViewer
                   currentDocument={currentDocument}
                   onNameChangeCallBack={nameChangeCallBack} // Pass the callback to FileViewer
