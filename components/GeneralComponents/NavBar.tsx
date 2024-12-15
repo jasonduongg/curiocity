@@ -14,8 +14,6 @@ export default function NavBar({ onLogoClick }: NavBarProps) {
   const { data: session } = useSession();
   const router = useRouter();
 
-  console.log(session);
-
   const handleSignOut = async () => {
     await signOut({ redirect: false })
       .then(() => {

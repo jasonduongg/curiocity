@@ -1,69 +1,121 @@
+<<<<<<< HEAD
 import React from 'react';
 import { useDroppable } from '@dnd-kit/core';
 import { FolderData, ResourceMeta } from '@/types/types';
 import TableRow from '@/components/ResourceComponents/TableRow';
+=======
+import React, { useState } from 'react';
+import TableRow from './TableRow';
+import { useCurrentDocument, useCurrentResource } from '@/context/AppContext';
+import { FolderData, ResourceCompressed } from '@/types/types';
+>>>>>>> 3c333ed (Fix linting errors and proceed with force push)
 
-interface TableFolderProps {
+interface FolderProps {
   folderData: FolderData;
-  isExpanded: boolean; // Receive expanded state
-  onToggle: () => void; // Handle folder toggle
-  onResourceClickCallBack: (resourceId: string) => void;
-  onResourceMoveCallBack: (
-    resourceId: string,
-    sourceFolder: string,
-    targetFolder: string,
-  ) => void;
-  currentResourceMeta: ResourceMeta | null;
+  isExpanded: boolean;
+  onToggle: () => void; // Callback to handle expand/collapse
 }
 
-function TableFolder({
-  folderData,
-  isExpanded,
-  onToggle,
-  onResourceClickCallBack,
-  currentResourceMeta,
-}: TableFolderProps) {
-  const { setNodeRef, isOver } = useDroppable({
-    id: folderData.name,
-    data: { targetFolderName: folderData.name },
-  });
+const Folder = ({ folderData, isExpanded, onToggle }: FolderProps) => {
+  const { currentDocument, setCurrentDocument, fetchDocument } =
+    useCurrentDocument();
+  const { moveResource } = useCurrentResource();
+
+  if (!currentDocument) {
+    console.error('No current document found.');
+    return null;
+  }
+
+  const { folders } = currentDocument;
+  const folder = folders[folderData.name];
+
+  if (!folder) {
+    console.error(`Folder "${folderData.name}" not found.`);
+    return null;
+  }
+
+  const resources: ResourceCompressed[] = folder.resources || [];
+
+  const handleMoveResource = async (
+    resourceId: string,
+    sourceFolderName: string,
+    targetFolderName: string,
+  ) => {
+    try {
+      console.log('Resource ID:', resourceId);
+      console.log('Source Folder Name:', sourceFolderName);
+      console.log('Target Folder Name:', targetFolderName);
+      console.log('Current Document Folders:', currentDocument.id);
+
+      await moveResource(
+        resourceId,
+        sourceFolderName,
+        targetFolderName,
+        currentDocument.id,
+      );
+
+      // Reset the current document state to refresh the UI
+      await fetchDocument(currentDocument.id);
+    } catch (error) {
+      console.error('Error in moving resource:', error);
+    }
+  };
+
+  const handleDelete = (resourceId: string) => {
+    const resourceIndex = folder.resources.findIndex(
+      (resource) => resource.id === resourceId,
+    );
+
+    if (resourceIndex === -1) {
+      console.error('Resource not found in the current folder.');
+      return;
+    }
+
+    folder.resources.splice(resourceIndex, 1);
+
+    setCurrentDocument({
+      ...currentDocument,
+      folders: {
+        ...folders,
+        [folderData.name]: { ...folder },
+      },
+    });
+  };
 
   return (
-    <div className='mb-2'>
+    <div className='mb-4 rounded-md border bg-gray-100'>
+      {/* Folder Header */}
       <div
-        ref={setNodeRef}
-        className={`flex cursor-pointer items-center rounded-lg border-[1px] border-zinc-700 px-2 py-1 transition duration-200 duration-300 hover:bg-gray-700 ${
-          isOver ? 'bg-accentPrimary' : ''
-        }`}
-        onClick={onToggle} // Use onToggle for expanding/collapsing
+        className='flex cursor-pointer items-center justify-between bg-gray-200 px-4 py-2 hover:bg-gray-300'
+        onClick={onToggle}
       >
-        <span
-          className={`mr-2 transform text-white transition-transform ${
-            isExpanded ? 'rotate-90' : 'rotate-0'
-          }`}
-        >
-          ▶
-        </span>
-        <p className='text-sm font-semibold text-textPrimary'>
-          {folderData.name}
-        </p>
+        <h2 className='text-lg font-semibold'>{folder.name}</h2>
+        <span className='text-sm'>{isExpanded ? '▼' : '►'}</span>
       </div>
 
+      {/* Folder Resources */}
       {isExpanded && (
-        <div className='pl-4 pt-1'>
-          {folderData.resources.map((resource) => (
+        <div className='space-y-2 p-4'>
+          {resources.map((resource) => (
             <TableRow
-              key={resource.id}
-              resource={resource}
-              folderName={folderData.name} // Pass folder name to resource
-              onResourceClickCallBack={onResourceClickCallBack}
-              isSelected={currentResourceMeta?.id === resource.id}
+              key={resource.id} // Ensure unique key for each resource
+              resourceCompressed={resource} // Pass the resource data
+              folderName={folderData.name} // Specify the folder name containing the resource
+              availableFolders={Object.keys(folders)} // Pass a list of available folders for moving
+              onMoveTo={(targetFolderName) =>
+                handleMoveResource(
+                  resource.id,
+                  folderData.name,
+                  targetFolderName,
+                )
+              }
+              onDelete={() => handleDelete(resource.id)} // Callback for deleting resource
             />
           ))}
         </div>
       )}
     </div>
   );
-}
+};
 
-export default TableFolder;
+export default Folder;

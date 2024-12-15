@@ -1,32 +1,38 @@
-import React, { useState, useEffect } from 'react';
+'use client';
+
+import React, { useEffect, useState } from 'react';
+import { useCurrentDocument } from '@/context/AppContext';
 import TagComponent from './TagComponent';
 import ErrorModal from '@/components/ModalComponents/ErrorModal';
 
-interface TagSectionProps {
-  documentId: string;
-  initialTags?: string[];
-}
-
-export default function TagSection({
-  documentId,
-  initialTags = [],
-}: TagSectionProps) {
-  const [tags, setTags] = useState<string[]>(initialTags);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null); // Single error modal state
+export default function TagSection() {
+  const { currentDocument, setCurrentDocument } = useCurrentDocument(); // Access current document
+  const [tags, setTags] = useState<string[]>([]);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   useEffect(() => {
-    setTags(initialTags); // Update when initialTags change
-  }, [initialTags]);
+    if (currentDocument) {
+      setTags(currentDocument.tags || []); // Set initial tags from the current document
+    }
+  }, [currentDocument]);
 
   const handleDelete = async (tag: string) => {
+    if (!currentDocument) return;
+
     try {
       const res = await fetch(`/api/db/deleteTag`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ documentId, tag }),
+        body: JSON.stringify({ documentId: currentDocument.id, tag }),
       });
+
       if (res.ok) {
         setTags((prevTags) => prevTags.filter((t) => t !== tag));
+        // Update the tags in the current document
+        setCurrentDocument({
+          ...currentDocument,
+          tags: currentDocument.tags.filter((t) => t !== tag),
+        });
       } else {
         setErrorMessage('Failed to delete the tag.');
       }
@@ -37,6 +43,8 @@ export default function TagSection({
   };
 
   const handleAddTag = async (newTag: string): Promise<boolean> => {
+    if (!currentDocument) return false;
+
     if (tags.includes(newTag)) {
       setErrorMessage('Duplicate tag not allowed.');
       return false;
@@ -46,10 +54,16 @@ export default function TagSection({
       const res = await fetch(`/api/db/newTag`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ documentId, tag: newTag }),
+        body: JSON.stringify({ documentId: currentDocument.id, tag: newTag }),
       });
+
       if (res.ok) {
         setTags((prevTags) => [...prevTags, newTag]);
+        // Update the tags in the current document
+        setCurrentDocument({
+          ...currentDocument,
+          tags: [...(currentDocument.tags || []), newTag],
+        });
         return true;
       } else {
         setErrorMessage('Failed to add new tag.');

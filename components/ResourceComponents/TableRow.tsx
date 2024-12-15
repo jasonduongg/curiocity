@@ -1,81 +1,87 @@
-import React, { useRef, useState } from 'react';
-import { useDraggable } from '@dnd-kit/core';
-import { CSS } from '@dnd-kit/utilities';
+import React, { useState } from 'react';
 import { ResourceCompressed } from '@/types/types';
 
 interface TableRowProps {
-  resource: ResourceCompressed;
-  folderName: string; // Add folderName as a prop
-  isSelected: boolean; // Indicates if the resource is selected
-  onResourceClickCallBack: (resourceId: string) => void;
+  resourceCompressed: ResourceCompressed;
+  folderName: string;
+  availableFolders: string[]; // List of available folders for moving the resource
+  onMoveTo: (resourceId: string, targetFolderName: string) => void;
+  onDelete: (resourceId: string) => void;
 }
 
-export function TableRow({
-  resource,
-  folderName, // Destructure folderName
-  isSelected,
-  onResourceClickCallBack,
-}: TableRowProps) {
-  const { attributes, listeners, setNodeRef, transform, transition } =
-    useDraggable({
-      id: resource.id, // Unique ID for the draggable item
-      data: { resourceId: resource.id, folderName }, // Include resourceId and folderName
-    });
+const TableRow = ({
+  resourceCompressed,
+  folderName,
+  availableFolders,
+  onMoveTo,
+  onDelete,
+}: TableRowProps) => {
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
-  const [isDragging, setIsDragging] = useState(false);
-  const dragStartRef = useRef<{ x: number; y: number } | null>(null);
+  const toggleDropdown = () => setIsDropdownOpen((prev) => !prev);
 
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    transition: transition || 'transform 0.2s ease',
-    border: isSelected ? '2px solid blue' : '1px solid transparent', // Blue border if selected
+  const handleMoveTo = (targetFolderName: string) => {
+    onMoveTo(resourceCompressed.id, targetFolderName);
+    setIsDropdownOpen(false); // Close dropdown after moving
   };
 
-  const handlePointerDown = (event: React.PointerEvent) => {
-    dragStartRef.current = { x: event.clientX, y: event.clientY };
-    setIsDragging(false); // Reset dragging state
-    listeners.onPointerDown?.(event); // Call the draggable listener
-  };
-
-  const handlePointerMove = (event: React.PointerEvent) => {
-    if (dragStartRef.current) {
-      const distance = Math.sqrt(
-        Math.pow(event.clientX - dragStartRef.current.x, 2) +
-          Math.pow(event.clientY - dragStartRef.current.y, 2),
-      );
-
-      if (distance > 5) {
-        setIsDragging(true); // Threshold for detecting drag
-      }
+  const handleDelete = () => {
+    const confirmation = confirm(
+      `Are you sure you want to delete "${resourceCompressed.name}"?`,
+    );
+    if (confirmation) {
+      onDelete(resourceCompressed.id);
+      setIsDropdownOpen(false); // Close dropdown after deleting
     }
-  };
-
-  const handlePointerUp = async (event: React.PointerEvent) => {
-    if (!isDragging) {
-      onResourceClickCallBack(resource.id);
-    }
-
-    dragStartRef.current = null;
-    listeners.onPointerUp?.(event);
   };
 
   return (
-    <div
-      ref={setNodeRef}
-      style={style}
-      {...attributes}
-      className='flex h-full cursor-pointer items-center gap-2 rounded-lg px-2 py-1 transition-colors duration-200 hover:bg-gray-700'
-      onPointerDown={handlePointerDown}
-      onPointerMove={handlePointerMove}
-      onPointerUp={handlePointerUp}
-    >
-      <div className='flex-grow overflow-hidden'>
-        <p className='truncate whitespace-nowrap text-sm text-textPrimary'>
-          {resource.name}
-        </p>
+    <div className='relative flex items-center justify-between rounded-md p-2 hover:bg-gray-100'>
+      <p className='truncate text-sm'>{resourceCompressed.name}</p>
+      <div className='relative'>
+        {/* Dropdown Toggle Button */}
+        <button
+          onClick={toggleDropdown}
+          className='px-2 py-1 text-sm text-gray-500 hover:text-gray-700'
+        >
+          ...
+        </button>
+        {isDropdownOpen && (
+          <div className='absolute right-0 z-10 mt-2 w-40 rounded-md bg-white shadow-lg'>
+            {/* Move To Option */}
+            <div className='relative'>
+              <button
+                className='block w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100'
+                onClick={toggleDropdown}
+              >
+                Move to...
+              </button>
+              <div className='absolute right-0 z-20 mt-2 w-full rounded-md bg-white shadow-md'>
+                {availableFolders
+                  .filter((folder) => folder !== folderName) // Exclude current folder
+                  .map((folder) => (
+                    <button
+                      key={folder}
+                      onClick={() => handleMoveTo(folder)}
+                      className='block w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100'
+                    >
+                      {folder}
+                    </button>
+                  ))}
+              </div>
+            </div>
+            {/* Delete Option */}
+            <button
+              onClick={handleDelete}
+              className='block w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-gray-100'
+            >
+              Delete
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );
-}
+};
 
 export default TableRow;

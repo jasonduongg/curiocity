@@ -4,6 +4,13 @@ import { v4 as uuidv4 } from 'uuid';
 import AWS from 'aws-sdk';
 import crypto from 'crypto';
 import { putObject, getObject, deleteObject } from '../route';
+import {
+  DynamoDBDocumentClient,
+  GetCommand,
+  PutCommand,
+  UpdateCommand,
+  DeleteCommand,
+} from '@aws-sdk/lib-dynamodb';
 
 import {
   Resource,
@@ -173,14 +180,69 @@ export async function GET(request: Request) {
 
 export async function DELETE(request: Request) {
   try {
-    const data = await request.json();
-    await deleteObject(client, data.id, resourceMetaTable);
-    return new Response(JSON.stringify({ msg: 'success' }), { status: 200 });
+    const { id: resourceId } = await request.json();
+
+    // Fetch the resource metadata
+    const resourceMeta = await client.send(
+      new GetCommand({ TableName: resourceMetaTable, Key: { id: resourceId } }),
+    );
+    if (!resourceMeta.Item) {
+      throw new Error('Resource not found.');
+    }
+
+    const { documentId } = resourceMeta.Item;
+
+    // Fetch the associated document
+    const document = await client.send(
+      new GetCommand({ TableName: documentTable, Key: { id: documentId } }),
+    );
+    if (!document.Item) {
+      throw new Error('Document not found.');
+    }
+
+    const existingDocument = AWS.DynamoDB.Converter.unmarshall(document.Item);
+    let folderUpdated = false;
+
+    Object.entries(existingDocument.folders).forEach(([folderName, folder]) => {
+      folder.resources = folder.resources.filter(
+        (resource: any) => resource.id !== resourceId,
+      );
+      if (folder.resources.length < folder.resources.length)
+        folderUpdated = true;
+    });
+
+    if (!folderUpdated) {
+      throw new Error('Resource not found in document folders.');
+    }
+
+    await client.send(
+      new UpdateCommand({
+        TableName: documentTable,
+        Key: { id: documentId },
+        UpdateExpression: 'SET folders = :folders',
+        ExpressionAttributeValues: { ':folders': existingDocument.folders },
+      }),
+    );
+
+    await client.send(
+      new DeleteCommand({
+        TableName: resourceMetaTable,
+        Key: { id: resourceId },
+      }),
+    );
+
+    return new Response(
+      JSON.stringify({ msg: 'Resource deleted successfully' }),
+      { status: 200 },
+    );
   } catch (error) {
     console.error('Error in DELETE request:', error);
-    return new Response(JSON.stringify({ err: 'Internal server error' }), {
-      status: 500,
-    });
+    return new Response(
+      JSON.stringify({ err: error.message || 'Internal server error' }),
+      {
+        status: 500,
+      },
+    );
   }
 }
 

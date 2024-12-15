@@ -1,27 +1,18 @@
 import MoreOptionsDropdown from './MoreOptionsDropdown';
+import { Document } from '@/types/types'; // Import the Document type
+
 function stripHtmlTags(text: string) {
   return text.replace(/<\/?[^>]+(>|$)/g, '');
 }
 
 interface Props {
-  documentId?: string; // Added documentId prop
-  title: string;
-  text: string;
-  dateAdded: string;
-  lastOpened: string;
+  document: Document; // Use the Document type for the document prop
   onClick: () => void;
-  refreshState: () => void;
 }
 
-export default function GridItem({
-  documentId,
-  title,
-  text,
-  dateAdded,
-  lastOpened,
-  onClick,
-  refreshState,
-}: Props) {
+export default function GridItem({ document, onClick }: Props) {
+  const { id, name, text, dateAdded, lastOpened } = document;
+
   const formattedDateAdded = new Date(dateAdded).toLocaleString('en-US', {
     year: 'numeric',
     month: 'short',
@@ -42,7 +33,9 @@ export default function GridItem({
   return (
     <div
       className='flex h-80 max-w-[250px] cursor-pointer flex-col justify-between rounded-lg bg-bgSecondary shadow-md transition duration-300 ease-in-out hover:bg-bgPrimary'
-      onClick={onClick}
+      onClick={() => {
+        onClick();
+      }}
     >
       <div className='flex h-full w-full min-w-48 flex-col items-stretch rounded-xl'>
         <div className='grow overflow-y-hidden rounded-t-xl border-[1px] border-white p-2 px-4 py-4'>
@@ -53,8 +46,8 @@ export default function GridItem({
 
         <div className='flex h-20 flex-col justify-center rounded-b-xl border-[1px] border-textPrimary bg-bgPrimary'>
           <div className='flex flex-row justify-between px-4'>
-            <div className=''>
-              <p className='text-base font-bold text-textPrimary'>{title}</p>
+            <div>
+              <p className='text-base font-bold text-textPrimary'>{name}</p>
               <p className='text-xs text-textPrimary'>
                 C: {formattedDateAdded}
               </p>
@@ -63,14 +56,11 @@ export default function GridItem({
               </p>
             </div>
             <div className='flex flex-col justify-end'>
-              <MoreOptionsDropdown
-                documentId={documentId}
-                refreshState={refreshState}
-                onEdit={() => console.log('Edit clicked for:', documentId)}
-                onDuplicate={() =>
-                  console.log('Duplicate clicked for:', documentId)
-                }
-              />
+              {/* <MoreOptionsDropdown
+                documentId={id}
+                onEdit={() => console.log('Edit clicked for:', id)}
+                onDuplicate={() => console.log('Duplicate clicked for:', id)}
+              /> */}
             </div>
           </div>
         </div>
