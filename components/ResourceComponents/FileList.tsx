@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   DndContext,
   useSensor,
@@ -48,6 +48,16 @@ export default function FileList({
     from: string;
     to: string;
   }>({ from: '', to: '' });
+
+  useEffect(() => {
+    // Add the "General" folder if it doesn't exist
+    if (!currentDocument.folders['General']) {
+      currentDocument.folders['General'] = {
+        name: 'General',
+        resources: [],
+      };
+    }
+  }, [currentDocument]);
 
   const handleResourceClick = async (
     resourceId: string,
