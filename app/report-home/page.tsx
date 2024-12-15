@@ -26,6 +26,8 @@ export default function TestPage() {
   );
   const [isModalOpen, setIsModalOpen] = useState(false);
 
+  console.log('Session', session);
+
   useEffect(() => {
     fetchDocuments();
   }, [session, isSortedByLastOpened]);
@@ -137,6 +139,15 @@ export default function TestPage() {
       })
       .catch((error) => console.error('Error creating document:', error));
   };
+
+  if (!session?.user) {
+    return (
+      <div>
+        <NavBar onLogoClick={handleBack} />
+        <div>Please log in to view your reports.</div>;
+      </div>
+    );
+  }
 
   return (
     <section className='h-screen overscroll-contain bg-bgPrimary'>

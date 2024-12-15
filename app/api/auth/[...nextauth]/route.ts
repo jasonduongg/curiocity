@@ -1,26 +1,35 @@
 import NextAuth, { NextAuthOptions } from 'next-auth';
 import GoogleProvider from 'next-auth/providers/google';
-import { getCurrentTime } from '../../user/route';
-import { PostHog } from 'posthog-node';
+import CredentialsProvider from 'next-auth/providers/credentials';
+import { DynamoDBDocumentClient, GetCommand } from '@aws-sdk/lib-dynamodb';
+import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
+import { fromEnv } from '@aws-sdk/credential-providers';
+import bcrypt from 'bcrypt';
 
 const API_BASE_URL = process.env.NEXTAUTH_URL || 'http://localhost:3000';
 
-const posthog = new PostHog(process.env.NEXT_PUBLIC_POSTHOG_KEY || '', {
-  host: process.env.NEXT_PUBLIC_POSTHOG_HOST,
-});
+const GOOGLE_ID = process.env.GOOGLE_ID || '';
+const GOOGLE_SECRET = process.env.GOOGLE_SECRET || '';
+const NEXTAUTH_SECRET = process.env.NEXTAUTH_SECRET || '';
 
-const GOOGLE_ID = process.env.GOOGLE_ID;
-const GOOGLE_SECRET = process.env.GOOGLE_SECRET;
-const NEXTAUTH_SECRET = process.env.NEXTAUTH_SECRET;
+const LOGIN_USERS_TABLE = 'curiocity-local-login-users';
+const USERS_TABLE = 'curiocity-users';
+
+// Initialize DynamoDB clients
+const dynamoDbClient = new DynamoDBClient({
+  region: process.env.S3_UPLOAD_REGION,
+  credentials: fromEnv(),
+});
+const ddbDocClient = DynamoDBDocumentClient.from(dynamoDbClient);
 
 if (!GOOGLE_ID || !GOOGLE_SECRET) {
   throw new Error(
-    'Missing GOOGLE_ID or GOOGLE_SECRET in environment variables',
+    'Missing GOOGLE_ID or GOOGLE_SECRET in environment variables.',
   );
 }
 
 if (!NEXTAUTH_SECRET) {
-  throw new Error('Missing NEXTAUTH_SECRET in environment variables');
+  throw new Error('Missing NEXTAUTH_SECRET in environment variables.');
 }
 
 const options: NextAuthOptions = {
@@ -28,153 +37,139 @@ const options: NextAuthOptions = {
     GoogleProvider({
       clientId: GOOGLE_ID,
       clientSecret: GOOGLE_SECRET,
-      authorization: {
-        params: {
-          scope: 'openid email profile',
-        },
+    }),
+    CredentialsProvider({
+      name: 'Credentials',
+      credentials: {
+        email: { label: 'Email', type: 'text' },
+        password: { label: 'Password', type: 'password' },
       },
-      profile(profile) {
-        return {
-          id: profile.sub,
-          name: profile.name || '',
-          email: profile.email || '',
-          image: profile.picture || '',
-        };
+      async authorize(credentials) {
+        const { email, password } = credentials || {};
+
+        if (!email || !password) {
+          throw new Error('Email and password are required.');
+        }
+
+        try {
+          // Fetch user credentials from DynamoDB
+          const loginParams = { TableName: LOGIN_USERS_TABLE, Key: { email } };
+          const loginResponse = await ddbDocClient.send(
+            new GetCommand(loginParams),
+          );
+          const loginRecord = loginResponse.Item;
+
+          if (
+            !loginRecord ||
+            !(await bcrypt.compare(password, loginRecord.password))
+          ) {
+            throw new Error('Invalid email or password.');
+          }
+
+          // Fetch user details
+          const userParams = {
+            TableName: USERS_TABLE,
+            Key: { id: loginRecord.userId },
+          };
+          const userResponse = await ddbDocClient.send(
+            new GetCommand(userParams),
+          );
+          const userRecord = userResponse.Item;
+
+          if (!userRecord) {
+            throw new Error('User details not found.');
+          }
+
+          return {
+            id: userRecord.id,
+            name: userRecord.name,
+            email: userRecord.email,
+            image: userRecord.image || null,
+            accountCreated: userRecord.accountCreated,
+            lastLoggedIn: new Date().toISOString(),
+          };
+        } catch (error) {
+          console.error('Error during manual login:', error);
+          throw new Error('Failed to log in.');
+        }
       },
     }),
   ],
   callbacks: {
     async signIn({ user, profile }) {
-      console.log('signIn callback triggered');
-      const userId = profile?.sub;
-      if (!userId || !profile) return false;
+      if (profile) {
+        // Google Sign-in Logic
+        const userId = profile.sub;
+        const userData = {
+          id: userId,
+          name: profile.name,
+          email: profile.email,
+          image: user.image,
+          lastLoggedIn: new Date().toISOString(),
+        };
 
-      const userData = {
-        id: userId,
-        name: profile.name,
-        email: profile.email,
-        image: user.image,
-        lastLoggedIn: new Date().toISOString(),
-      };
+        try {
+          const checkResponse = await fetch(
+            `${API_BASE_URL}/api/user?id=${userId}`,
+            {
+              method: 'GET',
+              headers: { 'Content-Type': 'application/json' },
+            },
+          );
 
-      try {
-        const checkResponse = await fetch(
-          `${API_BASE_URL}/api/user?id=${userId}`,
-          {
-            method: 'GET',
-            headers: { 'Content-Type': 'application/json' },
-          },
-        );
-
-        if (checkResponse.ok) {
-          const updateResponse = await fetch(`${API_BASE_URL}/api/user`, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              id: userData.id,
-              lastLoggedIn: userData.lastLoggedIn,
-            }),
-          });
-
-          if (!updateResponse.ok) {
-            console.error(
-              "Failed to update user's lastLoggedIn field:",
-              updateResponse.statusText,
-            );
-            return false;
+          if (checkResponse.ok) {
+            await fetch(`${API_BASE_URL}/api/user`, {
+              method: 'PUT',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                id: userData.id,
+                lastLoggedIn: userData.lastLoggedIn,
+              }),
+            });
+            return true;
+          } else if (checkResponse.status === 404) {
+            await fetch(`${API_BASE_URL}/api/user`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(userData),
+            });
+            return true;
           }
-
-          console.log("User's lastLoggedIn field successfully updated");
-          return true;
-        } else if (checkResponse.status === 404) {
-          const createResponse = await fetch(`${API_BASE_URL}/api/user`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(userData),
-          });
-
-          if (!createResponse.ok) {
-            console.error(
-              'Failed to create a new user:',
-              createResponse.statusText,
-            );
-            return false;
-          }
-
-          console.log('New user successfully created');
-          return true;
+        } catch (error) {
+          console.error('Error during Google sign-in process:', error);
+          return false;
         }
-
-        posthog.capture({
-          distinctId: userData.id, // Unique identifier for the user
-          event: 'User Login1 Successful', // Event name
-          properties: {
-            id: userData.id,
-            timeStamp: getCurrentTime(),
-          },
-        });
-        console.log({
-          distinctId: userData.id,
-          event: 'User Login1 Successful', // Event name
-          properties: {
-            id: userData.id,
-            timeStamp: getCurrentTime(),
-          },
-        });
-      } catch (error) {
-        console.error('Error during user sign-in process:', error);
-        posthog.capture({
-          distinctId: userData.id, // Unique identifier for the user
-          event: 'User Login Failed', // Event name
-          properties: {
-            id: userData.id,
-            timeStamp: getCurrentTime(),
-          },
-        });
-        return false;
       }
-    },
-    async session({ session, token }) {
-      // Attach user id from token to the session
-      if (token?.sub) {
-        session.user.id = token.sub;
-      }
-
-      try {
-        const response = await fetch(
-          `${API_BASE_URL}/api/user?id=${token.sub}`,
-          {
-            method: 'GET',
-            headers: { 'Content-Type': 'application/json' },
-          },
-        );
-
-        if (!response.ok) {
-          console.error('Failed to fetch user data:', response.statusText);
-          return session;
-        }
-
-        const userData = await response.json();
-        session.user = { ...session.user, ...userData };
-      } catch (error) {
-        console.error('Error fetching user data from API:', error);
-      }
-
-      return session;
+      return true;
     },
     async jwt({ token, user }) {
-      // Attach user id to the token on initial sign-in
       if (user) {
-        token.sub = user.id;
+        token.id = user.id;
+        token.name = user.name;
+        token.email = user.email;
+        token.image = user.image;
+        token.accountCreated = user.accountCreated;
+        token.lastLoggedIn = user.lastLoggedIn;
       }
       return token;
     },
-  },
-  pages: {
-    signIn: '/report-home',
-    signOut: '/login',
+    async session({ session, token }) {
+      session.user = {
+        id: token.id,
+        name: token.name,
+        email: token.email,
+        image: token.image,
+        accountCreated: token.accountCreated,
+        lastLoggedIn: token.lastLoggedIn,
+      };
+      return session;
+    },
   },
   secret: NEXTAUTH_SECRET,
+  pages: {
+    signIn: '/login',
+    signOut: '/logout',
+  },
 };
 
 const handler = NextAuth(options);
