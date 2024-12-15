@@ -25,6 +25,7 @@ export interface Document {
   dateAdded: string;
   lastOpened: string;
   tags: Array<string>;
+  ownerID: string;
 }
 
 export interface ResourceMeta {
@@ -37,4 +38,5 @@ export interface ResourceMeta {
   summary: string;
   tags: Array<string>;
   documentId: string;
+  fileType: string;
 }

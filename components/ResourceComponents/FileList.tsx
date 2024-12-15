@@ -1,4 +1,6 @@
-import React, { useState } from 'react';
+'use client';
+
+import React, { useState, useEffect } from 'react';
 import {
   DndContext,
   useSensor,
@@ -6,76 +8,47 @@ import {
   PointerSensor,
 } from '@dnd-kit/core';
 import TableFolder from '@/components/ResourceComponents/TableFolder';
-import { Document, ResourceMeta, FolderData } from '@/types/types';
+import { FolderData } from '@/types/types';
 import TextInput from '../GeneralComponents/TextInput';
 import Filter from '@/components/ResourceComponents/Filter';
+import { useCurrentResource } from '@/context/AppContext';
+import { useCurrentDocument } from '@/context/AppContext';
 
-interface FileListProps {
-  currentDocument: Document;
-  onResourceClickCallBack: (resourceId: string) => void;
-  onResourceMoveCallBack: (documentId: string) => void;
-  currentResourceMeta: ResourceMeta | null;
-}
-
-export default function FileList({
-  currentDocument,
-  onResourceClickCallBack,
-  onResourceMoveCallBack,
-  currentResourceMeta,
-}: FileListProps) {
+export default function FileList() {
   const sensors = useSensors(useSensor(PointerSensor));
+  const { currentDocument } = useCurrentDocument();
 
   const [expandedFolders, setExpandedFolders] = useState<{
     [key: string]: boolean;
-  }>(
-    Object.fromEntries(
-      Object.keys(currentDocument.folders).map((folderName) => [
-        folderName,
-        false,
-      ]),
-    ),
-  );
-
+  }>({});
   const [searchQuery, setSearchQuery] = useState<string>('');
-  const [fileListKey, setFileListKey] = useState(0);
   const [newFolderName, setNewFolderName] = useState<string>('');
   const [isAddingFolder, setIsAddingFolder] = useState<boolean>(false);
-
-  // States for filters applied by the Filter modal
-  const [selectedSortOrder, setSelectedSortOrder] = useState<string>('a-z'); // "a-z" | "z-a" | "dateAdded" | "lastOpened"
+  const [selectedSortOrder, setSelectedSortOrder] = useState<string>('a-z');
   const [selectedFileTypes, setSelectedFileTypes] = useState<string[]>([]);
   const [selectedDateRange, setSelectedDateRange] = useState<{
     from: string;
     to: string;
   }>({ from: '', to: '' });
 
-  const handleResourceClick = async (
-    resourceId: string,
-    folderName: string,
-  ) => {
-    try {
-      await fetch('/api/db/resourcemeta/updateLastOpened', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          resourceId,
-          documentId: currentDocument.id,
-          folderName,
-        }),
-      });
-
-      setFileListKey((prevKey) => prevKey + 1);
-      onResourceClickCallBack(resourceId);
-    } catch (error) {
-      console.error('Error updating lastOpened:', error);
+  useEffect(() => {
+    if (currentDocument?.folders) {
+      setExpandedFolders(
+        Object.fromEntries(
+          Object.keys(currentDocument.folders).map((folderName) => [
+            folderName,
+            false,
+          ]),
+        ),
+      );
     }
-  };
+  }, [currentDocument]);
 
   const handleAddFolder = async () => {
-    if (!newFolderName.trim()) return;
+    if (!newFolderName.trim() || !currentDocument) return;
 
     try {
-      await fetch('/api/db/documents/addFolder', {
+      const response = await fetch('/api/db/documents/addFolder', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -84,12 +57,12 @@ export default function FileList({
         }),
       });
 
+      if (!response.ok) throw new Error('Failed to add new folder');
+
       currentDocument.folders[newFolderName] = {
         name: newFolderName,
         resources: [],
       };
-
-      setFileListKey((prevKey) => prevKey + 1);
       setNewFolderName('');
       setIsAddingFolder(false);
     } catch (error) {
@@ -97,7 +70,6 @@ export default function FileList({
     }
   };
 
-  // Callback for when Filter applies changes
   const handleFilterApply = (filters: {
     sortOrder: string;
     fileTypes: string[];
@@ -109,26 +81,23 @@ export default function FileList({
   };
 
   const filteredAndSortedFolders = Object.entries(
-    currentDocument.folders,
+    currentDocument?.folders || {},
   ).reduce(
     (acc, [folderName, folderData]) => {
       let filteredResources = folderData.resources;
 
-      // Apply search query filtering
       if (searchQuery) {
         filteredResources = filteredResources.filter((resource) =>
           resource.name.toLowerCase().includes(searchQuery.toLowerCase()),
         );
       }
 
-      // Filter by file type if any selected
       if (selectedFileTypes.length > 0) {
         filteredResources = filteredResources.filter((resource) =>
           selectedFileTypes.includes(resource.fileType),
         );
       }
 
-      // Filter by date range if specified
       if (selectedDateRange.from || selectedDateRange.to) {
         const fromDate = selectedDateRange.from
           ? new Date(selectedDateRange.from + 'T00:00:00Z')
@@ -139,15 +108,6 @@ export default function FileList({
 
         filteredResources = filteredResources.filter((resource) => {
           const resourceDate = new Date(resource.dateAdded);
-
-          if (isNaN(resourceDate.getTime())) {
-            console.warn(
-              'Invalid date for resource:',
-              resource.name,
-              resource.dateAdded,
-            );
-            return false;
-          }
 
           if (fromDate && resourceDate < fromDate) return false;
           if (toDate && resourceDate > toDate) return false;
@@ -164,7 +124,6 @@ export default function FileList({
       if (filteredResources.length > 0 || noFiltersApplied) {
         const sortedResources = [...filteredResources];
 
-        // Apply sorting based on selectedSortOrder from Filter
         if (selectedSortOrder === 'a-z') {
           sortedResources.sort((a, b) => a.name.localeCompare(b.name));
         } else if (selectedSortOrder === 'z-a') {
@@ -201,28 +160,22 @@ export default function FileList({
           <Filter onApplyFilters={handleFilterApply} />
         </div>
 
-        {/* Removed old sort buttons since sorting is now done via the modal */}
-
-        <div key={fileListKey}>
-          {Object.entries(filteredAndSortedFolders).map(([key, folder]) => (
-            <TableFolder
-              key={`${key}-${selectedSortOrder}`}
-              folderData={folder}
-              isExpanded={expandedFolders[key]}
-              onToggle={() =>
-                setExpandedFolders((prev) => ({
-                  ...prev,
-                  [key]: !prev[key],
-                }))
-              }
-              onResourceClickCallBack={(resourceId) =>
-                handleResourceClick(resourceId, key)
-              }
-              onResourceMoveCallBack={onResourceMoveCallBack}
-              currentResourceMeta={currentResourceMeta}
-              currentDocument={currentDocument}
-            />
-          ))}
+        <div>
+          <div>
+            {Object.entries(filteredAndSortedFolders).map(([key, folder]) => (
+              <TableFolder
+                key={key} // Simplified the key for uniqueness, as `key` is already a unique folder identifier
+                folderData={folder} // Pass the folder data
+                isExpanded={!!expandedFolders[key]} // Ensure a boolean value for expanded state
+                onToggle={() =>
+                  setExpandedFolders((prev) => ({
+                    ...prev,
+                    [key]: !prev[key], // Toggle the expansion state for the clicked folder
+                  }))
+                }
+              />
+            ))}
+          </div>
         </div>
 
         {!isAddingFolder ? (

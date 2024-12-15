@@ -1,22 +1,15 @@
 'use client';
 
 import React, { useState, useRef } from 'react';
-import { useS3Upload } from 'next-s3-upload';
 import { FaCheckCircle, FaTrash, FaArrowLeft } from 'react-icons/fa';
 import FolderDropdown from '@/components/ResourceComponents/FolderSelectionDropdown';
-import { Document } from '@/types/types';
+import { useCurrentResource } from '@/context/AppContext';
+import { useCurrentDocument } from '@/context/AppContext';
 
-interface S3ButtonProps {
-  currentDocument: Document;
-  onCancel: () => void;
-  onResourceUploadCallBack: () => void;
-}
+const S3Button = () => {
+  const { uploadResource } = useCurrentResource();
+  const { currentDocument, fetchDocument } = useCurrentDocument();
 
-const S3Button: React.FC<S3ButtonProps> = ({
-  currentDocument,
-  onCancel,
-  onResourceUploadCallBack,
-}) => {
   const [selectedFolder, setSelectedFolder] = useState<string>('');
   const [isNewFolder, setIsNewFolder] = useState(false);
   const [newFolderName, setNewFolderName] = useState<string>('');
@@ -25,7 +18,7 @@ const S3Button: React.FC<S3ButtonProps> = ({
     {},
   );
   const [isUploading, setIsUploading] = useState(false);
-  const { uploadToS3 } = useS3Upload();
+
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -37,31 +30,6 @@ const S3Button: React.FC<S3ButtonProps> = ({
     }
   };
 
-  const extractText = async (file: File): Promise<string | null> => {
-    const formData = new FormData();
-    formData.append('myFile', file);
-
-    try {
-      const response = await fetch('/api/resource_parsing', {
-        method: 'POST',
-        body: formData,
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(
-          `Server error: ${response.statusText} - ${JSON.stringify(errorData)}`,
-        );
-      }
-
-      const { markdown } = await response.json();
-      console.log(`Extracted Markdown for ${file.name}:`, markdown);
-      return markdown;
-    } catch (error) {
-      console.error(`Error extracting text from ${file.name}:`, error.message);
-      return null;
-    }
-  };
   const handleUploadAll = async () => {
     if (fileQueue.length === 0) {
       alert('No files selected for upload.');
@@ -73,37 +41,7 @@ const S3Button: React.FC<S3ButtonProps> = ({
 
     for (const file of fileQueue) {
       try {
-        const fileReader = new FileReader();
-        fileReader.readAsDataURL(file);
-        const fileDataUrl = await new Promise<string>((resolve, reject) => {
-          fileReader.onload = () => resolve(fileReader.result as string);
-          fileReader.onerror = (error) => reject(error);
-        });
-
-        const fileBase64 = fileDataUrl.split(',')[1]; // Extract Base64 portion of the data URL
-
-        const parsedText = await extractText(file);
-        if (!parsedText) {
-          console.error(`Failed to parse text for file ${file.name}`);
-          continue;
-        }
-
-        const { url } = await uploadToS3(file);
-        await fetch('/api/db/resourcemeta', {
-          method: 'POST',
-          body: JSON.stringify({
-            documentId: currentDocument.id,
-            name: file.name,
-            folderName: folderToSave,
-            url,
-            file: fileBase64, // Include file content
-            markdown: parsedText, // Save the parsed text
-            dateAdded: new Date().toISOString(),
-            lastOpened: new Date().toISOString(),
-          }),
-          headers: { 'Content-Type': 'application/json' },
-        });
-
+        await uploadResource(file, folderToSave, currentDocument.id);
         setUploadedFiles((prev) => ({ ...prev, [file.name]: true }));
       } catch (error) {
         console.error(`Error uploading file ${file.name}:`, error);
@@ -111,9 +49,8 @@ const S3Button: React.FC<S3ButtonProps> = ({
     }
 
     setIsUploading(false);
-    onResourceUploadCallBack();
     setFileQueue([]);
-    onCancel();
+    fetchDocument(currentDocument.id);
   };
 
   return (
@@ -210,7 +147,7 @@ const S3Button: React.FC<S3ButtonProps> = ({
           Upload All Files
         </button>
         <button
-          onClick={onCancel}
+          onClick={() => {}}
           className='w-full rounded-md border-[1px] border-zinc-700 px-2 py-1 text-sm text-white hover:bg-red-900'
         >
           Cancel
