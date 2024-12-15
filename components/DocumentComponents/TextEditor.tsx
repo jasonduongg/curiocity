@@ -100,7 +100,7 @@ const TextEditor = ({ mode, source, generalCallback }: TextEditorProps) => {
 
   if (mode === 'full') {
     return (
-      <div className='flex h-full max-w-full flex-col rounded-xl text-white'>
+      <div className='flex h-full max-w-full flex-col rounded-xl border-[1px] border-zinc-700 text-white'>
         {id && (
           <TagSection
             documentId={id}
@@ -113,7 +113,7 @@ const TextEditor = ({ mode, source, generalCallback }: TextEditorProps) => {
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             placeholder='Enter document title'
-            className='text-md h-[5vh] w-full border-t-2 border-zinc-700 bg-bgSecondary px-2 font-bold outline-none'
+            className='text-md h-[5vh] w-full rounded-t-xl bg-bgSecondary px-2 font-bold outline-none'
           />
           <style>{`
             .ql-toolbar {
@@ -144,7 +144,7 @@ const TextEditor = ({ mode, source, generalCallback }: TextEditorProps) => {
             }
           `}</style>
           <ReactQuill
-            className='scrollbar-hide h-full max-w-full overflow-y-auto bg-bgSecondary text-white'
+            className='scrollbar h-full max-w-full overflow-y-auto bg-bgSecondary text-white'
             formats={[
               'header',
               'font',
@@ -176,13 +176,13 @@ const TextEditor = ({ mode, source, generalCallback }: TextEditorProps) => {
               <>
                 <button
                   onClick={() => generalCallback()}
-                  className='w-1/2 whitespace-nowrap rounded-md border border-zinc-700 bg-transparent px-2 py-1 text-sm text-white hover:bg-gray-700'
+                  className='w-1/2 whitespace-nowrap rounded-md border border-zinc-700 bg-transparent px-2 py-1 text-sm text-white duration-200 hover:bg-gray-700'
                 >
                   Back
                 </button>
                 <button
                   onClick={handleSave}
-                  className='w-1/2 whitespace-nowrap rounded-md border border-zinc-700 bg-transparent px-2 py-1 text-sm text-white hover:bg-gray-700'
+                  className='w-1/2 whitespace-nowrap rounded-md border border-zinc-700 bg-transparent px-2 py-1 text-sm text-white duration-200 hover:bg-gray-700'
                 >
                   Save
                 </button>
@@ -212,13 +212,13 @@ const TextEditor = ({ mode, source, generalCallback }: TextEditorProps) => {
             <>
               <button
                 onClick={() => generalCallback()}
-                className='w-1/2 rounded-md border-[1px] border-zinc-700 px-2 py-1 text-xs text-white'
+                className='w-1/2 rounded-md border-[1px] border-zinc-700 px-2 py-1 text-xs text-white duration-200 hover:bg-gray-700'
               >
                 Cancel
               </button>
               <button
                 onClick={handleSave}
-                className='w-1/2 rounded-md border-[1px] border-zinc-700 px-2 py-1 text-xs text-white'
+                className='w-1/2 rounded-md border-[1px] border-zinc-700 px-2 py-1 text-xs text-white duration-200 hover:bg-gray-700'
               >
                 Save Notes
               </button>

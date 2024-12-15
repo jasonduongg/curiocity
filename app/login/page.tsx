@@ -110,24 +110,23 @@ export default function Login() {
             <div className='flex justify-center'>
               <button
                 type='submit'
-                className={`h-[40px] w-[320px] rounded-lg py-2.5 text-white transition ${
+                className='h-[40px] w-[320px] rounded-lg bg-[rgba(100,81,110,0.6)] py-2.5 text-white transition-colors duration-200 hover:bg-[rgba(100,81,110,0.8)]' ${
                   loading ? 'cursor-not-allowed opacity-50' : ''
                 }`}
-                style={{ backgroundColor: 'rgba(100, 81, 110, 0.6)' }}
                 disabled={loading}
+
               >
                 {loading ? 'Logging In...' : 'Log In'}
               </button>
             </div>
 
             {/* Google Login Button */}
-            <div className='flex cursor-pointer justify-center'>
+            <div className='flex justify-center'>
               <div
                 onClick={() =>
                   signIn('google', { callbackUrl: '/report-home' })
                 }
-                className='grid h-[40px] w-[320px] place-items-center rounded-lg py-2.5 text-center text-white transition'
-                style={{ backgroundColor: 'rgba(100, 81, 110, 0.6)' }}
+                className='grid h-[40px] w-[320px] cursor-pointer place-items-center rounded-lg bg-[rgba(100,81,110,0.6)] py-2.5 text-white transition-colors duration-200 hover:bg-[rgba(100,81,110,0.8)]'
               >
                 Log In with Google
               </div>
@@ -164,3 +163,43 @@ export default function Login() {
     </div>
   );
 }
+
+const InputField = ({ id, label, type, placeholder, value, onChange }) => (
+  <div className='space-y-1.5'>
+    <label
+      htmlFor={id}
+      className='block text-[14px] font-medium text-textPrimary'
+    >
+      {label}
+    </label>
+    <div className='flex h-10 w-full items-center rounded-lg bg-[#64516E]/20 px-3 py-1.5'>
+      <input
+        id={id}
+        type={type}
+        placeholder={placeholder}
+        value={value}
+        onChange={onChange}
+        className='h-full w-full bg-transparent text-textPrimary placeholder-textSecondary focus:outline-none'
+      />
+    </div>
+  </div>
+);
+
+const LinksSection = () => (
+  <div className='space-y-3 text-center'>
+    <LinkItem text='Don’t have an account?' linkText='Sign-Up' href='/signup' />
+    <LinkItem text='Forgot Password?' linkText='Reset Password' href='#' />
+  </div>
+);
+
+const LinkItem = ({ text, linkText, href }) => (
+  <p className='pt-1.5 text-[14px] text-textPrimary'>
+    <span className='decoration-textPrimary underline-offset-2'>{text}</span>{' '}
+    <a
+      href={href}
+      className='text-textSecondary underline decoration-textSecondary underline-offset-2'
+    >
+      {linkText}
+    </a>
+  </p>
+);

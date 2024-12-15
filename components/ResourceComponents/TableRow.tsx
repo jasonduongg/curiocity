@@ -1,7 +1,7 @@
-import React, { useRef, useState } from "react";
-import { useDraggable } from "@dnd-kit/core";
-import { CSS } from "@dnd-kit/utilities";
-import { ResourceCompressed } from "@/types/types";
+import React, { useRef, useState } from 'react';
+import { useDraggable } from '@dnd-kit/core';
+import { CSS } from '@dnd-kit/utilities';
+import { ResourceCompressed } from '@/types/types';
 
 interface TableRowProps {
   resource: ResourceCompressed;
@@ -27,8 +27,8 @@ export function TableRow({
 
   const style = {
     transform: CSS.Transform.toString(transform),
-    transition: transition || "transform 0.2s ease",
-    border: isSelected ? "2px solid blue" : "1px solid transparent", // Blue border if selected
+    transition: transition || 'transform 0.2s ease',
+    border: isSelected ? '2px solid blue' : '1px solid transparent', // Blue border if selected
   };
 
   const handlePointerDown = (event: React.PointerEvent) => {
@@ -64,13 +64,13 @@ export function TableRow({
       ref={setNodeRef}
       style={style}
       {...attributes}
-      className="flex h-full cursor-pointer items-center gap-2 rounded-lg px-2 py-1 hover:border-blue-500"
+      className='flex h-full cursor-pointer items-center gap-2 rounded-lg px-2 py-1 transition-colors duration-200 hover:bg-gray-700'
       onPointerDown={handlePointerDown}
       onPointerMove={handlePointerMove}
       onPointerUp={handlePointerUp}
     >
-      <div className="flex-grow overflow-hidden">
-        <p className="truncate whitespace-nowrap text-sm text-textPrimary">
+      <div className='flex-grow overflow-hidden'>
+        <p className='truncate whitespace-nowrap text-sm text-textPrimary'>
           {resource.name}
         </p>
       </div>

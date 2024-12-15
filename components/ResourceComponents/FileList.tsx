@@ -37,12 +37,13 @@ export default function FileList({
   );
 
   const [searchQuery, setSearchQuery] = useState<string>('');
+  const [sortBy, setSortBy] = useState<'dateAdded' | 'lastOpened'>('dateAdded');
   const [fileListKey, setFileListKey] = useState(0);
   const [newFolderName, setNewFolderName] = useState<string>('');
   const [isAddingFolder, setIsAddingFolder] = useState<boolean>(false);
 
-  // States for filters applied by the Filter modal
-  const [selectedSortOrder, setSelectedSortOrder] = useState<string>('a-z'); // "a-z" | "z-a" | "dateAdded" | "lastOpened"
+  // Filter states
+  const [selectedSortOrder, setSelectedSortOrder] = useState<string>('a-z');
   const [selectedFileTypes, setSelectedFileTypes] = useState<string[]>([]);
   const [selectedDateRange, setSelectedDateRange] = useState<{
     from: string;
@@ -140,6 +141,28 @@ export default function FileList({
         filteredResources = filteredResources.filter((resource) => {
           const resourceDate = new Date(resource.dateAdded);
 
+          console.log(
+            'Resource Name:',
+            resource.name,
+            '| FromDate:',
+            fromDate,
+            '| ToDate:',
+            toDate,
+            '| ResourceDate String:',
+            resource.dateAdded,
+            '| ResourceDate:',
+            resourceDate,
+          );
+
+          if (isNaN(resourceDate.getTime())) {
+            console.warn(
+              'Invalid date for resource:',
+              resource.name,
+              resource.dateAdded,
+            );
+            return false;
+          }
+
           if (isNaN(resourceDate.getTime())) {
             console.warn(
               'Invalid date for resource:',
@@ -164,24 +187,26 @@ export default function FileList({
       if (filteredResources.length > 0 || noFiltersApplied) {
         const sortedResources = [...filteredResources];
 
-        // Apply sorting based on selectedSortOrder from Filter
-        if (selectedSortOrder === 'a-z') {
-          sortedResources.sort((a, b) => a.name.localeCompare(b.name));
-        } else if (selectedSortOrder === 'z-a') {
-          sortedResources.sort((a, b) => b.name.localeCompare(a.name));
-        } else if (selectedSortOrder === 'dateAdded') {
+
+        // Sort by date if required
+        if (sortBy === 'dateAdded') {
           sortedResources.sort(
             (a, b) =>
               new Date(a.dateAdded).getTime() - new Date(b.dateAdded).getTime(),
           );
-        } else if (selectedSortOrder === 'lastOpened') {
+        } else if (sortBy === 'lastOpened') {
           sortedResources.sort(
             (a, b) =>
               new Date(b.lastOpened).getTime() -
               new Date(a.lastOpened).getTime(),
           );
         }
-
+        // Apply alphabetical sorting from Filter modal
+        if (selectedSortOrder === 'a-z') {
+          sortedResources.sort((a, b) => a.name.localeCompare(b.name));
+        } else if (selectedSortOrder === 'z-a') {
+          sortedResources.sort((a, b) => b.name.localeCompare(a.name));
+        }
         acc[folderName] = { ...folderData, resources: sortedResources };
       }
       return acc;
@@ -192,13 +217,29 @@ export default function FileList({
   return (
     <DndContext sensors={sensors}>
       <div className='flex h-full w-full flex-col overflow-auto'>
-        <div className='flex w-full justify-center px-4'>
-          <TextInput
-            placeholder='Search Resources'
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-          />
-          <Filter onApplyFilters={handleFilterApply} />
+        <TextInput
+          placeholder='Search Resources'
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+        />
+        <Filter onApplyFilters={handleFilterApply} />
+        <div className='flex gap-2 pb-2 pt-2'>
+          <button
+            className={`rounded-sm px-1.5 py-0.5 text-xs font-medium ${
+              sortBy === 'dateAdded' ? 'bg-gray-700 text-white' : 'bg-gray-200'
+            }`}
+            onClick={() => setSortBy('dateAdded')}
+          >
+            Sort by Date Added
+          </button>
+          <button
+            className={`rounded-sm px-1.5 py-0.5 text-xs font-medium ${
+              sortBy === 'lastOpened' ? 'bg-gray-700 text-white' : 'bg-gray-200'
+            }`}
+            onClick={() => setSortBy('lastOpened')}
+          >
+            Sort by Last Opened
+          </button>
         </div>
 
         {/* Removed old sort buttons since sorting is now done via the modal */}
@@ -228,7 +269,7 @@ export default function FileList({
         {!isAddingFolder ? (
           <button
             onClick={() => setIsAddingFolder(true)}
-            className='mt-4 rounded-md border-[1px] border-gray-700 bg-gray-800 px-4 py-2 text-sm text-white hover:bg-gray-700'
+            className='mt-4 rounded-md border-[1px] border-gray-700 bg-gray-800 px-4 py-2 text-sm text-white duration-200 hover:bg-gray-700'
           >
             Add New Folder
           </button>
@@ -239,20 +280,22 @@ export default function FileList({
               placeholder='Folder Name'
               value={newFolderName}
               onChange={(e) => setNewFolderName(e.target.value)}
-              className='flex-grow rounded-md border-[1px] border-gray-700 bg-gray-800 px-4 py-2 text-sm text-white'
+              className='w-full rounded-md border border-gray-700 bg-gray-800 px-4 py-2 text-sm text-white outline-none focus:outline-none focus:ring-0'
             />
-            <button
-              onClick={handleAddFolder}
-              className='rounded-md bg-blue-600 px-4 py-2 text-sm text-white hover:bg-blue-500'
-            >
-              Submit
-            </button>
-            <button
-              onClick={() => setIsAddingFolder(false)}
-              className='rounded-md bg-red-600 px-4 py-2 text-sm text-white hover:bg-red-500'
-            >
-              Cancel
-            </button>
+            <div className='flex w-full gap-2'>
+              <button
+                onClick={handleAddFolder}
+                className='flex-1 rounded-md bg-gray-800 px-4 py-2 text-sm text-white duration-200 hover:bg-blue-500'
+              >
+                Submit
+              </button>
+              <button
+                onClick={() => setIsAddingFolder(false)}
+                className='flex-1 rounded-md bg-gray-800 px-4 py-2 text-sm text-white duration-200 hover:bg-red-500'
+              >
+                Cancel
+              </button>
+            </div>
           </div>
         )}
       </div>

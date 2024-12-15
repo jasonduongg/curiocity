@@ -98,6 +98,8 @@ export default function ProfileCustomization({
       }
 
       console.log('Profile updated successfully');
+      // Update the session to reflect new profile info
+      await updateSession();
 
       await updateSession(); // Refresh session to reflect updates
       onProfileUpdate(); // Notify parent of the profile update
@@ -118,7 +120,7 @@ export default function ProfileCustomization({
   }, [session, formMethods]);
 
   return (
-    <div className='grid h-10 w-10 place-items-center rounded-lg border-2 border-fileBlue'>
+    <div className='grid h-10 w-10 place-items-center rounded-lg border-2 border-fileBlue transition-colors duration-200 hover:bg-gray-700'>
       <div
         onClick={handleOpenModal}
         className='grid h-full w-full cursor-pointer place-items-center'
@@ -129,7 +131,7 @@ export default function ProfileCustomization({
       {isModalOpen && (
         <div className='fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-75'>
           <div className='flex h-[48rem] w-[32rem] flex-col rounded-xl border-[1px] border-zinc-700 bg-bgSecondary p-6'>
-            <div className='mb-6 flex w-full justify-between'>
+            <div className='w-fill mb-6 flex justify-between'>
               <h1 className='text-3xl font-bold text-textPrimary'>
                 Profile Settings
               </h1>
@@ -137,7 +139,7 @@ export default function ProfileCustomization({
                 onClick={handleCloseModal}
                 className='grid cursor-pointer place-items-center'
               >
-                <Cross2Icon className='h-6 w-6 text-textPrimary' />
+                <Cross2Icon className='h-6 w-6 rounded-lg text-textPrimary transition-colors duration-200 hover:bg-gray-700' />
               </div>
             </div>
 
@@ -165,7 +167,7 @@ export default function ProfileCustomization({
             />
             <Button
               onClick={() => document.getElementById('photo-upload')?.click()}
-              className='mt-2'
+              className='bg-gray-800 transition-colors duration-200 hover:bg-gray-700'
             >
               Change Photo
             </Button>
@@ -203,7 +205,14 @@ export default function ProfileCustomization({
                 <FormField
                   name='email'
                   control={formMethods.control}
-                  render={() => (
+                  rules={{
+                    required: 'Email is required',
+                    pattern: {
+                      value: /^[\w-.]+@([\w-]+\.)+[\w-]{2,4}$/,
+                      message: 'Enter a valid email address',
+                    },
+                  }}
+                  render={({}) => (
                     <FormItem className='space-y-2'>
                       <FormLabel className='text-textPrimary'>Email</FormLabel>
                       <FormControl>
@@ -211,16 +220,18 @@ export default function ProfileCustomization({
                           type='email'
                           placeholder='Feature Coming Soon'
                           disabled
-                          className='w-full rounded-md border bg-bgSecondary px-4 py-2 text-textSecondary focus:outline-none'
+                          className='w-full rounded-md border border-red-500 bg-bgSecondary px-4 py-2 text-textPrimary focus:outline-none focus:ring-2 focus:ring-blue-500'
                         />
                       </FormControl>
+                      <FormMessage className='text-sm font-medium text-red-500' />
                     </FormItem>
                   )}
                 />
 
                 <button
                   type='submit'
-                  className='w-full rounded-md bg-blue-600 py-2 font-semibold text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2'
+
+                  className='w-full rounded-md bg-gray-800 py-2 font-semibold text-white duration-200 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2'
                 >
                   Update Profile
                 </button>

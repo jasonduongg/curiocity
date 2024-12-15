@@ -118,14 +118,14 @@ export default function SignUp() {
           <div className='mt-3 flex flex-col items-center space-y-3'>
             <button
               type='submit'
-              className='h-[40px] w-full max-w-[320px] rounded-lg bg-[#64516E99] py-2.5 text-textPrimary'
+              className='h-[40px] w-full max-w-[320px] rounded-lg bg-[#64516E99] py-2.5 text-textPrimary transition-colors duration-200 hover:bg-[#64516Ecc]'
             >
               Sign Up
             </button>
 
             <button
               type='button'
-              className='flex h-[40px] w-full max-w-[320px] items-center justify-center space-x-2 rounded-lg bg-[#64516E99] py-2.5 text-textPrimary'
+              className='flex h-[40px] w-full max-w-[320px] items-center justify-center space-x-2 rounded-lg bg-[#64516E99] py-2.5 text-textPrimary transition-colors duration-200 hover:bg-[#64516Ecc]'
             >
               <span className='text-base'>G</span>
               <span>Sign Up with Google</span>
@@ -135,7 +135,7 @@ export default function SignUp() {
           {/* Links Section */}
           <div className='text-center'>
             <p className='pt-1.5 text-[13px] text-textPrimary sm:text-[14px]'>
-              <span className='underline decoration-textPrimary underline-offset-2'>
+              <span className='decoration-textPrimary underline-offset-2'>
                 Already have an account?
               </span>{' '}
               <a

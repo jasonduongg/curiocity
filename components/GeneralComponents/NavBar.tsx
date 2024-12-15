@@ -1,4 +1,5 @@
 'use client';
+import { useState } from 'react';
 import Image from 'next/image';
 import { signOut, useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
@@ -19,7 +20,9 @@ export default function NavBar({ onLogoClick }: NavBarProps) {
   const handleSignOut = async () => {
     await signOut({ redirect: false })
       .then(() => {
-        if (session?.user) {
+        console.log(session, 'logout attempt');
+        // posthog
+        if (session && session.user) {
           fetch('/api/analytics', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -32,7 +35,8 @@ export default function NavBar({ onLogoClick }: NavBarProps) {
         }
       })
       .catch(() => {
-        if (session?.user) {
+        // posthog
+        if (session && session.user) {
           fetch('/api/analytics', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -62,9 +66,18 @@ export default function NavBar({ onLogoClick }: NavBarProps) {
         </div>
 
         <div className='flex h-full items-center gap-4'>
-          {session?.user?.image && (
-            <div className='relative h-8 w-8'>
-              <img src={session.user.image} />
+          {session && session.user && (
+            <div className='flex items-center space-x-2'>
+              {session.user.image && (
+                <div key={profileVersion} className='relative h-8 w-8'>
+                  <Image
+                    src={session.user.image}
+                    alt='User Avatar'
+                    layout='fill'
+                    className='rounded-full'
+                  />
+                </div>
+              )}
             </div>
           )}
           <ProfileCustomization
@@ -72,12 +85,12 @@ export default function NavBar({ onLogoClick }: NavBarProps) {
               await router.refresh(); // Reload to reflect the updated session
             }}
           />
-          <div className='grid h-10 w-10 place-items-center rounded-lg border-2 border-fileBlue'>
+          <div className='grid h-10 w-10 place-items-center rounded-lg border-2 border-fileBlue transition-colors duration-200 hover:bg-gray-700'>
             <GearIcon className='h-6 w-6 text-fileBlue' />
           </div>
           <button
             onClick={handleSignOut}
-            className='grid h-10 w-10 place-items-center rounded-lg border-2 border-fileRed'
+            className='grid h-10 w-10 place-items-center rounded-lg border-2 border-fileRed transition-colors duration-200 hover:bg-gray-700'
           >
             <svg
               xmlns='http://www.w3.org/2000/svg'

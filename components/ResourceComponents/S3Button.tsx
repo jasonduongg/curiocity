@@ -148,7 +148,7 @@ const S3Button: React.FC<S3ButtonProps> = ({
         )}
         <button
           onClick={() => fileInputRef.current?.click()}
-          className='whitespace-nowrap rounded-md border border-zinc-700 bg-transparent px-2 py-1 text-sm text-white hover:bg-gray-700'
+          className='whitespace-nowrap rounded-md border border-zinc-700 bg-transparent px-2 py-1 text-sm text-white duration-200 hover:bg-gray-700'
         >
           Select Files
         </button>
@@ -205,13 +205,13 @@ const S3Button: React.FC<S3ButtonProps> = ({
       <div className='flex space-x-2 py-2'>
         <button
           onClick={handleUploadAll}
-          className='w-full rounded-md border-[1px] border-zinc-700 px-2 py-1 text-sm text-white hover:bg-blue-900'
+          className='w-full rounded-md border-[1px] border-zinc-700 px-2 py-1 text-sm text-white duration-200 hover:bg-blue-500'
         >
           Upload All Files
         </button>
         <button
           onClick={onCancel}
-          className='w-full rounded-md border-[1px] border-zinc-700 px-2 py-1 text-sm text-white hover:bg-red-900'
+          className='w-full rounded-md border-[1px] border-zinc-700 px-2 py-1 text-sm text-white duration-200 hover:bg-red-500'
         >
           Cancel
         </button>

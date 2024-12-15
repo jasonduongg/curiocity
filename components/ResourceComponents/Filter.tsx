@@ -22,7 +22,7 @@ const Filter: React.FC<ButtonProps> = ({
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   // Default states
-  const defaultSortOrder = 'a-z';
+  const defaultSortOrder = '';
   const defaultFileTypes: string[] = [];
   const defaultDateRange = { from: '', to: '' };
 
@@ -92,7 +92,7 @@ const Filter: React.FC<ButtonProps> = ({
     <>
       <button
         onClick={handleButtonClick}
-        className='ml-2 flex h-10 w-10 items-center justify-center rounded-md bg-gray-700 text-white hover:bg-blue-600'
+        className='ml-2 flex h-10 w-10 items-center justify-center rounded-md bg-gray-700 text-white duration-200 hover:bg-gray-500'
         type={type}
         disabled={disabled}
       >
@@ -106,7 +106,7 @@ const Filter: React.FC<ButtonProps> = ({
 
             {/* Sort */}
             <div className='mb-4'>
-              <h3 className='mb-2 flex items-center font-semibold text-gray-700'>
+              <h3 className='mb-2 font-semibold text-gray-700'>
                 Sort
                 {sortOrder !== defaultSortOrder && (
                   <button
@@ -171,29 +171,17 @@ const Filter: React.FC<ButtonProps> = ({
             <div className='mb-4'>
               <h3 className='mb-2 font-semibold text-gray-700'>File Type</h3>
               <div className='flex flex-wrap gap-4'>
-                {[
-                  'PDF',
-                  'Excel',
-                  'Word',
-                  'PowerPoint',
-                  'Link',
-                  'CSV',
-                  'HTML',
-                  'PNG',
-                  'JPG',
-                ].map((type) => {
-                  const isSelected = fileTypes.includes(type);
-                  return (
-                    <div key={type} className='flex items-center'>
-                      <label className='flex items-center'>
-                        <input
-                          type='checkbox'
-                          checked={isSelected}
-                          onChange={() => toggleFileType(type)}
-                          className='mr-2'
-                        />
-                        {type}
-                      </label>
+                {['PDF', 'Excel', 'Word', 'PowerPoint', 'Link'].map((type) => (
+                  <label className='flex items-center' key={type}>
+                    <input
+                      type='checkbox'
+                      checked={fileTypes.includes(type)}
+                      onChange={() => toggleFileType(type)}
+                      className='mr-2'
+                    />
+                    {type}
+                  </label>
+                ))}
                       {isSelected && (
                         <button
                           type='button'
