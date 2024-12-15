@@ -68,7 +68,10 @@ export default function ResetPasswordButton() {
 
   return (
     <div>
-      <Button onClick={handleOpenModal} className='bg-red-500 hover:bg-red-600'>
+      <Button
+        onClick={handleOpenModal}
+        className='bg-red-500 duration-200 hover:bg-red-600'
+      >
         Reset Password
       </Button>
 

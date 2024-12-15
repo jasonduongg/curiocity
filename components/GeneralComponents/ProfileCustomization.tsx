@@ -166,7 +166,7 @@ export default function ProfileCustomization({ onProfileUpdate }) {
             />
             <Button
               onClick={() => document.getElementById('photo-upload')?.click()}
-              className='transition-colors duration-200 hover:bg-blue-500'
+              className='bg-gray-800 transition-colors duration-200 hover:bg-gray-700'
             >
               Change Photo
             </Button>
@@ -229,7 +229,7 @@ export default function ProfileCustomization({ onProfileUpdate }) {
 
                 <button
                   type='submit'
-                  className='w-full rounded-md bg-blue-600 py-2 font-semibold text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2'
+                  className='w-full rounded-md bg-gray-800 py-2 font-semibold text-white duration-200 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2'
                 >
                   Update Profile
                 </button>

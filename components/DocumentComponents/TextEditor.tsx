@@ -144,7 +144,7 @@ const TextEditor = ({ mode, source, generalCallback }: TextEditorProps) => {
             }
           `}</style>
           <ReactQuill
-            className='scrollbar-hide h-full max-w-full overflow-y-auto bg-bgSecondary text-white'
+            className='scrollbar h-full max-w-full overflow-y-auto bg-bgSecondary text-white'
             formats={[
               'header',
               'font',
@@ -176,13 +176,13 @@ const TextEditor = ({ mode, source, generalCallback }: TextEditorProps) => {
               <>
                 <button
                   onClick={() => generalCallback()}
-                  className='w-1/2 whitespace-nowrap rounded-md border border-zinc-700 bg-transparent px-2 py-1 text-sm text-white hover:bg-gray-700'
+                  className='w-1/2 whitespace-nowrap rounded-md border border-zinc-700 bg-transparent px-2 py-1 text-sm text-white duration-200 hover:bg-gray-700'
                 >
                   Back
                 </button>
                 <button
                   onClick={handleSave}
-                  className='w-1/2 whitespace-nowrap rounded-md border border-zinc-700 bg-transparent px-2 py-1 text-sm text-white hover:bg-gray-700'
+                  className='w-1/2 whitespace-nowrap rounded-md border border-zinc-700 bg-transparent px-2 py-1 text-sm text-white duration-200 hover:bg-gray-700'
                 >
                   Save
                 </button>

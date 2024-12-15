@@ -46,7 +46,7 @@ export default function AllDocumentGrid({
             {/* Create New Report Button */}
             <div className='flex items-center px-2 py-4'>
               <div
-                className='flex h-10 w-10 cursor-pointer items-center justify-center rounded-xl border-[1px] border-textSecondary transition-colors duration-200 duration-300 ease-in-out hover:bg-bgPrimary hover:bg-gray-700'
+                className='flex h-10 w-10 cursor-pointer items-center justify-center rounded-xl border-[1px] border-textSecondary transition-colors duration-200 ease-in-out hover:bg-bgPrimary hover:bg-gray-700'
                 onClick={onCreateNewReport}
               >
                 <p className='text-lg text-textPrimary'>+</p>
@@ -56,7 +56,7 @@ export default function AllDocumentGrid({
             {/* Sort Toggle Button */}
             <div className='flex items-center px-2 py-4'>
               <div
-                className='flex h-10 w-auto cursor-pointer items-center justify-center rounded-xl border-[1px] border-textSecondary px-4 transition-colors duration-200 duration-300 ease-in-out hover:bg-bgPrimary hover:bg-gray-700'
+                className='flex h-10 w-auto cursor-pointer items-center justify-center rounded-xl border-[1px] border-textSecondary px-4 transition-colors duration-200 ease-in-out hover:bg-bgPrimary hover:bg-gray-700'
                 onClick={toggleSortOrder}
               >
                 <p className='whitespace-nowrap text-sm text-textPrimary'>

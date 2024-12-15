@@ -1,16 +1,16 @@
-import React from "react";
+import React from 'react';
 
 interface ButtonProps {
   label: string;
   onClick: () => void;
-  type?: "button" | "submit" | "reset";
+  type?: 'button' | 'submit' | 'reset';
   disabled?: boolean;
 }
 
 const Button: React.FC<ButtonProps> = ({
   label,
   onClick,
-  type = "button",
+  type = 'button',
   disabled = false,
 }) => {
   return (
@@ -18,7 +18,7 @@ const Button: React.FC<ButtonProps> = ({
       type={type}
       onClick={onClick}
       disabled={disabled}
-      className="whitespace-nowrap rounded-md border border-zinc-700 bg-transparent px-2 py-1 text-sm text-white hover:bg-gray-700"
+      className='whitespace-nowrap rounded-md border border-zinc-700 bg-transparent px-2 py-1 text-sm text-white duration-200 hover:bg-gray-700'
     >
       {label}
     </button>

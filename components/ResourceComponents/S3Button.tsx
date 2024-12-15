@@ -148,7 +148,7 @@ const S3Button: React.FC<S3ButtonProps> = ({
         )}
         <button
           onClick={() => fileInputRef.current?.click()}
-          className='whitespace-nowrap rounded-md border border-zinc-700 bg-transparent px-2 py-1 text-sm text-white hover:bg-gray-700'
+          className='whitespace-nowrap rounded-md border border-zinc-700 bg-transparent px-2 py-1 text-sm text-white duration-200 hover:bg-gray-700'
         >
           Select Files
         </button>
