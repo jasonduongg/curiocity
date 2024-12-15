@@ -109,7 +109,7 @@ export const getObject = async (client: any, id: any, table: string) => {
     )
     .then((data: any) => data)
     .catch((error: any) => {
-      console.log(error);
+      
       throw new Error('Could not retrieve the item');
     });
 
@@ -142,7 +142,7 @@ export const deleteObject = async (client: any, id: any, table: string) => {
     const command = new DeleteItemCommand(params);
     const data = await client.send(command);
 
-    console.log('Item successfully deleted');
+    
     return data; // Return the delete operation's response data
   } catch (error) {
     console.error('Error deleting item:', error);
@@ -151,7 +151,7 @@ export const deleteObject = async (client: any, id: any, table: string) => {
 };
 
 export async function GET(request: Request) {
-  console.log('call get dynamodb');
+  
   const url = new URL(request.url);
   const id = url.searchParams.get('id'); // Retrieves the 'id' query parameter
 
@@ -160,21 +160,21 @@ export async function GET(request: Request) {
 }
 
 export async function PUT(request: Request) {
-  console.log('call put dynamodb');
+  
   const data = await request.json();
 
-  console.log(data);
+  
 
   // if had id (exiting object), pull from aws and update
   if (data.id) {
     const dynamoItem = await getObject(client, data.id, tableName);
 
     if (!dynamoItem?.Item) {
-      console.log('here');
+      
       throw new Error('Could not retrieve the item');
     }
 
-    console.log('retrieved put item: ', dynamoItem.Item);
+    
 
     const updatedObj = AWS.DynamoDB.Converter.unmarshall(dynamoItem.Item);
     for (const key in data) {
@@ -184,7 +184,7 @@ export async function PUT(request: Request) {
       }
     }
 
-    console.log('updatedObj', updatedObj);
+    
 
     // put the updated object to the db
     const res = await putObject(
@@ -202,14 +202,14 @@ export async function PUT(request: Request) {
       },
     });
 
-    console.log('Updated object: ', res);
+    
   }
 
   return Response.json({});
 }
 
 export async function POST(request: Request) {
-  console.log('Call create DynamoDB');
+  
   const data = await request.json();
 
   const defaultFolder = { name: 'General', resources: [] };
@@ -238,7 +238,7 @@ export async function POST(request: Request) {
         createdAt: getCurrentTime(),
       },
     });
-    console.log('PostHog event captured for document creation');
+    
   } catch (error) {
     console.error('Error creating document:', error);
     posthog.capture({
@@ -258,13 +258,13 @@ export async function POST(request: Request) {
 
 export async function DELETE(request: Request) {
   const data = await request.json();
-  console.log('call delete dynamodb: ', data.id);
+  
 
   // create posthog event for doc deleted
   const obj = await getObject(client, data.id, tableName);
   const updatedObj = AWS.DynamoDB.Converter.unmarshall(obj.Item);
 
-  console.log('posthog delete: ', updatedObj);
+  
 
   await deleteObject(client, data.id, tableName).catch(() => {
     posthog.capture({

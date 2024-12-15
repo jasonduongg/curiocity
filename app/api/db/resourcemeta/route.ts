@@ -41,9 +41,9 @@ function inferFileType(nameOrUrl: string): string {
 
 export async function POST(request: Request) {
   try {
-    console.log('POST request received');
+    
     const data = await request.json();
-    console.log('Incoming data:', data);
+    
     const requiredFields = [
       'documentId',
       'name',
@@ -80,7 +80,7 @@ export async function POST(request: Request) {
 
     const determinedFileType =
       data.fileType || inferFileType(data.name || data.url);
-    console.log('Determined fileType:', determinedFileType);
+    
 
     const resourceMetaCompressed: ResourceCompressed = {
       id: resourceMetaId,
@@ -130,7 +130,7 @@ export async function POST(request: Request) {
     await putObject(client, inputResourceMetaData, resourceMetaTable);
     await putObject(client, inputDocumentData, documentTable);
 
-    console.log('Successfully updated DynamoDB');
+    
     return new Response(JSON.stringify(newDocument), { status: 200 });
   } catch (error) {
     console.error('Error in POST request:', error);

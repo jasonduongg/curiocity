@@ -34,7 +34,7 @@ export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
     const { name, email, password, passwordConfirmation } = body;
-    console.log('Received Body:', body);
+    
 
     if (!name) {
       return NextResponse.json({ error: 'Name is required' }, { status: 400 });
@@ -109,7 +109,7 @@ export async function POST(req: NextRequest) {
       if (!response.ok) {
         console.error('Error sending user data:', response.statusText);
       } else {
-        console.log('User data sent successfully to API');
+        
       }
     } catch (error) {
       console.error('Error sending user data:', error);
@@ -117,7 +117,6 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json(
       {
-        message: 'User registered successfully',
         user: { email, username: name },
       },
       { status: 201 },

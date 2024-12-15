@@ -50,11 +50,11 @@ export async function POST(req: Request) {
 }
 
 export async function PUT(request: Request) {
-  console.log("Received PUT request for resourceMetaNotes");
+  
 
   try {
     const { id, notes } = await request.json();
-    console.log("Request payload:", { id, notes });
+    
 
     if (!id || typeof notes !== "string") {
       return NextResponse.json(
@@ -80,7 +80,7 @@ export async function PUT(request: Request) {
     }
 
     const existingItem = unmarshall(getResult.Item);
-    console.log("Retrieved item from DynamoDB:", existingItem);
+    
 
     // Update the item with new notes and updatedAt
     const updatedItem = {
@@ -89,7 +89,7 @@ export async function PUT(request: Request) {
       updatedAt: new Date().toISOString(),
     };
 
-    console.log("Updated item:", updatedItem);
+    
 
     // Save the updated item back to DynamoDB
     const putCommand = new PutItemCommand({
@@ -98,7 +98,7 @@ export async function PUT(request: Request) {
     });
 
     const putResult = await dynamoDBClient.send(putCommand);
-    console.log("Put result:", putResult);
+    
 
     return NextResponse.json({
       message: "Notes updated successfully.",
@@ -119,7 +119,7 @@ export async function GET(req: Request) {
     const id = searchParams.get("id");
 
     // Log the received ID
-    console.log("Received resource ID:", id);
+    
 
     if (!id) {
       console.error("Missing resource ID in query parameters.");
@@ -137,13 +137,13 @@ export async function GET(req: Request) {
       },
     });
 
-    console.log("DynamoDB GetItemCommand:", command);
+    
 
     // Send the command to DynamoDB
     const result = await dynamoDBClient.send(command);
 
     // Log the result from DynamoDB
-    console.log("DynamoDB result:", result);
+    
 
     if (!result.Item) {
       console.warn("Resource not found for ID:", id);
@@ -156,7 +156,7 @@ export async function GET(req: Request) {
     const data = unmarshall(result.Item);
 
     // Log the unmarshalled data
-    console.log("Unmarshalled data:", data);
+    
 
     return NextResponse.json({ notes: data.notes || "" });
   } catch (error) {

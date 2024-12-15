@@ -21,7 +21,7 @@ async function testDynamoDb() {
 
   try {
     await dynamoDb.put(params).promise();
-    console.log('DynamoDB is working! Test item saved successfully.');
+    
   } catch (error) {
     console.error('DynamoDB error:', error);
   }

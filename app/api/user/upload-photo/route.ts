@@ -37,7 +37,7 @@ async function putS3Object(
 // The main handler function
 export async function POST(request: Request) {
   try {
-    console.log('upload-photo POST request received');
+    
 
     const formData = await request.formData();
     const userId = formData.get('userId') as string;
@@ -63,7 +63,7 @@ export async function POST(request: Request) {
       file.type,
     );
 
-    console.log('Image successfully uploaded to S3:', imageUrl);
+    
 
     // DynamoDB: Update user's image field
     const updateParams = {
@@ -80,10 +80,10 @@ export async function POST(request: Request) {
       },
     };
 
-    console.log(updateParams);
+    
 
     await client.send(new UpdateItemCommand(updateParams));
-    console.log('DynamoDB user image URL updated');
+    
 
     return new Response(JSON.stringify({ imageUrl }), { status: 200 });
   } catch (error) {

@@ -66,10 +66,6 @@ export default function GridItem({
               <MoreOptionsDropdown
                 documentId={documentId}
                 refreshState={refreshState}
-                onEdit={() => console.log("Edit clicked for:", documentId)}
-                onDuplicate={() =>
-                  console.log("Duplicate clicked for:", documentId)
-                }
               />
             </div>
           </div>

@@ -26,7 +26,7 @@ export default function TestPage() {
   );
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  console.log('Session', session);
+  
 
   useEffect(() => {
     fetchDocuments();
@@ -73,7 +73,7 @@ export default function TestPage() {
       const dynamoResponse = await response.json();
       const unmarshalledData =
         AWS.DynamoDB.Converter.unmarshall(dynamoResponse);
-      console.log('hhere2');
+      
       setCurrentDocument(unmarshalledData);
     } catch (error) {
       console.error('Error fetching single document:', error);

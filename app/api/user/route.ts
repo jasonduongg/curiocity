@@ -82,7 +82,7 @@ export const getUser = async (id: string) => {
     return data.Item ? (unmarshall(data.Item) as User) : null;
   } catch (error) {
     console.error('Error getting user:', error);
-    console.log(error);
+    
     throw new Error('Could not retrieve the user');
   }
 };
@@ -104,7 +104,7 @@ export const deleteUser = async (id: string) => {
         timeStamp: getCurrentTime(),
       },
     });
-    console.log('User successfully deleted');
+    
   } catch (error) {
     posthog.capture({
       distinctId: id, // Unique identifier for the user
@@ -122,7 +122,7 @@ export const deleteUser = async (id: string) => {
 
 // GET endpoint to retrieve a user by id
 export async function GET(request: Request) {
-  console.log('Retrieving user from DynamoDB');
+  
   const url = new URL(request.url);
   const id = url.searchParams.get('id');
 
@@ -148,7 +148,7 @@ export async function GET(request: Request) {
 
 // POST endpoint to create a new user db/
 export async function POST(request: Request) {
-  console.log('Creating new user in DynamoDB');
+  
   const data = await request.json();
 
   const { id, name, email, image, lastLoggedIn } = data || {};
@@ -199,14 +199,14 @@ export async function POST(request: Request) {
 
 // PUT endpoint to update an existing user
 export async function PUT(request: Request) {
-  console.log('Updating user in DynamoDB');
+  
   const data = await request.json();
 
   if (!data.id) {
     return new Response('User ID is required', { status: 400 });
   }
 
-  console.log('Retrieving user with ID:', data.id);
+  
   const existingUser = await getUser(data.id);
 
   if (!existingUser) {
@@ -249,7 +249,7 @@ export async function PUT(request: Request) {
 
 // DELETE endpoint to remove a user by ID
 export async function DELETE(request: Request) {
-  console.log('Deleting user from DynamoDB');
+  
   const data = await request.json();
 
   const { id } = data;

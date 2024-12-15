@@ -10,7 +10,7 @@ const documentTable = process.env.DOCUMENT_TABLE || "";
 
 export async function PUT(request: Request) {
   try {
-    console.log("PUT request to move resource between folders received");
+    
 
     const data = await request.json();
     const { documentId, resourceId, sourceFolderName, targetFolderName } = data;
@@ -83,7 +83,7 @@ export async function PUT(request: Request) {
     const inputDocument = AWS.DynamoDB.Converter.marshall(updatedDocument);
     await putObject(client, inputDocument, documentTable);
 
-    console.log("Document updated successfully");
+    
     return new Response(
       JSON.stringify({ msg: "Resource moved successfully" }),
       {

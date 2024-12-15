@@ -34,7 +34,7 @@ export async function GET(request: Request) {
     const resourceData = AWS.DynamoDB.Converter.unmarshall(
       resource.Item,
     ) as Resource;
-    console.log("Retrieved resource:", resourceData);
+    
 
     return new Response(JSON.stringify(resourceData), { status: 200 });
   } catch (error) {

@@ -1,8 +1,11 @@
 'use client';
 
 import React, { useState } from 'react';
+import { useRouter } from 'next/navigation';
+
 
 export default function SignUp() {
+  const router = useRouter();
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -28,7 +31,7 @@ export default function SignUp() {
     setMessage('');
 
     try {
-      console.log('Submitted Form Data:', formData);
+      
       const response = await fetch('/api/manual-signup', {
         method: 'POST',
         headers: {
@@ -45,6 +48,8 @@ export default function SignUp() {
 
       const data = await response.json();
       setMessage(data.message);
+      
+      router.push('/login');
     } catch (err) {
       console.error('Error submitting form:', err);
       setError('Failed to submit. Please try again.');

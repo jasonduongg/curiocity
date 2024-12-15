@@ -11,7 +11,7 @@ const resourceMetaTable = process.env.RESOURCEMETA_TABLE || "";
 
 export async function PUT(request: Request) {
   try {
-    console.log("PUT request received");
+    
 
     const data = await request.json();
     const { id, name, documentId } = data;
@@ -52,7 +52,7 @@ export async function PUT(request: Request) {
 
     // Update the resourceMeta in DynamoDB
     await putObject(client, inputResourceMeta, resourceMetaTable);
-    console.log("Updated resourceMeta in DynamoDB:", updatedResourceMeta);
+    
 
     // Retrieve the associated document
     const document = await getObject(client, documentId, documentTable);
@@ -95,7 +95,7 @@ export async function PUT(request: Request) {
 
       const inputDocument = AWS.DynamoDB.Converter.marshall(updatedDocument);
       await putObject(client, inputDocument, documentTable);
-      console.log("Updated document in DynamoDB:", updatedDocument);
+      
     }
 
     return new Response(JSON.stringify(updatedResourceMeta), { status: 200 });

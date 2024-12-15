@@ -97,7 +97,7 @@ export default function ProfileCustomization({
         throw new Error('Failed to update profile');
       }
 
-      console.log('Profile updated successfully');
+      
 
       await updateSession(); // Refresh session to reflect updates
       onProfileUpdate(); // Notify parent of the profile update

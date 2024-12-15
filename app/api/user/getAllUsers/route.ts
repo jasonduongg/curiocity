@@ -34,7 +34,7 @@ export async function GET() {
     const items = await getAllEntries();
     return NextResponse.json(items);
   } catch (error) {
-    console.log(error);
+    
     return NextResponse.error();
   }
 }
