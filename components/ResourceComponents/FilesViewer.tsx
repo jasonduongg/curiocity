@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import ResourceViewer from '@/components/ResourceComponents/ResourceViewer';
 import S3Button from '@/components/ResourceComponents/S3Button';
 import FileList from '@/components/ResourceComponents/FileList';
@@ -40,6 +40,12 @@ const FileViewer: React.FC<FileViewerProps> = ({
       console.error('Error fetching resource metadata:', error);
     }
   };
+
+  useEffect(() => {
+    if (resetResource) {
+      setCurrentResourceMeta(null);
+    }
+  }, [resetResource]);
 
   const handleResourceClick = async (resourceId: string) => {
     fetchResourceMeta(resourceId);

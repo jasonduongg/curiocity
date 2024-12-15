@@ -105,7 +105,7 @@ export default function TestPage() {
     setViewingDocument(false);
     setCurrentDocument(undefined);
     setResetResource(true); // Trigger resourceViewer reset
-    setTimeout(() => setResetResource(false), 0); // Reset back to false after clearing  };
+    setTimeout(() => setResetResource(false), 50); // Reset back to false after clearing  };
   };
 
   const handleCreateNewReport = () => {
