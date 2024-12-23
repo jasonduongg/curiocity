@@ -10,13 +10,18 @@ import {
 import { useSession } from 'next-auth/react';
 import React, { createContext, useContext, useState, ReactNode } from 'react';
 import { useS3Upload } from 'next-s3-upload';
+import AWS from 'aws-sdk';
 
 interface CurrentResourceContextValue {
   currentResource: Resource | null;
   setCurrentResource: (resource: Resource | null) => void;
   currentResourceMeta: ResourceMeta | null;
   setCurrentResourceMeta: (meta: ResourceMeta | null) => void;
-  fetchResourceAndMeta: (resourceMetaId: string) => Promise<void>;
+  fetchResourceMeta: (resourceMetaId: string) => Promise<ResourceMeta>;
+  fetchResourceAndMeta: (
+    resourceMetaId: string,
+    folderName: string,
+  ) => Promise<void>;
   uploadResource: (
     file: File,
     folderName: string,
@@ -42,29 +47,70 @@ export function CurrentResourceProvider({ children }: { children: ReactNode }) {
   const [currentResourceMeta, setCurrentResourceMeta] =
     useState<ResourceMeta | null>(null);
 
-  const fetchResourceAndMeta = async (resourceMetaId: string) => {
+  const fetchResourceMeta = async (
+    resourceMetaId: string,
+  ): Promise<ResourceMeta> => {
     try {
-      const resourceMetaRes = await fetch(
-        `/api/db/resourcemeta?resourceMetaId=${resourceMetaId}`,
+      const response = await fetch(
+        `/api/db/resourcemeta?resourceId=${resourceMetaId}`,
+        {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        },
       );
-      if (!resourceMetaRes.ok) throw new Error('Failed to fetch ResourceMeta');
-      const resourceMeta: ResourceMeta = await resourceMetaRes.json();
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(
+          `Failed to fetch ResourceMeta (ID: ${resourceMetaId}): ${
+            errorData.error || response.statusText
+          }`,
+        );
+      }
+
+      const resourceMeta = await response.json();
+      return resourceMeta; // Return the parsed ResourceMeta object
+    } catch (error) {
+      console.error('Error fetching ResourceMeta:', error.message);
+      throw error; // Rethrow the error to be handled by the calling function
+    }
+  };
+
+  const fetchResourceAndMeta = async (
+    resourceMetaId: string,
+    folderName: string,
+  ) => {
+    try {
+      // Fetch resource metadata using the updated function
+      const resourceMeta = await fetchResourceMeta(resourceMetaId);
       setCurrentResourceMeta(resourceMeta);
 
+      // Fetch resource data using the resource hash from metadata
       const resourceRes = await fetch(
         `/api/db/resource?hash=${resourceMeta.hash}`,
+        {
+          method: 'GET',
+          headers: { 'Content-Type': 'application/json' },
+        },
       );
-      if (!resourceRes.ok) throw new Error('Failed to fetch Resource');
+
+      if (!resourceRes.ok) {
+        throw new Error('Failed to fetch Resource');
+      }
+
       const resource: Resource = await resourceRes.json();
       setCurrentResource(resource);
 
+      // Update the lastOpened field in the metadata
       await fetch('/api/db/resourcemeta/updateLastOpened', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ resourceMetaId }),
+        body: JSON.stringify({ resourceMetaId, folderName }),
       });
     } catch (error) {
-      console.error('Error fetching resource details:', error);
+      console.error('Error fetching resource and metadata:', error);
     }
   };
 
@@ -143,7 +189,6 @@ export function CurrentResourceProvider({ children }: { children: ReactNode }) {
     documentId: string,
   ) => {
     try {
-      console.log(targetFolderName);
       const documentResponse = await fetch(`/api/db?id=${documentId}`, {
         method: 'GET',
         headers: { 'Content-Type': 'application/json' },
@@ -153,7 +198,8 @@ export function CurrentResourceProvider({ children }: { children: ReactNode }) {
         throw new Error(`Failed to fetch document with ID: ${documentId}`);
       }
 
-      const document: Document = await documentResponse.json();
+      const dynamoResponse = await documentResponse.json();
+      const document = AWS.DynamoDB.Converter.unmarshall(dynamoResponse);
 
       const { folders } = document;
 
@@ -198,10 +244,6 @@ export function CurrentResourceProvider({ children }: { children: ReactNode }) {
           targetFolderName,
         }),
       });
-
-      console.log(
-        `Resource "${resourceId}" moved successfully to "${targetFolderName}".`,
-      );
     } catch (error) {
       console.error('Error moving resource:', error);
     }
@@ -215,6 +257,7 @@ export function CurrentResourceProvider({ children }: { children: ReactNode }) {
         setCurrentResource,
         setCurrentResourceMeta,
         fetchResourceAndMeta,
+        fetchResourceMeta,
         uploadResource,
         extractText,
         moveResource,
@@ -318,14 +361,10 @@ export const CurrentDocumentProvider = ({
       }
 
       const dynamoResponse = await fetchResponse.json();
-      console.log('here');
-      console.log(dynamoResponse);
       const document: Document = mapDynamoDBItemToDocument(dynamoResponse);
 
       setCurrentDocument(document); // Update context
       setViewingDocument(true); // Set viewing state to true
-
-      console.log('Document fetched and set successfully:', document);
     } catch (error) {
       console.error('Error fetching or updating document:', error);
     }

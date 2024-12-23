@@ -46,26 +46,13 @@ export default function TagComponent({
         />
         <button
           onClick={handleAddNewTag}
-<<<<<<< HEAD
-          className='flex h-6 w-6 items-center justify-center rounded-full bg-gray-800 text-white duration-200 hover:bg-green-500 focus:outline-none'
-=======
           className='flex h-6 w-6 items-center justify-center rounded-full bg-green-500 text-white hover:bg-green-600 focus:outline-none'
->>>>>>> 3c333ed (Fix linting errors and proceed with force push)
           aria-label='Add new tag'
         >
           ✓
         </button>
         <button
           onClick={handleCancel}
-<<<<<<< HEAD
-          className='flex h-6 w-6 items-center justify-center rounded-full bg-gray-800 text-white duration-200 hover:bg-red-500 focus:outline-none'
-          aria-label='Cancel adding tag'
-        ></button>
-      </div>
-    ) : (
-      <div
-        className='flex h-7 w-7 cursor-pointer items-center justify-center rounded-full border-[1px] border-zinc-700 text-sm text-white duration-200 hover:bg-gray-700'
-=======
           className='flex h-6 w-6 items-center justify-center rounded-full bg-red-500 text-white hover:bg-red-600 focus:outline-none'
           aria-label='Cancel adding tag'
         >
@@ -75,7 +62,6 @@ export default function TagComponent({
     ) : (
       <div
         className='flex h-7 w-7 cursor-pointer items-center justify-center rounded-full border-[1px] border-zinc-700 text-sm text-white hover:bg-blue-600'
->>>>>>> 3c333ed (Fix linting errors and proceed with force push)
         onClick={() => setIsAdding(true)}
         aria-label='Add new tag'
       >
@@ -86,11 +72,7 @@ export default function TagComponent({
     <div className='flex items-center justify-center space-x-2 rounded-full border-[1px] border-zinc-700 py-1 pl-2 pr-3 text-sm font-medium text-white'>
       <button
         onClick={onDelete}
-<<<<<<< HEAD
-        className='flex h-4 w-4 items-center justify-center rounded-full text-xs text-zinc-300 duration-200 hover:bg-red-600 focus:outline-none'
-=======
         className='flex h-4 w-4 items-center justify-center rounded-full text-xs text-zinc-300 hover:bg-red-600 focus:outline-none'
->>>>>>> 3c333ed (Fix linting errors and proceed with force push)
         aria-label={`Delete ${label}`}
       >
         ✕

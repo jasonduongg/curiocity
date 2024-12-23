@@ -11,7 +11,6 @@ import NavBar from '@/components/GeneralComponents/NavBar';
 import DocumentEditor from '@/components/DocumentComponents/DocumentEditor';
 import AllDocumentsGrid from '@/components/DocumentComponents/AllDocumentsGrid';
 
-import AWS from 'aws-sdk';
 import {
   ResizableHandle,
   ResizablePanel,
@@ -31,6 +30,8 @@ export default function ReportHome() {
     viewingDocument,
     setViewingDocument,
   } = useCurrentDocument();
+
+  const { setCurrentResource, setCurrentResourceMeta } = useCurrentResource();
 
   const [isModalOpen, setIsModalOpen] = useState(false);
 
@@ -53,6 +54,8 @@ export default function ReportHome() {
     fetchDocuments();
     setViewingDocument(false);
     setCurrentDocument(null);
+    setCurrentResourceMeta(null);
+    setCurrentResource(null);
   };
 
   // Show unauthenticated state
@@ -86,7 +89,6 @@ export default function ReportHome() {
             </div>
           </ResizablePanel>
 
-          {/* File Viewer Panel */}
           <ResizableHandle withHandle={true} className='my-4' />
           <ResizablePanel>
             <div className='h-full w-full p-4'>
@@ -98,7 +100,6 @@ export default function ReportHome() {
         </ResizablePanelGroup>
       </div>
 
-      {/* Create Report Modal */}
       {isModalOpen && (
         <NameYourReport
           onSave={handleSaveNewReport}

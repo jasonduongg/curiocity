@@ -80,7 +80,6 @@ export async function PUT(request: Request) {
     }
 
     const existingItem = unmarshall(getResult.Item);
-    console.log('Retrieved item from DynamoDB:', existingItem);
 
     // Update the item with new notes and updatedAt
     const updatedItem = {
@@ -89,16 +88,11 @@ export async function PUT(request: Request) {
       updatedAt: new Date().toISOString(),
     };
 
-    console.log('Updated item:', updatedItem);
-
     // Save the updated item back to DynamoDB
     const putCommand = new PutItemCommand({
       TableName: resourceMetaTable,
       Item: marshall(updatedItem),
     });
-
-    const putResult = await dynamoDBClient.send(putCommand);
-    console.log('Put result:', putResult);
 
     return NextResponse.json({
       message: 'Notes updated successfully.',

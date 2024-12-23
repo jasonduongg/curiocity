@@ -174,8 +174,6 @@ export async function PUT(request: Request) {
       throw new Error('Could not retrieve the item');
     }
 
-    console.log('retrieved put item: ', dynamoItem.Item);
-
     const updatedObj = AWS.DynamoDB.Converter.unmarshall(dynamoItem.Item);
     for (const key in data) {
       if (key !== 'resources') {

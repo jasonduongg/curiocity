@@ -9,7 +9,7 @@ import {
 } from '@dnd-kit/core';
 import TableFolder from '@/components/ResourceComponents/TableFolder';
 import { FolderData } from '@/types/types';
-import TextInput from '../GeneralComponents/TextInput';
+import TextInpqut from '../GeneralComponents/TextInput';
 import Filter from '@/components/ResourceComponents/Filter';
 import { useCurrentResource } from '@/context/AppContext';
 import { useCurrentDocument } from '@/context/AppContext';
@@ -22,17 +22,8 @@ export default function FileList() {
     [key: string]: boolean;
   }>({});
   const [searchQuery, setSearchQuery] = useState<string>('');
-<<<<<<< HEAD
-  const [sortBy, setSortBy] = useState<'dateAdded' | 'lastOpened'>('dateAdded');
-  const [fileListKey, setFileListKey] = useState(0);
   const [newFolderName, setNewFolderName] = useState<string>('');
   const [isAddingFolder, setIsAddingFolder] = useState<boolean>(false);
-
-  // Filter states
-=======
-  const [newFolderName, setNewFolderName] = useState<string>('');
-  const [isAddingFolder, setIsAddingFolder] = useState<boolean>(false);
->>>>>>> 3c333ed (Fix linting errors and proceed with force push)
   const [selectedSortOrder, setSelectedSortOrder] = useState<string>('a-z');
   const [selectedFileTypes, setSelectedFileTypes] = useState<string[]>([]);
   const [selectedDateRange, setSelectedDateRange] = useState<{
@@ -118,40 +109,6 @@ export default function FileList() {
         filteredResources = filteredResources.filter((resource) => {
           const resourceDate = new Date(resource.dateAdded);
 
-<<<<<<< HEAD
-          console.log(
-            'Resource Name:',
-            resource.name,
-            '| FromDate:',
-            fromDate,
-            '| ToDate:',
-            toDate,
-            '| ResourceDate String:',
-            resource.dateAdded,
-            '| ResourceDate:',
-            resourceDate,
-          );
-
-          if (isNaN(resourceDate.getTime())) {
-            console.warn(
-              'Invalid date for resource:',
-              resource.name,
-              resource.dateAdded,
-            );
-            return false;
-          }
-
-          if (isNaN(resourceDate.getTime())) {
-            console.warn(
-              'Invalid date for resource:',
-              resource.name,
-              resource.dateAdded,
-            );
-            return false;
-          }
-
-=======
->>>>>>> 3c333ed (Fix linting errors and proceed with force push)
           if (fromDate && resourceDate < fromDate) return false;
           if (toDate && resourceDate > toDate) return false;
           return true;
@@ -167,16 +124,11 @@ export default function FileList() {
       if (filteredResources.length > 0 || noFiltersApplied) {
         const sortedResources = [...filteredResources];
 
-<<<<<<< HEAD
-        // Sort by date if required
-        if (sortBy === 'dateAdded') {
-=======
         if (selectedSortOrder === 'a-z') {
           sortedResources.sort((a, b) => a.name.localeCompare(b.name));
         } else if (selectedSortOrder === 'z-a') {
           sortedResources.sort((a, b) => b.name.localeCompare(a.name));
         } else if (selectedSortOrder === 'dateAdded') {
->>>>>>> 3c333ed (Fix linting errors and proceed with force push)
           sortedResources.sort(
             (a, b) =>
               new Date(a.dateAdded).getTime() - new Date(b.dateAdded).getTime(),

@@ -3,9 +3,8 @@ import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
 import { v4 as uuidv4 } from 'uuid';
 import AWS from 'aws-sdk';
 import crypto from 'crypto';
-import { putObject, getObject, deleteObject } from '../route';
+import { putObject, getObject } from '../route';
 import {
-  DynamoDBDocumentClient,
   GetCommand,
   PutCommand,
   UpdateCommand,
@@ -48,9 +47,7 @@ function inferFileType(nameOrUrl: string): string {
 
 export async function POST(request: Request) {
   try {
-    console.log('POST request received');
     const data = await request.json();
-    console.log('Incoming data:', data);
     const requiredFields = [
       'documentId',
       'name',
