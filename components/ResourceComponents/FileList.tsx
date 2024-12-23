@@ -9,13 +9,12 @@ import {
 } from '@dnd-kit/core';
 import TableFolder from '@/components/ResourceComponents/TableFolder';
 import { FolderData } from '@/types/types';
-import TextInpqut from '../GeneralComponents/TextInput';
-import Filter from '@/components/ResourceComponents/Filter';
+import TextInput from '../GeneralComponents/TextInput';
 import { useCurrentDocument } from '@/context/AppContext';
 
 export default function FileList() {
   const sensors = useSensors(useSensor(PointerSensor));
-  const { currentDocument } = useCurrentDocument();
+  const { currentDocument, fetchDocument } = useCurrentDocument();
 
   const [expandedFolders, setExpandedFolders] = useState<{
     [key: string]: boolean;
@@ -30,29 +29,21 @@ export default function FileList() {
     to: string;
   }>({ from: '', to: '' });
 
+  // Initialize expanded folders when the current document changes
   useEffect(() => {
     if (currentDocument?.folders) {
-      setExpandedFolders(
-        Object.fromEntries(
+      setExpandedFolders((prev) => ({
+        ...prev,
+        ...Object.fromEntries(
           Object.keys(currentDocument.folders).map((folderName) => [
             folderName,
-            false,
+            prev[folderName] ?? false, // Preserve the current state or default to false
           ]),
         ),
-      );
+      }));
     }
   }, [currentDocument]);
 
-<<<<<<< HEAD
-=======
-  const handleToggleFolder = (folderName: string) => {
-    setExpandedFolders((prev) => ({
-      ...prev,
-      [folderName]: !prev[folderName],
-    }));
-  };
-
->>>>>>> 75e6d7e (jason)
   const handleAddFolder = async () => {
     if (!newFolderName.trim() || !currentDocument) return;
 
@@ -79,88 +70,92 @@ export default function FileList() {
     }
   };
 
-  const handleFilterApply = (filters: {
-    sortOrder: string;
-    fileTypes: string[];
-    dateRange: { from: string; to: string };
-  }) => {
-    setSelectedSortOrder(filters.sortOrder);
-    setSelectedFileTypes(filters.fileTypes);
-    setSelectedDateRange(filters.dateRange);
+  const handleMoveResource = async () => {
+    if (currentDocument) {
+      try {
+        // Preserve expanded folder states
+        const preservedExpandedFolders = { ...expandedFolders };
+
+        // Fetch the document and restore the folder states
+        await fetchDocument(currentDocument.id);
+        setExpandedFolders(preservedExpandedFolders);
+      } catch (error) {
+        console.error(
+          'Error refreshing document after moving resource:',
+          error,
+        );
+      }
+    }
+  };
+
+  const applyFiltersAndSort = (folderData: FolderData) => {
+    let resources = folderData.resources;
+
+    // Apply search filter
+    if (searchQuery) {
+      resources = resources.filter((resource) =>
+        resource.name.toLowerCase().includes(searchQuery.toLowerCase()),
+      );
+    }
+
+    // Apply file type filter
+    if (selectedFileTypes.length > 0) {
+      resources = resources.filter((resource) =>
+        selectedFileTypes.includes(resource.fileType),
+      );
+    }
+
+    // Apply date range filter
+    if (selectedDateRange.from || selectedDateRange.to) {
+      const fromDate = selectedDateRange.from
+        ? new Date(selectedDateRange.from + 'T00:00:00Z')
+        : null;
+      const toDate = selectedDateRange.to
+        ? new Date(selectedDateRange.to + 'T23:59:59Z')
+        : null;
+
+      resources = resources.filter((resource) => {
+        const resourceDate = new Date(resource.dateAdded);
+
+        if (fromDate && resourceDate < fromDate) return false;
+        if (toDate && resourceDate > toDate) return false;
+        return true;
+      });
+    }
+
+    // Apply sorting
+    if (selectedSortOrder === 'a-z') {
+      resources.sort((a, b) => a.name.localeCompare(b.name));
+    } else if (selectedSortOrder === 'z-a') {
+      resources.sort((a, b) => b.name.localeCompare(a.name));
+    } else if (selectedSortOrder === 'dateAdded') {
+      resources.sort(
+        (a, b) =>
+          new Date(a.dateAdded).getTime() - new Date(b.dateAdded).getTime(),
+      );
+    } else if (selectedSortOrder === 'lastOpened') {
+      resources.sort(
+        (a, b) =>
+          new Date(b.lastOpened).getTime() - new Date(a.lastOpened).getTime(),
+      );
+    }
+
+    return { ...folderData, resources };
   };
 
   const filteredAndSortedFolders = Object.entries(
     currentDocument?.folders || {},
-  ).reduce(
-    (acc, [folderName, folderData]) => {
-      let filteredResources = folderData.resources;
-
-      if (searchQuery) {
-        filteredResources = filteredResources.filter((resource) =>
-          resource.name.toLowerCase().includes(searchQuery.toLowerCase()),
-        );
-      }
-
-      if (selectedFileTypes.length > 0) {
-        filteredResources = filteredResources.filter((resource) =>
-          selectedFileTypes.includes(resource.fileType),
-        );
-      }
-
-      if (selectedDateRange.from || selectedDateRange.to) {
-        const fromDate = selectedDateRange.from
-          ? new Date(selectedDateRange.from + 'T00:00:00Z')
-          : null;
-        const toDate = selectedDateRange.to
-          ? new Date(selectedDateRange.to + 'T23:59:59Z')
-          : null;
-
-        filteredResources = filteredResources.filter((resource) => {
-          const resourceDate = new Date(resource.dateAdded);
-
-          if (fromDate && resourceDate < fromDate) return false;
-          if (toDate && resourceDate > toDate) return false;
-          return true;
-        });
-      }
-
-      const noFiltersApplied =
-        !searchQuery &&
-        selectedFileTypes.length === 0 &&
-        !selectedDateRange.from &&
-        !selectedDateRange.to;
-
-      if (filteredResources.length > 0 || noFiltersApplied) {
-        const sortedResources = [...filteredResources];
-
-        if (selectedSortOrder === 'a-z') {
-          sortedResources.sort((a, b) => a.name.localeCompare(b.name));
-        } else if (selectedSortOrder === 'z-a') {
-          sortedResources.sort((a, b) => b.name.localeCompare(a.name));
-        } else if (selectedSortOrder === 'dateAdded') {
-          sortedResources.sort(
-            (a, b) =>
-              new Date(a.dateAdded).getTime() - new Date(b.dateAdded).getTime(),
-          );
-        } else if (sortBy === 'lastOpened') {
-          sortedResources.sort(
-            (a, b) =>
-              new Date(b.lastOpened).getTime() -
-              new Date(a.lastOpened).getTime(),
-          );
-        }
-        // Apply alphabetical sorting from Filter modal
-        if (selectedSortOrder === 'a-z') {
-          sortedResources.sort((a, b) => a.name.localeCompare(b.name));
-        } else if (selectedSortOrder === 'z-a') {
-          sortedResources.sort((a, b) => b.name.localeCompare(a.name));
-        }
-        acc[folderName] = { ...folderData, resources: sortedResources };
-      }
-      return acc;
-    },
-    {} as Record<string, FolderData>,
-  );
+  )
+    .sort(([folderNameA], [folderNameB]) =>
+      folderNameA.localeCompare(folderNameB),
+    )
+    .reduce(
+      (acc, [folderName, folderData]) => ({
+        ...acc,
+        [folderName]: applyFiltersAndSort(folderData),
+      }),
+      {},
+    );
 
   return (
     <DndContext sensors={sensors}>
@@ -170,48 +165,28 @@ export default function FileList() {
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
         />
-        <Filter onApplyFilters={handleFilterApply} />
-        <div className='flex gap-2 pb-2 pt-2'>
-          <button
-            className={`rounded-sm px-1.5 py-0.5 text-xs font-medium ${
-              sortBy === 'dateAdded' ? 'bg-gray-700 text-white' : 'bg-gray-200'
-            }`}
-            onClick={() => setSortBy('dateAdded')}
-          >
-            Sort by Date Added
-          </button>
-          <button
-            className={`rounded-sm px-1.5 py-0.5 text-xs font-medium ${
-              sortBy === 'lastOpened' ? 'bg-gray-700 text-white' : 'bg-gray-200'
-            }`}
-            onClick={() => setSortBy('lastOpened')}
-          >
-            Sort by Last Opened
-          </button>
-        </div>
 
-        <div>
-          <div>
-            {Object.entries(filteredAndSortedFolders).map(([key, folder]) => (
-              <TableFolder
-                key={key} // Simplified the key for uniqueness, as `key` is already a unique folder identifier
-                folderData={folder} // Pass the folder data
-                isExpanded={!!expandedFolders[key]} // Ensure a boolean value for expanded state
-                onToggle={() =>
-                  setExpandedFolders((prev) => ({
-                    ...prev,
-                    [key]: !prev[key], // Toggle the expansion state for the clicked folder
-                  }))
-                }
-              />
-            ))}
-          </div>
+        <div className='h-full overflow-scroll'>
+          {Object.entries(filteredAndSortedFolders).map(([key, folder]) => (
+            <TableFolder
+              key={key}
+              folderData={folder}
+              isExpanded={!!expandedFolders[key]}
+              onToggle={() =>
+                setExpandedFolders((prev) => ({
+                  ...prev,
+                  [key]: !prev[key],
+                }))
+              }
+              onResourceMove={handleMoveResource} // Handle resource movement
+            />
+          ))}
         </div>
 
         {!isAddingFolder ? (
           <button
             onClick={() => setIsAddingFolder(true)}
-            className='mt-4 rounded-md border-[1px] border-gray-700 bg-gray-800 px-4 py-2 text-sm text-white duration-200 hover:bg-gray-700'
+            className='mt-4 rounded-md border-[1px] border-gray-700 bg-gray-800 px-2 py-1 text-sm text-white duration-200 hover:bg-gray-400'
           >
             Add New Folder
           </button>
@@ -222,18 +197,18 @@ export default function FileList() {
               placeholder='Folder Name'
               value={newFolderName}
               onChange={(e) => setNewFolderName(e.target.value)}
-              className='w-full rounded-md border border-gray-700 bg-gray-800 px-4 py-2 text-sm text-white outline-none focus:outline-none focus:ring-0'
+              className='w-full rounded-md bg-gray-800 px-2 py-1 text-sm text-white outline-none focus:outline-none focus:ring-0'
             />
             <div className='flex w-full gap-2'>
               <button
                 onClick={handleAddFolder}
-                className='flex-1 rounded-md bg-gray-800 px-4 py-2 text-sm text-white duration-200 hover:bg-blue-500'
+                className='flex-1 rounded-md bg-gray-800 px-2 py-1 text-sm text-white duration-200 hover:bg-gray-400'
               >
                 Submit
               </button>
               <button
                 onClick={() => setIsAddingFolder(false)}
-                className='flex-1 rounded-md bg-gray-800 px-4 py-2 text-sm text-white duration-200 hover:bg-red-500'
+                className='flex-1 rounded-md bg-gray-800 px-2 py-1 text-sm text-white duration-200 hover:bg-gray-400'
               >
                 Cancel
               </button>

@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React from 'react';
 import TableRow from './TableRow';
-import { useCurrentDocument, useCurrentResource } from '@/context/AppContext';
+import { useCurrentDocument } from '@/context/AppContext';
 import { FolderData, ResourceCompressed } from '@/types/types';
 
 interface FolderProps {
@@ -10,8 +10,7 @@ interface FolderProps {
 }
 
 const Folder = ({ folderData, isExpanded, onToggle }: FolderProps) => {
-  const { currentDocument, setCurrentDocument, fetchDocument } =
-    useCurrentDocument();
+  const { currentDocument } = useCurrentDocument();
 
   if (!currentDocument) {
     console.error('No current document found.');
@@ -29,17 +28,17 @@ const Folder = ({ folderData, isExpanded, onToggle }: FolderProps) => {
   const resources: ResourceCompressed[] = folder.resources || [];
 
   return (
-    <div className='mb-4 rounded-md border bg-gray-100'>
+    <div className='rounded-md px-2'>
       <div
-        className='flex cursor-pointer items-center justify-between bg-gray-200 px-4 py-2 hover:bg-gray-300'
+        className='mb-2 flex cursor-pointer items-center justify-between border-b-[1px] border-white py-1 text-white hover:border-gray-400 hover:text-gray-400'
         onClick={onToggle}
       >
-        <h2 className='text-lg font-semibold'>{folder.name}</h2>
-        <span className='text-sm'>{isExpanded ? '▼' : '►'}</span>
+        <h2 className='text-md font-semibold'>{folder.name}</h2>
+        <span className='pr-1 text-xs'>{isExpanded ? '▼' : '►'}</span>
       </div>
 
       {isExpanded && (
-        <div className='space-y-2 p-4'>
+        <div className='mb-2 space-y-2'>
           {resources.map((resource) => (
             <TableRow
               key={resource.id}
