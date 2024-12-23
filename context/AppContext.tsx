@@ -71,10 +71,10 @@ export function CurrentResourceProvider({ children }: { children: ReactNode }) {
       }
 
       const resourceMeta = await response.json();
-      return resourceMeta; // Return the parsed ResourceMeta object
+      return resourceMeta;
     } catch (error) {
       console.error('Error fetching ResourceMeta:', error.message);
-      throw error; // Rethrow the error to be handled by the calling function
+      throw error;
     }
   };
 
@@ -83,11 +83,9 @@ export function CurrentResourceProvider({ children }: { children: ReactNode }) {
     folderName: string,
   ) => {
     try {
-      // Fetch resource metadata using the updated function
       const resourceMeta = await fetchResourceMeta(resourceMetaId);
       setCurrentResourceMeta(resourceMeta);
 
-      // Fetch resource data using the resource hash from metadata
       const resourceRes = await fetch(
         `/api/db/resource?hash=${resourceMeta.hash}`,
         {
@@ -103,7 +101,6 @@ export function CurrentResourceProvider({ children }: { children: ReactNode }) {
       const resource: Resource = await resourceRes.json();
       setCurrentResource(resource);
 
-      // Update the lastOpened field in the metadata
       await fetch('/api/db/resourcemeta/updateLastOpened', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -281,16 +278,14 @@ export function useCurrentResource() {
 // ---------- DOCUMENT ------------
 
 interface CurrentDocumentContextProps {
-  allDocuments: Document[]; // List of all documents
-  currentDocument: Document | null; // The currently selected document
-  setCurrentDocument: (doc: Document | null) => void; // Setter for the current document
-  fetchDocuments: () => Promise<void>; // Fetches all documents
-  fetchDocument: (id: string) => Promise<void>; // Fetches a single document
-  toggleSortOrder: () => void; // Toggles the sorting order
-  isSortedByLastOpened: boolean; // Sorting state (true: last opened, false: last added)
-  createDocument: (name: string, userId: string) => Promise<void>; // Creates a new document
-  viewingDocument: boolean; // Whether a document is currently being viewed
-  setViewingDocument: (isViewing: boolean) => void; // Setter for viewing state
+  allDocuments: Document[];
+  currentDocument: Document | null;
+  setCurrentDocument: (doc: Document | null) => void;
+  fetchDocuments: () => Promise<void>;
+  fetchDocument: (id: string) => Promise<void>;
+  createDocument: (name: string, userId: string) => Promise<void>;
+  viewingDocument: boolean;
+  setViewingDocument: (isViewing: boolean) => void;
 }
 
 const CurrentDocumentContext = createContext<
@@ -315,9 +310,7 @@ export const CurrentDocumentProvider = ({
       return;
     }
 
-    const endpoint = isSortedByLastOpened
-      ? `/api/db/getAllLastOpened?ownerID=${session.user.id}`
-      : `/api/db/getAll?ownerID=${session.user.id}`;
+    const endpoint = `/api/db/getAll?ownerID=${session.user.id}`;
 
     fetch(endpoint, {
       method: 'GET',
@@ -370,10 +363,6 @@ export const CurrentDocumentProvider = ({
     }
   };
 
-  const toggleSortOrder = () => {
-    setIsSortedByLastOpened((prev) => !prev);
-  };
-
   const createDocument = async (name: string, userId: string) => {
     if (!userId) {
       console.error('User ID not provided. Cannot create document.');
@@ -403,8 +392,8 @@ export const CurrentDocumentProvider = ({
       const data = await response.json();
       const createdDoc = { ...newDoc, id: data.id };
 
-      setCurrentDocument(createdDoc);
-      setAllDocuments((prevDocs) => [...prevDocs, createdDoc]); // Add to the list
+      // setCurrentDocument(createdDoc);
+      setAllDocuments((prevDocs) => [...prevDocs, createdDoc]);
     } catch (error) {
       console.error('Error creating document:', error);
     }
@@ -418,8 +407,6 @@ export const CurrentDocumentProvider = ({
         setCurrentDocument,
         fetchDocuments,
         fetchDocument,
-        toggleSortOrder,
-        isSortedByLastOpened,
         createDocument,
         viewingDocument,
         setViewingDocument,

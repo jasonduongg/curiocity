@@ -11,7 +11,6 @@ import TableFolder from '@/components/ResourceComponents/TableFolder';
 import { FolderData } from '@/types/types';
 import TextInpqut from '../GeneralComponents/TextInput';
 import Filter from '@/components/ResourceComponents/Filter';
-import { useCurrentResource } from '@/context/AppContext';
 import { useCurrentDocument } from '@/context/AppContext';
 
 export default function FileList() {
@@ -44,6 +43,16 @@ export default function FileList() {
     }
   }, [currentDocument]);
 
+<<<<<<< HEAD
+=======
+  const handleToggleFolder = (folderName: string) => {
+    setExpandedFolders((prev) => ({
+      ...prev,
+      [folderName]: !prev[folderName],
+    }));
+  };
+
+>>>>>>> 75e6d7e (jason)
   const handleAddFolder = async () => {
     if (!newFolderName.trim() || !currentDocument) return;
 

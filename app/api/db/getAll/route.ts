@@ -33,19 +33,11 @@ const getUserDocuments = async (ownerID: string) => {
     const command = new ScanCommand(params);
     const data = await client.send(command);
 
-    // Unmarshall the data
     const items =
       data.Items?.map((item: any) => AWS.DynamoDB.Converter.unmarshall(item)) ||
       [];
-
-    // Sort items by dateAdded in descending order (most recent to least recent)
-    const sortedItems = items.sort((a, b) => {
-      const dateA = a.dateAdded ? new Date(a.dateAdded).getTime() : -Infinity;
-      const dateB = b.dateAdded ? new Date(b.dateAdded).getTime() : -Infinity;
-      return dateB - dateA;
-    });
-
-    return sortedItems;
+    console.log(items);
+    return items;
   } catch (error) {
     console.error('Error retrieving user documents:', error);
     throw new Error('Could not retrieve user documents');
