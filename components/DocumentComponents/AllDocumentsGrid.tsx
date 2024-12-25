@@ -6,16 +6,10 @@ import { useState } from 'react';
 import { useCurrentDocument } from '@/context/AppContext';
 import { useSession } from 'next-auth/react';
 
-export default function AllDocumentGrid() {
+export default function AllDocumentGrid({ onDocumentClick }) {
   const { data: session } = useSession();
 
-  const {
-    allDocuments,
-    setCurrentDocument,
-    createDocument,
-    setViewingDocument,
-    fetchDocument,
-  } = useCurrentDocument();
+  const { allDocuments, createDocument } = useCurrentDocument();
 
   const [searchQuery, setSearchQuery] = useState('');
   const [isSortedByLastOpened, setIsSortedByLastOpened] = useState(false);
@@ -25,17 +19,19 @@ export default function AllDocumentGrid() {
     const dateB = new Date(isSortedByLastOpened ? a.lastOpened : a.dateAdded);
 
     if (isNaN(dateA.getTime()) || isNaN(dateB.getTime())) {
-      console.warn('Invalid date detected', { dateA, dateB });
+      return 0; // Fallback sorting if dates are invalid
     }
 
     return dateA.getTime() - dateB.getTime();
   });
 
-  const filteredDocuments = sortedDocuments.filter(
-    (doc) =>
+  const filteredDocuments = sortedDocuments.filter((doc) => {
+    if (!searchQuery.trim()) return true; // Show all if no query
+    return (
       doc.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      doc.text?.toLowerCase().includes(searchQuery.toLowerCase()),
-  );
+      doc.text?.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+  });
 
   const handleCreateNewReport = () => {
     if (session?.user?.id) {
@@ -91,7 +87,7 @@ export default function AllDocumentGrid() {
               <GridItem
                 key={doc.id}
                 document={doc}
-                onClick={() => fetchDocument(doc.id)}
+                onClick={() => onDocumentClick(doc.id)} // Pass down onDocumentClick
               />
             ))}
           </div>

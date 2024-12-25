@@ -27,19 +27,20 @@ export default function ReportHome() {
     setCurrentDocument,
     allDocuments,
     fetchDocuments,
-    isSortedByLastOpened,
     createDocument,
     viewingDocument,
     setViewingDocument,
+    fetchDocument,
   } = useCurrentDocument();
 
   const { setCurrentResource, setCurrentResourceMeta } = useCurrentResource();
 
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     if (session?.user?.id) fetchDocuments();
-  }, [session, isSortedByLastOpened]);
+  }, [session]);
 
   const handleSaveNewReport = async (name: string) => {
     if (!session?.user?.id) {
@@ -58,6 +59,18 @@ export default function ReportHome() {
     setCurrentResource(null);
   };
 
+  const handleDocumentClick = async (documentId: string) => {
+    setIsLoading(true);
+    try {
+      await fetchDocument(documentId);
+      setViewingDocument(true);
+    } catch (error) {
+      console.error('Error fetching document:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   if (!session?.user) {
     return (
       <div className='flex h-screen w-screen items-center justify-center bg-black'>
@@ -70,6 +83,14 @@ export default function ReportHome() {
 
   return (
     <section className='h-screen overscroll-contain bg-bgPrimary'>
+      {isLoading && (
+        <div className='absolute inset-0 z-50 flex items-center justify-center bg-black bg-opacity-70'>
+          <div className='text-center text-white'>
+            <FaSpinner className='mx-auto mb-4 animate-spin text-6xl' />
+            <p>Loading document...</p>
+          </div>
+        </div>
+      )}
       <div className='flex h-full w-full flex-col items-start justify-start overflow-hidden'>
         {!currentDocument && <NavBar onLogoClick={handleBack} />}
         <ResizablePanelGroup
@@ -86,7 +107,7 @@ export default function ReportHome() {
                       handleBack={handleBack}
                     />
                   ) : (
-                    <AllDocumentsGrid />
+                    <AllDocumentsGrid onDocumentClick={handleDocumentClick} />
                   )}
                 </div>
               </div>

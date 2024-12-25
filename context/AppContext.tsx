@@ -42,7 +42,6 @@ const CurrentResourceContext = createContext<
 
 export function CurrentResourceProvider({ children }: { children: ReactNode }) {
   const { uploadToS3 } = useS3Upload();
-
   const [currentResource, setCurrentResource] = useState<Resource | null>(null);
   const [currentResourceMeta, setCurrentResourceMeta] =
     useState<ResourceMeta | null>(null);
@@ -358,6 +357,7 @@ export const CurrentDocumentProvider = ({
 
       setCurrentDocument(document); // Update context
       setViewingDocument(true); // Set viewing state to true
+      return document;
     } catch (error) {
       console.error('Error fetching or updating document:', error);
     }

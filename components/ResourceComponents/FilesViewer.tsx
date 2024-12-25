@@ -23,7 +23,7 @@ const FileViewer: React.FC = () => {
 
   return (
     <div className='flex h-full w-full'>
-      <div className='h-[95%] w-2/3 p-4'>
+      <div className='h-full w-2/3 p-4'>
         {!showUploadForm && (
           <button
             onClick={() => setShowUploadForm(true)}

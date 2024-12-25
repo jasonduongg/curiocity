@@ -77,7 +77,7 @@ export default function TagSection() {
   };
 
   return (
-    <div className='h-[5vh] w-full'>
+    <div className='w-full'>
       {errorMessage && (
         <ErrorModal
           message={errorMessage}

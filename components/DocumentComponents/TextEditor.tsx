@@ -90,7 +90,7 @@ const FullTextEditor: React.FC<TextEditorProps> = ({
         value={title}
         onChange={(e) => setTitle(e.target.value)}
         placeholder='Enter document title'
-        className='w-full rounded-t-xl bg-bgSecondary text-lg font-bold text-gray-200 outline-none'
+        className='text-gray-200outline-none mb-2 w-full rounded-t-xl bg-bgSecondary text-lg font-bold'
       />
       {id && <TagSection />}
       <Divider />

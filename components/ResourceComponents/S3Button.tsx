@@ -1,10 +1,11 @@
 'use client';
 
 import React, { useState, useRef } from 'react';
-import { FaCheckCircle, FaTrash, FaArrowLeft } from 'react-icons/fa';
+import { FaCheckCircle, FaTrash, FaArrowLeft, FaSpinner } from 'react-icons/fa';
 import FolderDropdown from '@/components/ResourceComponents/FolderSelectionDropdown';
 import { useCurrentResource } from '@/context/AppContext';
 import { useCurrentDocument } from '@/context/AppContext';
+import Divider from '../GeneralComponents/Divider';
 
 interface S3ButtonProps {
   onBack: () => void; // Callback function for "Cancel" button
@@ -13,7 +14,8 @@ interface S3ButtonProps {
 const S3Button = ({ onBack }: S3ButtonProps) => {
   // need to create new use Context called for global states such as loading, showS3,etc
   const { uploadResource } = useCurrentResource();
-  const { currentDocument, fetchDocument } = useCurrentDocument();
+  const { currentDocument, fetchDocument, setCurrentDocument } =
+    useCurrentDocument();
 
   const [selectedFolder, setSelectedFolder] = useState<string>('');
   const [isNewFolder, setIsNewFolder] = useState(false);
@@ -52,12 +54,12 @@ const S3Button = ({ onBack }: S3ButtonProps) => {
         console.error(`Error uploading file ${file.name}:`, error);
       }
     }
-
-    setIsUploading(false);
+    await fetchDocument(currentDocument.id);
     setFileQueue([]);
-    fetchDocument(currentDocument.id);
+    setIsUploading(false);
   };
 
+  console.log(currentDocument);
   return (
     <div className='flex h-full flex-col'>
       <div className='flex items-center space-x-2 p-2'>
@@ -95,7 +97,7 @@ const S3Button = ({ onBack }: S3ButtonProps) => {
           Select Files
         </button>
       </div>
-
+      <Divider></Divider>
       <input
         type='file'
         multiple
@@ -104,8 +106,8 @@ const S3Button = ({ onBack }: S3ButtonProps) => {
         ref={fileInputRef}
       />
 
-      <div className='h-[30%] flex-grow overflow-y-auto py-2'>
-        <div className='flex h-full overflow-y-auto rounded-xl border border-zinc-700 p-2'>
+      <div className='h-[40%] flex-grow py-2'>
+        <div className='flex h-full overflow-y-auto p-2'>
           {fileQueue.length === 0 ? (
             <div className='flex h-full w-full items-center justify-center'>
               <p className='text-gray-400'>No files selected</p>
@@ -146,20 +148,29 @@ const S3Button = ({ onBack }: S3ButtonProps) => {
         </div>
       </div>
 
-      <div className='flex space-x-4 py-2'>
-        <button
-          onClick={onBack}
-          className='w-full rounded-md bg-gray-800 px-2 py-1 text-sm text-white hover:bg-gray-400'
-        >
-          Cancel
-        </button>
-        <button
-          onClick={handleUploadAll}
-          className='w-full rounded-md bg-gray-800 px-2 py-1 text-sm text-white hover:bg-gray-400'
-        >
-          Upload All Files
-        </button>
-      </div>
+      <Divider></Divider>
+
+      {isUploading ? (
+        <div className='flex items-center justify-center'>
+          <FaSpinner className='mr-3 animate-spin text-lg text-white' />
+          <span className='text-gray-400'>Uploading...</span>
+        </div>
+      ) : (
+        <div className='flex space-x-4 py-2'>
+          <button
+            onClick={onBack}
+            className='w-full rounded-md bg-gray-800 px-2 py-1 text-sm text-white hover:bg-gray-400'
+          >
+            Cancel
+          </button>
+          <button
+            onClick={handleUploadAll}
+            className='w-full rounded-md bg-gray-800 px-2 py-1 text-sm text-white hover:bg-gray-400'
+          >
+            Upload All Files
+          </button>
+        </div>
+      )}
     </div>
   );
 };

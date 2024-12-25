@@ -38,18 +38,18 @@ const FolderDropdown: React.FC<FolderDropdownProps> = ({
         <FaChevronDown className='ml-2 text-white' />
       </button>
       {isDropdownOpen && (
-        <div className='absolute z-10 mt-1 w-full rounded-md bg-zinc-800 shadow-lg'>
+        <div className='absolute z-10 mt-1 w-full rounded-md border-[1px] border-gray-600 bg-gray-800 shadow-lg'>
           {possibleFolders.map((folder) => (
             <div
               key={folder}
-              className='cursor-pointer px-4 py-2 text-white hover:bg-purple-500'
+              className='cursor-pointer border-b-[1px] border-gray-600 bg-gray-800 px-2 py-1 text-white hover:bg-gray-400'
               onClick={() => handleFolderSelection(folder)}
             >
               {folder}
             </div>
           ))}
           <div
-            className='cursor-pointer px-4 py-2 text-white hover:bg-purple-500'
+            className='cursor-pointer px-2 py-1 text-white hover:bg-purple-500'
             onClick={() => handleFolderSelection('Enter New Folder Name')}
           >
             + New Folder
