@@ -158,13 +158,13 @@ const FullTextEditor: React.FC<TextEditorProps> = ({
           <>
             <button
               onClick={generalCallback}
-              className='w-1/2 whitespace-nowrap rounded-md border border-zinc-700 bg-gray-800 px-2 py-1 text-sm text-white transition ease-in-out hover:bg-gray-700'
+              className='w-1/2 whitespace-nowrap rounded-md bg-gray-800 px-2 py-1 text-sm text-white transition ease-in-out hover:bg-gray-700'
             >
               Back
             </button>
             <button
               onClick={handleSave}
-              className='w-1/2 whitespace-nowrap rounded-md border border-zinc-700 bg-gray-800 px-2 py-1 text-sm text-white transition ease-in-out hover:bg-gray-700'
+              className='w-1/2 whitespace-nowrap rounded-md bg-gray-800 px-2 py-1 text-sm text-white transition ease-in-out hover:bg-gray-700'
             >
               Save
             </button>

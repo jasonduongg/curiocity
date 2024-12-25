@@ -23,11 +23,11 @@ const FileViewer: React.FC = () => {
 
   return (
     <div className='flex h-full w-full'>
-      <div className='w-2/3 p-4'>
+      <div className='h-[95%] w-2/3 p-4'>
         {!showUploadForm && (
           <button
             onClick={() => setShowUploadForm(true)}
-            className='mb-4 w-full rounded-md border-[1px] border-zinc-700 bg-gray-800 px-2 py-1 text-sm text-white transition ease-in-out hover:bg-gray-700'
+            className='mb-4 w-full rounded-md bg-gray-800 px-2 py-1 text-sm text-white transition ease-in-out hover:bg-gray-700'
           >
             Open Upload Form
           </button>

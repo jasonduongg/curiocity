@@ -61,7 +61,7 @@ const S3Button = ({ onBack }: S3ButtonProps) => {
   return (
     <div className='flex h-full flex-col'>
       <div className='flex items-center space-x-2 p-2'>
-        <p className='text-sm text-white'>Select Folder:</p>
+        <p className='whitespace-nowrap text-sm text-white'>Select Folder:</p>
         {!isNewFolder ? (
           <FolderDropdown
             possibleFolders={Object.keys(currentDocument.folders)}
@@ -75,7 +75,7 @@ const S3Button = ({ onBack }: S3ButtonProps) => {
           <>
             <button
               onClick={() => setIsNewFolder(false)}
-              className='rounded-md p-1 text-white hover:bg-gray-700'
+              className='bg:gray-800 rounded-md p-1 text-white hover:bg-gray-400'
             >
               <FaArrowLeft />
             </button>
@@ -84,13 +84,13 @@ const S3Button = ({ onBack }: S3ButtonProps) => {
               placeholder='Enter new folder name'
               value={newFolderName}
               onChange={(e) => setNewFolderName(e.target.value)}
-              className='w-full rounded-lg border border-zinc-700 bg-transparent px-2 py-1 text-sm text-white outline-none focus:border-white'
+              className='w-full rounded-lg border border-zinc-700 bg-gray-400 px-2 py-1 text-sm text-white outline-none focus:border-white'
             />
           </>
         )}
         <button
           onClick={() => fileInputRef.current?.click()}
-          className='whitespace-nowrap rounded-md border border-zinc-700 bg-transparent px-2 py-1 text-sm text-white duration-200 hover:bg-gray-700'
+          className='whitespace-nowrap rounded-md bg-gray-800 px-2 py-1 text-sm text-white duration-200 hover:bg-gray-400'
         >
           Select Files
         </button>
@@ -104,23 +104,25 @@ const S3Button = ({ onBack }: S3ButtonProps) => {
         ref={fileInputRef}
       />
 
-      <div className='h-[30%] flex-grow overflow-y-auto'>
-        <div className='flex h-full items-center justify-center overflow-y-auto rounded-xl border border-zinc-700 p-2'>
+      <div className='h-[30%] flex-grow overflow-y-auto py-2'>
+        <div className='flex h-full overflow-y-auto rounded-xl border border-zinc-700 p-2'>
           {fileQueue.length === 0 ? (
-            <p className='text-gray-400'>No files selected</p>
+            <div className='flex h-full w-full items-center justify-center'>
+              <p className='text-gray-400'>No files selected</p>
+            </div>
           ) : (
-            <ul className='list-disc text-white'>
+            <ul className='w-full list-disc space-y-2 text-white'>
               {fileQueue.map((file, index) => (
                 <div
                   key={index}
-                  className='mb-2 flex items-center rounded-lg border-[1px] border-zinc-700'
+                  className='flex w-full rounded-lg border-[1px] border-zinc-700'
                 >
                   <p className='flex-1 whitespace-nowrap px-2 py-1 text-sm'>
                     {file.name}
                   </p>
                   {isUploading ? (
                     uploadedFiles[file.name] ? (
-                      <FaCheckCircle className='mx-2 text-green-500' />
+                      <FaCheckCircle className='mx-2 my-2 text-green-500' />
                     ) : (
                       <div className='ml-2 h-4 w-4' />
                     )
@@ -144,18 +146,18 @@ const S3Button = ({ onBack }: S3ButtonProps) => {
         </div>
       </div>
 
-      <div className='flex space-x-2 py-2'>
-        <button
-          onClick={handleUploadAll}
-          className='w-full rounded-md border-[1px] border-zinc-700 px-2 py-1 text-sm text-white duration-200 hover:bg-blue-500'
-        >
-          Upload All Files
-        </button>
+      <div className='flex space-x-4 py-2'>
         <button
           onClick={onBack}
-          className='w-full rounded-md border-[1px] border-zinc-700 px-2 py-1 text-sm text-white hover:bg-red-900'
+          className='w-full rounded-md bg-gray-800 px-2 py-1 text-sm text-white hover:bg-gray-400'
         >
           Cancel
+        </button>
+        <button
+          onClick={handleUploadAll}
+          className='w-full rounded-md bg-gray-800 px-2 py-1 text-sm text-white hover:bg-gray-400'
+        >
+          Upload All Files
         </button>
       </div>
     </div>

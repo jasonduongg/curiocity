@@ -17,15 +17,15 @@
 
   .scrollbar::-webkit-scrollbar-track {
     border-radius: 100vh;
-    background: rgb(13, 13, 13);
+    background: transparent;
   }
 
   .scrollbar::-webkit-scrollbar-thumb {
-    background: gray;
+    background: transparent;
     border-radius: 100vh;
   }
 
   .scrollbar::-webkit-scrollbar-thumb:hover {
-    background: #130e16;
+    background: transparent;
   }
 }

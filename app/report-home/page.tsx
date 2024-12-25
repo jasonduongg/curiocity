@@ -93,7 +93,10 @@ export default function ReportHome() {
             </div>
           </ResizablePanel>
 
-          <ResizableHandle withHandle={true} className='my-4' />
+          <ResizableHandle
+            withHandle={true}
+            className='mx-2 my-4 bg-gray-400'
+          />
           <ResizablePanel>
             <div className='h-full w-full p-4'>
               <div className='flex h-full flex-col rounded-xl border-[1px] border-zinc-700 bg-bgSecondary'>

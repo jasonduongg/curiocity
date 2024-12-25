@@ -9,6 +9,8 @@ import NotesEditor from '@/components/ResourceComponents/NotesEditor';
 import Image from 'next/image';
 import NameEditor from './NameEditor';
 import { Switch } from '../ui/switch';
+import Divider from '../GeneralComponents/Divider';
+import { FaSpinner } from 'react-icons/fa';
 
 const ResourceViewer: React.FC = () => {
   const { currentResourceMeta, setCurrentResourceMeta } = useCurrentResource();
@@ -70,7 +72,7 @@ const ResourceViewer: React.FC = () => {
   if (isLoading) {
     return (
       <div className='flex h-full w-full items-center justify-center'>
-        <p className='text-white'>Loading...</p>
+        <FaSpinner className='animate-spin text-4xl text-white' />
       </div>
     );
   }
@@ -86,19 +88,19 @@ const ResourceViewer: React.FC = () => {
   return (
     <div className='flex h-full w-full flex-col overflow-hidden p-2'>
       <div className='flex items-center justify-between'>
-        <div className='mb-2 flex w-full items-center'>
+        <div className='flex w-full items-center'>
           <div className='flex h-full w-full flex-col px-2 py-2'>
-            <div className='mb-2 text-white'>
+            <div className='mb-2 text-lg font-bold text-white'>
               {currentResourceMeta?.name
-                ? currentResourceMeta.name.length > 30
-                  ? `${currentResourceMeta.name.slice(0, 30)}...`
+                ? currentResourceMeta.name.length > 20
+                  ? `${currentResourceMeta.name.slice(0, 20)}...`
                   : currentResourceMeta.name
                 : ''}
             </div>
             <div className='w-1/2'>
               <button
                 onClick={() => setShowEditor((prev) => !prev)}
-                className='whitespace-nowrap rounded-md border-[1px] border-zinc-700 px-2 py-1 text-sm text-white hover:bg-blue-700'
+                className='whitespace-nowrap rounded-md bg-gray-800 px-2 py-1 text-sm text-white hover:bg-gray-400'
               >
                 {showEditor ? 'Close Notes Editor' : 'Open Notes Editor'}
               </button>
@@ -106,7 +108,9 @@ const ResourceViewer: React.FC = () => {
           </div>
 
           <div className='flex h-full items-center justify-center px-2'>
-            <label className='mr-2 text-sm text-white'>{viewMode}</label>
+            <label className='mr-2 text-sm font-semibold text-white'>
+              {viewMode}
+            </label>
             <Switch
               checked={viewMode === 'Text'}
               onCheckedChange={(checked) =>
@@ -124,14 +128,18 @@ const ResourceViewer: React.FC = () => {
         </div>
       )}
 
+      <Divider></Divider>
+
       <div className='h-[85%] overflow-hidden'>
         {viewMode === 'Text' ? (
-          <ReactMarkdown
-            className='prose text-white'
-            remarkPlugins={[remarkGfm]}
-          >
-            {resource?.markdown || ''}
-          </ReactMarkdown>
+          <div className='h-full overflow-scroll'>
+            <ReactMarkdown
+              className='prose text-white'
+              remarkPlugins={[remarkGfm]}
+            >
+              {resource?.markdown || ''}
+            </ReactMarkdown>
+          </div>
         ) : resource.url.toLowerCase().endsWith('.pdf') ? (
           <iframe src={resource.url} className='h-full w-full border-none' />
         ) : /\.(jpeg|jpg|png|gif)$/i.test(resource.url) ? (

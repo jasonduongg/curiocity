@@ -20,6 +20,8 @@ const TableRow = ({
     fetchResourceAndMeta,
     currentResource,
     currentResourceMeta,
+    setCurrentResource,
+    setCurrentResourceMeta,
   } = useCurrentResource();
 
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -79,8 +81,13 @@ const TableRow = ({
   };
 
   const handleResourceClick = async () => {
+    if (resourceCompressed.id === currentResourceMeta?.id) {
+      setCurrentResource(null);
+      setCurrentResourceMeta(null);
+    } else {
+      await fetchResourceAndMeta(resourceCompressed.id, folderName);
+    }
     setIsDropdownOpen(false); // Close dropdown
-    await fetchResourceAndMeta(resourceCompressed.id, folderName);
   };
 
   // Determine row background color
@@ -98,14 +105,16 @@ const TableRow = ({
           className='cursor-pointer truncate text-sm text-white'
           onClick={handleResourceClick}
         >
-          {resourceCompressed.name}
+          {resourceCompressed.name.length > 15
+            ? `${resourceCompressed.name.slice(0, 15)}...`
+            : resourceCompressed.name}
         </p>
       </div>
 
       <div className='relative'>
         <button
           onClick={toggleDropdown}
-          className='px-2 py-1 text-sm text-white'
+          className='text-md px-2 py-1 text-gray-400 hover:text-white'
         >
           ...
         </button>

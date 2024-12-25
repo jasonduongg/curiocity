@@ -39,6 +39,7 @@ function inferFileType(nameOrUrl: string): string {
   if (lower.endsWith('.htm') || lower.endsWith('.html')) return 'HTML';
   if (lower.endsWith('.png')) return 'PNG';
   if (lower.endsWith('.jpg') || lower.endsWith('.jpeg')) return 'JPG';
+  if (lower.endsWith('.gif')) return 'GIF';
   if (lower.startsWith('http')) return 'Link';
 
   return 'Other';
