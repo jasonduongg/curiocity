@@ -69,7 +69,7 @@ export default function TagComponent({
       </div>
     )
   ) : (
-    <div className='flex items-center justify-center space-x-2 rounded-full border-[1px] border-zinc-700 py-1 pl-2 pr-3 text-sm font-medium text-white'>
+    <div className='flex items-center justify-center space-x-2 rounded-full border-[1px] border-zinc-700 py-1 pl-2 pr-3 text-sm font-medium text-gray-200'>
       <button
         onClick={onDelete}
         className='flex h-4 w-4 items-center justify-center rounded-full text-xs text-zinc-300 hover:bg-red-600 focus:outline-none'

@@ -68,7 +68,7 @@ const NotesEditor: React.FC<{ handleBack: () => void }> = ({ handleBack }) => {
 
   // Render the TextEditor once notes are loaded
   return (
-    <div className='flex flex-col py-2 text-white'>
+    <div className='flex flex-col text-white'>
       <TextEditor
         mode='mini'
         source={{ ...currentResourceMeta, notes }} // Pass fetched notes to TextEditor

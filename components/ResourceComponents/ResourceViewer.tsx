@@ -8,6 +8,7 @@ import remarkGfm from 'remark-gfm';
 import NotesEditor from '@/components/ResourceComponents/NotesEditor';
 import Image from 'next/image';
 import NameEditor from './NameEditor';
+import { Switch } from '../ui/switch';
 
 const ResourceViewer: React.FC = () => {
   const { currentResourceMeta, setCurrentResourceMeta } = useCurrentResource();
@@ -84,43 +85,46 @@ const ResourceViewer: React.FC = () => {
 
   return (
     <div className='flex h-full w-full flex-col overflow-hidden p-2'>
-      <div className='mb-4 flex items-center justify-between'>
-        <div className='mb-2 flex h-12 items-center justify-between'>
-          <div className='flex flex-col'>
-            <NameEditor />
-            {/* {!showEditor && (
-              <div className='flex flex-row'>
-                <p className='whitespace-nowrap pr-1 text-xs font-semibold text-white'>
-                  Document Notes
-                </p>
-                <EditButton
-                  onClick={() => setShowEditor(!showEditor)}
-                  tooltip='Edit Resource Notes'
-                />
-              </div>
-            )}
+      <div className='flex items-center justify-between'>
+        <div className='mb-2 flex w-full items-center'>
+          <div className='flex h-full w-full flex-col px-2 py-2'>
+            <div className='mb-2 text-white'>
+              {currentResourceMeta?.name
+                ? currentResourceMeta.name.length > 30
+                  ? `${currentResourceMeta.name.slice(0, 30)}...`
+                  : currentResourceMeta.name
+                : ''}
+            </div>
+            <div className='w-1/2'>
+              <button
+                onClick={() => setShowEditor((prev) => !prev)}
+                className='whitespace-nowrap rounded-md border-[1px] border-zinc-700 px-2 py-1 text-sm text-white hover:bg-blue-700'
+              >
+                {showEditor ? 'Close Notes Editor' : 'Open Notes Editor'}
+              </button>
+            </div>
           </div>
-          <div className='flex items-center space-x-2'>
-            <label className='text-sm text-white'>View as {viewMode}</label>
+
+          <div className='flex h-full items-center justify-center px-2'>
+            <label className='mr-2 text-sm text-white'>{viewMode}</label>
             <Switch
               checked={viewMode === 'Text'}
               onCheckedChange={(checked) =>
                 setViewMode(checked ? 'Text' : 'URL')
               }
-            /> */}
+            />
           </div>
         </div>
-        <button
-          onClick={() => setShowEditor((prev) => !prev)}
-          className='rounded-md border-[1px] border-zinc-700 px-4 py-2 text-sm text-white hover:bg-blue-700'
-        >
-          {showEditor ? 'Close Notes Editor' : 'Open Notes Editor'}
-        </button>
       </div>
 
-      {showEditor && <NotesEditor handleBack={() => setShowEditor(false)} />}
+      {showEditor && (
+        <div className='mb-4'>
+          {' '}
+          <NotesEditor handleBack={() => setShowEditor(false)} />{' '}
+        </div>
+      )}
 
-      <div className='flex-grow overflow-hidden'>
+      <div className='h-[85%] overflow-hidden'>
         {viewMode === 'Text' ? (
           <ReactMarkdown
             className='prose text-white'
@@ -131,13 +135,17 @@ const ResourceViewer: React.FC = () => {
         ) : resource.url.toLowerCase().endsWith('.pdf') ? (
           <iframe src={resource.url} className='h-full w-full border-none' />
         ) : /\.(jpeg|jpg|png|gif)$/i.test(resource.url) ? (
-          <div className='relative h-full w-full overflow-hidden'>
-            <Image
-              src={resource.url}
-              alt='Resource image'
-              fill
-              className='object-contain'
-            />
+          <div className='relative flex h-full w-full'>
+            {resource.url ? (
+              <Image
+                src={resource.url}
+                alt='Resource image'
+                fill
+                className='object-contain object-top'
+              />
+            ) : (
+              <p className='text-white'>No image available</p>
+            )}
           </div>
         ) : resource.url.toLowerCase().endsWith('.html') ? (
           <iframe

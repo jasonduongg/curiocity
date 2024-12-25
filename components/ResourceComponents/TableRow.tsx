@@ -15,7 +15,12 @@ const TableRow = ({
   availableFolders,
 }: TableRowProps) => {
   const { currentDocument, fetchDocument } = useCurrentDocument();
-  const { moveResource, fetchResourceAndMeta } = useCurrentResource();
+  const {
+    moveResource,
+    fetchResourceAndMeta,
+    currentResource,
+    currentResourceMeta,
+  } = useCurrentResource();
 
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isRenameModalOpen, setIsRenameModalOpen] = useState(false);
@@ -78,8 +83,16 @@ const TableRow = ({
     await fetchResourceAndMeta(resourceCompressed.id, folderName);
   };
 
+  // Determine row background color
+  const rowClass =
+    resourceCompressed.id === currentResourceMeta?.id
+      ? 'bg-gray-500'
+      : 'bg-gray-800 hover:bg-gray-400';
+
   return (
-    <div className='relative flex items-center justify-between rounded-md bg-gray-800 hover:bg-gray-400'>
+    <div
+      className={`relative flex items-center justify-between rounded-md ${rowClass}`}
+    >
       <div className='h-full w-full px-2'>
         <p
           className='cursor-pointer truncate text-sm text-white'

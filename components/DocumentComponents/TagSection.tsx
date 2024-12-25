@@ -77,14 +77,14 @@ export default function TagSection() {
   };
 
   return (
-    <div className='h-[5vh] w-full px-2'>
+    <div className='h-[5vh] w-full'>
       {errorMessage && (
         <ErrorModal
           message={errorMessage}
           onClose={() => setErrorMessage(null)}
         />
       )}
-      <div className='flex h-full w-full flex-row items-center'>
+      <div className='flex h-full w-full flex-row items-center text-sm'>
         <span className='mr-2 text-white'>Tags:</span>
         <div className='flex h-full w-full flex-row items-center space-x-2 overflow-x-scroll'>
           <TagComponent newTag onAdd={handleAddTag} />

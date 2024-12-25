@@ -71,8 +71,11 @@ export default function ReportHome() {
   return (
     <section className='h-screen overscroll-contain bg-bgPrimary'>
       <div className='flex h-full w-full flex-col items-start justify-start overflow-hidden'>
-        <NavBar onLogoClick={handleBack} />
-        <ResizablePanelGroup direction='horizontal' className='flex-grow px-8'>
+        {!currentDocument && <NavBar onLogoClick={handleBack} />}
+        <ResizablePanelGroup
+          direction='horizontal'
+          className='flex-grow px-8 py-4'
+        >
           <ResizablePanel>
             <div className='h-full w-full max-w-full gap-4 overflow-hidden bg-bgPrimary p-4'>
               <div className='max-w-1/2 h-full shrink grow basis-1/2 flex-col gap-4 overflow-hidden rounded-xl border-[1px] border-zinc-700'>

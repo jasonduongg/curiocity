@@ -6,7 +6,6 @@ import crypto from 'crypto';
 import { putObject, getObject } from '../route';
 import {
   GetCommand,
-  PutCommand,
   UpdateCommand,
   DeleteCommand,
 } from '@aws-sdk/lib-dynamodb';

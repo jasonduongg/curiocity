@@ -29,7 +29,6 @@ export default function FileList() {
     to: string;
   }>({ from: '', to: '' });
 
-  // Initialize expanded folders when the current document changes
   useEffect(() => {
     if (currentDocument?.folders) {
       setExpandedFolders((prev) => ({
@@ -37,7 +36,7 @@ export default function FileList() {
         ...Object.fromEntries(
           Object.keys(currentDocument.folders).map((folderName) => [
             folderName,
-            prev[folderName] ?? false, // Preserve the current state or default to false
+            prev[folderName] ?? false,
           ]),
         ),
       }));
@@ -186,7 +185,7 @@ export default function FileList() {
         {!isAddingFolder ? (
           <button
             onClick={() => setIsAddingFolder(true)}
-            className='mt-4 rounded-md border-[1px] border-gray-700 bg-gray-800 px-2 py-1 text-sm text-white duration-200 hover:bg-gray-400'
+            className='mt-4 rounded-md border-[1px] border-gray-700 bg-gray-800 px-2 py-1 text-sm text-white transition duration-200 ease-in-out hover:bg-gray-700'
           >
             Add New Folder
           </button>
