@@ -57,7 +57,7 @@ const S3Button = ({ onBack }: S3ButtonProps) => {
         }
       }
 
-      await new Promise((resolve) => setTimeout(resolve, 500)); // Ensure context propagates
+      await new Promise((resolve) => setTimeout(resolve, 500));
       await fetchDocument(currentDocument.id);
       setFileQueue([]);
     } catch (error) {
