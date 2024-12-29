@@ -5,13 +5,11 @@ import { useSession } from 'next-auth/react';
 
 import { useCurrentDocument, useCurrentResource } from '@/context/AppContext';
 
-import NameYourReport from '@/components/DocumentComponents/newPrompt';
 import FileViewer from '@/components/ResourceComponents/FilesViewer';
 import NavBar from '@/components/GeneralComponents/NavBar';
 import DocumentEditor from '@/components/DocumentComponents/DocumentEditor';
 import AllDocumentsGrid from '@/components/DocumentComponents/AllDocumentsGrid';
-
-import { FaSpinner } from 'react-icons/fa';
+import LoadingOverlay from '@/components/GeneralComponents/LoadingOverlay';
 
 import {
   ResizableHandle,
@@ -74,23 +72,14 @@ export default function ReportHome() {
   if (!session?.user) {
     return (
       <div className='flex h-screen w-screen items-center justify-center bg-black'>
-        <div className='text-center text-white'>
-          <FaSpinner className='mx-auto mb-4 animate-spin text-6xl' />
-        </div>
+        <LoadingOverlay message='Authenticating...' />
       </div>
     );
   }
 
   return (
     <section className='h-screen overscroll-contain bg-bgPrimary'>
-      {isLoading && (
-        <div className='absolute inset-0 z-50 flex items-center justify-center bg-black bg-opacity-70'>
-          <div className='text-center text-white'>
-            <FaSpinner className='mx-auto mb-4 animate-spin text-6xl' />
-            <p>Loading document...</p>
-          </div>
-        </div>
-      )}
+      {isLoading && <LoadingOverlay message='Loading document...' />}
       <div className='flex h-full w-full flex-col items-start justify-start overflow-hidden'>
         {!currentDocument && <NavBar onLogoClick={handleBack} />}
         <ResizablePanelGroup
@@ -114,26 +103,24 @@ export default function ReportHome() {
             </div>
           </ResizablePanel>
 
-          <ResizableHandle
-            withHandle={true}
-            className='mx-2 my-4 bg-gray-400'
-          />
-          <ResizablePanel>
-            <div className='h-full w-full p-4'>
-              <div className='flex h-full flex-col rounded-xl border-[1px] border-zinc-700 bg-bgSecondary'>
-                <FileViewer />
-              </div>
-            </div>
-          </ResizablePanel>
+          {/* Render the second panel only if currentDocument exists */}
+          {currentDocument && (
+            <>
+              <ResizableHandle
+                withHandle={true}
+                className='mx-2 my-4 bg-gray-400'
+              />
+              <ResizablePanel>
+                <div className='h-full w-full p-4'>
+                  <div className='flex h-full flex-col rounded-xl border-[1px] border-zinc-700 bg-bgSecondary'>
+                    <FileViewer />
+                  </div>
+                </div>
+              </ResizablePanel>
+            </>
+          )}
         </ResizablePanelGroup>
       </div>
-
-      {isModalOpen && (
-        <NameYourReport
-          onSave={handleSaveNewReport}
-          onCancel={() => setIsModalOpen(false)}
-        />
-      )}
     </section>
   );
 }

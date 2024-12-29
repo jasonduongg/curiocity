@@ -9,22 +9,16 @@ import {
 } from '@/components/ui/dropdown-menu';
 
 import DeleteConfirmationModal from '../ModalComponents/DeleteConfirmationModal';
+import { useCurrentDocument } from '@/context/AppContext';
 
 interface MoreOptionsDropdownProps {
   documentId?: string;
-  refreshState: () => void;
 }
 
 const MoreOptionsDropdown: React.FC<MoreOptionsDropdownProps> = ({
   documentId,
-  refreshState,
 }) => {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-
-  const handleEdit = (e: React.MouseEvent) => {
-    e.stopPropagation(); // Prevents event bubbling
-    console.log(`Edit document with ID: ${documentId}`);
-  };
 
   const handleDeleteClick = (e: React.MouseEvent) => {
     e.stopPropagation(); // Prevents event bubbling
@@ -37,7 +31,6 @@ const MoreOptionsDropdown: React.FC<MoreOptionsDropdownProps> = ({
 
   const handleDeleteComplete = () => {
     setIsDeleteModalOpen(false); // Close the modal after deletion
-    refreshState(); // Refresh the state to update the UI
   };
 
   return (
@@ -55,8 +48,6 @@ const MoreOptionsDropdown: React.FC<MoreOptionsDropdownProps> = ({
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent className='w-48'>
-          <DropdownMenuItem onClick={handleEdit}>Edit</DropdownMenuItem>
-          <DropdownMenuSeparator />
           <DropdownMenuItem onClick={handleDeleteClick}>
             Delete
           </DropdownMenuItem>

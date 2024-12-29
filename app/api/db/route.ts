@@ -151,7 +151,6 @@ export const deleteObject = async (client: any, id: any, table: string) => {
 };
 
 export async function GET(request: Request) {
-  console.log('call get dynamodb');
   const url = new URL(request.url);
   const id = url.searchParams.get('id'); // Retrieves the 'id' query parameter
 
@@ -162,8 +161,6 @@ export async function GET(request: Request) {
 export async function PUT(request: Request) {
   console.log('call put dynamodb');
   const data = await request.json();
-
-  console.log(data);
 
   // if had id (exiting object), pull from aws and update
   if (data.id) {

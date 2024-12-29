@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import { ResourceCompressed } from '@/types/types';
+import { FaFilePdf, FaImage, FaFileAlt, FaFile } from 'react-icons/fa';
+
 import { useCurrentDocument, useCurrentResource } from '@/context/AppContext';
 import { FaSpinner } from 'react-icons/fa';
 
@@ -27,13 +29,26 @@ const TableRow = ({
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isRenameModalOpen, setIsRenameModalOpen] = useState(false);
   const [isMoveListOpen, setIsMoveListOpen] = useState(false);
-  const [isRenaming, setIsRenaming] = useState(false); // Specific loading state for renaming
-  const [isMoving, setIsMoving] = useState(false); // Specific loading state for moving
+
+  const [isRenaming, setIsRenaming] = useState(false);
+  const [isMoving, setIsMoving] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+
   const [newResourceName, setNewResourceName] = useState(
     resourceCompressed.name,
   );
 
   const toggleDropdown = () => setIsDropdownOpen((prev) => !prev);
+
+  const handleResourceClick = async () => {
+    if (resourceCompressed.id === currentResourceMeta?.id) {
+      setCurrentResource(null);
+      setCurrentResourceMeta(null);
+    } else {
+      await fetchResourceAndMeta(resourceCompressed.id, folderName);
+    }
+    setIsDropdownOpen(false);
+  };
 
   const handleRename = async () => {
     setIsRenaming(true); // Start renaming loading state
@@ -80,14 +95,53 @@ const TableRow = ({
     }
   };
 
-  const handleResourceClick = async () => {
-    if (resourceCompressed.id === currentResourceMeta?.id) {
-      setCurrentResource(null);
-      setCurrentResourceMeta(null);
-    } else {
-      await fetchResourceAndMeta(resourceCompressed.id, folderName);
+  const handleDelete = async () => {
+    setIsDeleting(true);
+    try {
+      const response = await fetch(`/api/db/resourcemeta/delete`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: resourceCompressed.id }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to delete resource.');
+      }
+
+      // Check if the resource being deleted is the current one displayed
+      if (currentResourceMeta?.id === resourceCompressed.id) {
+        setCurrentResource(null);
+        setCurrentResourceMeta(null);
+      }
+
+      await fetchDocument(currentDocument.id);
+    } catch (error) {
+      console.error('Error deleting resource:', error);
+    } finally {
+      setIsDeleting(false);
+      setIsDropdownOpen(false);
     }
-    setIsDropdownOpen(false); // Close dropdown
+  };
+
+  const getIconByFileType = () => {
+    const fileName = resourceCompressed.name.toLowerCase();
+    if (fileName.endsWith('.pdf'))
+      return <FaFilePdf className='text-red-500' />;
+    if (
+      fileName.endsWith('.png') ||
+      fileName.endsWith('.jpg') ||
+      fileName.endsWith('.jpeg')
+    ) {
+      return <FaImage className='text-green-500' />;
+    }
+    if (
+      fileName.endsWith('.txt') ||
+      fileName.endsWith('.doc') ||
+      fileName.endsWith('.docx')
+    ) {
+      return <FaFileAlt className='text-blue-500' />;
+    }
+    return <FaFile className='text-gray-500' />;
   };
 
   // Determine row background color
@@ -100,14 +154,13 @@ const TableRow = ({
     <div
       className={`relative flex items-center justify-between rounded-md ${rowClass}`}
     >
-      <div className='h-full w-full px-2'>
+      <div className='flex h-full max-w-[80%] flex-row items-center px-2'>
+        <div className='mr-2'>{getIconByFileType()}</div>
         <p
           className='cursor-pointer truncate text-sm text-white'
           onClick={handleResourceClick}
         >
-          {resourceCompressed.name.length > 15
-            ? `${resourceCompressed.name.slice(0, 15)}...`
-            : resourceCompressed.name}
+          {resourceCompressed.name}
         </p>
       </div>
 
@@ -148,6 +201,12 @@ const TableRow = ({
                 Move Resource
               </button>
               <button
+                onClick={handleDelete}
+                className='block w-full px-2 py-2 text-left text-sm text-red-400 hover:bg-gray-400'
+              >
+                Delete Resource
+              </button>
+              <button
                 onClick={() => setIsDropdownOpen(false)}
                 className='block w-full px-2 py-2 text-left text-sm text-red-400 hover:bg-gray-400'
               >
@@ -157,12 +216,16 @@ const TableRow = ({
           </>
         )}
 
-        {(isRenaming || isMoving) && (
+        {(isRenaming || isMoving || isDeleting) && (
           <div className='fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-75'>
             <div className='flex flex-col items-center justify-center p-6 text-white shadow-lg'>
               <FaSpinner className='animate-spin text-4xl' />
               <p className='mt-4'>
-                {isRenaming ? 'Renaming Resource...' : 'Moving Resource...'}
+                {isRenaming
+                  ? 'Renaming Resource...'
+                  : isMoving
+                    ? 'Moving Resource...'
+                    : 'Deleting Resource...'}
               </p>
             </div>
           </div>

@@ -56,11 +56,7 @@ export default function GridItem({ document, onClick }: Props) {
               </p>
             </div>
             <div className='flex flex-col justify-end'>
-              {/* <MoreOptionsDropdown
-                documentId={id}
-                onEdit={() => console.log('Edit clicked for:', id)}
-                onDuplicate={() => console.log('Duplicate clicked for:', id)}
-              /> */}
+              <MoreOptionsDropdown documentId={id} />
             </div>
           </div>
         </div>

@@ -63,20 +63,6 @@ export default function NavBar({ onLogoClick }: NavBarProps) {
         </div>
 
         <div className='flex h-full items-center gap-4'>
-          {session && session.user && (
-            <div className='flex items-center space-x-2'>
-              {session.user.image && (
-                <div className='relative h-8 w-8'>
-                  <Image
-                    src={session.user.image}
-                    alt='User Avatar'
-                    layout='fill'
-                    className='rounded-full'
-                  />
-                </div>
-              )}
-            </div>
-          )}
           <ProfileCustomization
             onProfileUpdate={async () => {
               await router.refresh(); // Reload to reflect the updated session

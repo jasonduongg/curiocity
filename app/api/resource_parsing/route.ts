@@ -12,7 +12,7 @@ interface ResponseData {
   }[];
 }
 
-export async function POST(req) {
+export async function POST(req: Request) {
   try {
     const formData = await req.formData();
     const file = formData.get('myFile');
@@ -21,11 +21,25 @@ export async function POST(req) {
       return NextResponse.json({ error: 'No file uploaded' }, { status: 400 });
     }
 
-    const fileBlob =
-      file instanceof Blob ? file : new Blob([file], { type: file.type });
+    if (!(file instanceof Blob)) {
+      return NextResponse.json(
+        { error: 'Uploaded file is not a valid Blob' },
+        { status: 400 },
+      );
+    }
+
+    const fileBlob = new Blob([file], {
+      type: file.type || 'application/octet-stream',
+    });
+
+    console.log('Constructed fileBlob:', fileBlob);
 
     const uploadFormData = new FormData();
-    uploadFormData.append('file', fileBlob, file.name);
+    uploadFormData.append(
+      'file',
+      fileBlob,
+      (file as any).name || 'uploaded-file',
+    );
 
     const uploadResponse = await fetch(
       'https://api.cloud.llamaindex.ai/api/parsing/upload',
@@ -38,19 +52,20 @@ export async function POST(req) {
         body: uploadFormData,
       },
     );
+
     if (!uploadResponse.ok) {
       const errorData = await uploadResponse.json();
-      throw new Error(`Upload failed: ${errorData.message}`);
+      console.error('Upload failed:', errorData);
+      throw new Error(`Upload failed: ${errorData.message || 'Unknown error'}`);
     }
 
     const uploadResult = await uploadResponse.json();
     const jobId = uploadResult.id;
-    console.log(jobId);
 
     let jobStatus = '';
     while (jobStatus !== 'SUCCESS') {
       const statusResponse = await fetch(
-        `https://api.cloud.llamaindex.ai//api/v1/parsing/job/${jobId}`,
+        `https://api.cloud.llamaindex.ai/api/v1/parsing/job/${jobId}`,
         {
           headers: {
             Accept: 'application/json',
@@ -61,6 +76,7 @@ export async function POST(req) {
 
       if (!statusResponse.ok) {
         const errorData = await statusResponse.json();
+        console.error('Status check failed:', errorData);
         throw new Error(`Status check failed: ${errorData.message}`);
       }
 
@@ -69,35 +85,15 @@ export async function POST(req) {
 
       if (jobStatus === 'ERROR') {
         throw new Error('Parsing job failed.');
-      } else if (jobStatus !== 'COMPLETED') {
+      } else if (jobStatus !== 'SUCCESS') {
         await new Promise((resolve) => setTimeout(resolve, 2000));
       }
     }
 
-    const imageResult = await fetch(
-      `https://api.cloud.llamaindex.ai/api/parsing/job/${jobId}/result/json`,
-      {
-        headers: {
-          Authorization: `Bearer ${LLAMA_CLOUD_API_KEY}`,
-          Accept: 'text/markdown',
-        },
-      },
-    );
-    if (!imageResult.ok) {
-      const errorData = await imageResult.json();
-      throw new Error(`Result retrieval failed: ${errorData.message}`);
-    }
-    const images = [];
-    const data: ResponseData = await imageResult.json();
-    data.pages.forEach((page) => {
-      if (page.images && page.images.length > 0) {
-        page.images.forEach((image) => {
-          images.push(image);
-        });
-      }
-    });
+    console.log('Job completed successfully. Fetching result...');
+
     const resultResponse = await fetch(
-      `https://api.cloud.llamaindex.ai//api/v1/parsing/job/${jobId}/result/raw/markdown`,
+      `https://api.cloud.llamaindex.ai/api/v1/parsing/job/${jobId}/result/raw/markdown`,
       {
         headers: {
           Authorization: `Bearer ${LLAMA_CLOUD_API_KEY}`,
@@ -105,12 +101,15 @@ export async function POST(req) {
         },
       },
     );
+
     if (!resultResponse.ok) {
       const errorData = await resultResponse.json();
+      console.error('Result retrieval failed:', errorData);
       throw new Error(`Result retrieval failed: ${errorData.message}`);
     }
+
     const markdown = await resultResponse.text();
-    return NextResponse.json({ markdown, images });
+    return NextResponse.json({ markdown });
   } catch (error) {
     console.error('Error processing file:', error.message);
     return NextResponse.json({ error: error.message }, { status: 500 });

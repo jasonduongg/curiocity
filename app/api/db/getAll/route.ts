@@ -36,7 +36,6 @@ const getUserDocuments = async (ownerID: string) => {
     const items =
       data.Items?.map((item: any) => AWS.DynamoDB.Converter.unmarshall(item)) ||
       [];
-    console.log(items);
     return items;
   } catch (error) {
     console.error('Error retrieving user documents:', error);

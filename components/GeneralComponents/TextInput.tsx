@@ -8,7 +8,7 @@ interface Props {
 
 const TextInput = ({ placeholder, value, onChange }: Props) => {
   return (
-    <div className='mb-1 flex w-full flex-col rounded-lg bg-gray-800 px-2 py-1'>
+    <div className='flex w-full flex-col rounded-lg bg-gray-800 px-2 py-1'>
       <div className='flex flex-row items-center rounded-lg'>
         <MagnifyingGlassIcon className='h-5 w-5 text-textPrimary' />
         <input

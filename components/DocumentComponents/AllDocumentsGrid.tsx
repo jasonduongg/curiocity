@@ -2,17 +2,18 @@
 
 import GridItem from '@/components/DocumentComponents/GridItem';
 import TextInput from '@/components/GeneralComponents/TextInput';
+import NewDocumentModal from '@/components/ModalComponents/NewDocumentModal';
 import { useState } from 'react';
 import { useCurrentDocument } from '@/context/AppContext';
 import { useSession } from 'next-auth/react';
 
 export default function AllDocumentGrid({ onDocumentClick }) {
   const { data: session } = useSession();
-
   const { allDocuments, createDocument } = useCurrentDocument();
 
   const [searchQuery, setSearchQuery] = useState('');
   const [isSortedByLastOpened, setIsSortedByLastOpened] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   const sortedDocuments = [...allDocuments].sort((a, b) => {
     const dateA = new Date(isSortedByLastOpened ? b.lastOpened : b.dateAdded);
@@ -33,13 +34,7 @@ export default function AllDocumentGrid({ onDocumentClick }) {
     );
   });
 
-  const handleCreateNewReport = () => {
-    if (session?.user?.id) {
-      createDocument('New Report', session.user.id);
-    } else {
-      console.error('User ID not found. Please log in.');
-    }
-  };
+  const handleToggleModal = () => setIsModalOpen((prev) => !prev);
 
   const toggleSortOrder = () => {
     setIsSortedByLastOpened((prev) => !prev);
@@ -49,26 +44,26 @@ export default function AllDocumentGrid({ onDocumentClick }) {
     <div className='relative flex h-full w-full flex-col'>
       <div className='w-full flex-shrink-0 px-4 py-2'>
         <div className='flex w-full items-center justify-between'>
-          <div className='w-full px-4'>
-            <TextInput
-              placeholder='Search for documents...'
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
-          </div>
+          <div className='flex w-full flex-row items-center justify-center space-x-1'>
+            <div className='w-full px-2'>
+              <TextInput
+                placeholder='Search for documents...'
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+            </div>
 
-          <div className='flex flex-row space-x-2'>
             <div className='flex items-center px-2 py-4'>
               <div
-                className='flex h-10 w-10 cursor-pointer items-center justify-center rounded-xl border-[1px] border-textSecondary duration-300 ease-in-out hover:bg-bgPrimary'
-                onClick={handleCreateNewReport}
+                className='flex h-10 w-10 cursor-pointer items-center justify-center rounded-2xl bg-gray-800 px-4 py-2 hover:bg-gray-700'
+                onClick={handleToggleModal}
               >
                 <p className='text-lg text-textPrimary'>+</p>
               </div>
             </div>
             <div className='flex items-center px-2 py-4'>
               <div
-                className='flex h-10 w-auto cursor-pointer items-center justify-center rounded-xl border-[1px] border-textSecondary px-4 duration-300 ease-in-out hover:bg-bgPrimary'
+                className='flex h-10 w-auto cursor-pointer items-center justify-center rounded-2xl bg-gray-800 px-4 py-2 hover:bg-gray-700'
                 onClick={toggleSortOrder}
               >
                 <p className='whitespace-nowrap text-sm text-textPrimary'>
@@ -93,6 +88,8 @@ export default function AllDocumentGrid({ onDocumentClick }) {
           </div>
         </div>
       </div>
+
+      <NewDocumentModal isOpen={isModalOpen} onClose={handleToggleModal} />
     </div>
   );
 }

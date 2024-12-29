@@ -14,8 +14,8 @@ const Folder = ({ folderData, isExpanded, onToggle }: FolderProps) => {
   const { currentDocument, fetchDocument } = useCurrentDocument();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isRenaming, setIsRenaming] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   const [newFolderName, setNewFolderName] = useState(folderData.name);
-  console.log(newFolderName);
   if (!currentDocument) {
     console.error('No current document found.');
     return null;
@@ -65,10 +65,12 @@ const Folder = ({ folderData, isExpanded, onToggle }: FolderProps) => {
   return (
     <div className='relative rounded-md px-2'>
       <div
-        className='mb-2 flex cursor-pointer items-center justify-between border-b-[1px] border-white py-1 text-white hover:border-gray-400 hover:text-gray-400'
+        className='mb-2 flex cursor-pointer items-center justify-between border-b-[1px] border-gray-700 py-1 text-white hover:border-gray-400 hover:text-gray-400'
         onClick={onToggle}
       >
-        <h2 className='text-md font-semibold'>{folderData.name}</h2>
+        <h2 className='text-md font-semibold'>
+          {folderData.name} ({folderData.resources?.length || 0})
+        </h2>
         <div className='flex items-center'>
           <span className='pr-1 text-xs'>{isExpanded ? '▼' : '►'}</span>
           {folderData.name !== 'General' && (
@@ -96,7 +98,37 @@ const Folder = ({ folderData, isExpanded, onToggle }: FolderProps) => {
           >
             Rename Folder
           </button>
-          {/* Add more dropdown options here */}
+          <button
+            className='block w-full px-4 py-2 text-left hover:bg-gray-600'
+            onClick={async () => {
+              setIsDeleting(true);
+
+              try {
+                const response = await fetch('/api/db/documents/deleteFolder', {
+                  method: 'DELETE',
+                  headers: {
+                    'Content-Type': 'application/json',
+                  },
+                  body: JSON.stringify({
+                    folderName: folderData.name,
+                    documentId: currentDocument.id,
+                  }),
+                });
+
+                if (!response.ok) {
+                  const errorData = await response.json();
+                  throw new Error(errorData.error || 'Failed to delete folder');
+                }
+                await fetchDocument(currentDocument.id);
+              } catch (error) {
+                console.error('Error deleting folder:', error);
+              } finally {
+                setIsDeleting(false);
+              }
+            }}
+          >
+            {isDeleting ? 'Deleting...' : 'Delete Folder'}
+          </button>
         </div>
       )}
 

@@ -352,7 +352,7 @@ export default function FileList() {
       console.error('Folder name and document ID are required.');
       return;
     }
-
+    setLoading(true);
     try {
       const response = await fetch(`api/db/documents/addFolder`, {
         method: 'POST',
@@ -375,9 +375,8 @@ export default function FileList() {
 
       // Optionally, refresh the document to reflect changes
       await fetchDocument(currentDocument.id);
-
-      // Close the modal
       setIsAddFileModalOpen(false);
+      setLoading(false);
     } catch (error) {
       console.error('Error adding folder:', error);
       alert('An error occurred while adding the folder.');
@@ -408,7 +407,9 @@ export default function FileList() {
         >
           Open Filters
         </button>
+
         <Divider />
+
         <div className='h-full overflow-scroll'>
           {Object.entries(searchedFolders).map(([key, folder]) => (
             <TableFolder
@@ -424,11 +425,13 @@ export default function FileList() {
             />
           ))}
         </div>
+
         <Divider />
+
         <div className='flex justify-center'>
           <button
             onClick={() => setIsAddFileModalOpen(true)}
-            className='rounded-md bg-blue-600 px-2 py-1 text-sm text-white hover:bg-blue-500'
+            className='w-full rounded-md bg-gray-800 px-2 py-1 text-sm text-white hover:bg-gray-700'
           >
             Add File
           </button>

@@ -45,6 +45,8 @@ function inferFileType(nameOrUrl: string): string {
   return 'Other';
 }
 
+const MAX_MARKDOWN_SIZE = 350 * 1024; // 350 KB to stay safely within the 400 KB limit
+
 export async function POST(request: Request) {
   try {
     const data = await request.json();
@@ -69,6 +71,10 @@ export async function POST(request: Request) {
     const fileBuffer = Buffer.from(data.file, 'base64');
     const fileHash = generateFileHash(fileBuffer);
 
+    const determinedFileType =
+      data.fileType || inferFileType(data.name || data.url);
+    console.log('Determined fileType:', determinedFileType);
+
     const resourceMetaId = uuidv4();
     const resourceMetaItem: ResourceMeta = {
       id: resourceMetaId,
@@ -80,12 +86,8 @@ export async function POST(request: Request) {
       summary: data.summary || '',
       tags: data.tags || [],
       documentId: data.documentId,
+      fileType: determinedFileType,
     };
-
-    const determinedFileType =
-      data.fileType || inferFileType(data.name || data.url);
-    console.log('Determined fileType:', determinedFileType);
-
     const resourceMetaCompressed: ResourceCompressed = {
       id: resourceMetaId,
       name: data.name,
@@ -94,9 +96,17 @@ export async function POST(request: Request) {
       fileType: determinedFileType,
     };
 
+    console.log(data.markdown);
+    if (data.markdown.length > MAX_MARKDOWN_SIZE) {
+      console.warn('Markdown content truncated to fit within size limit.');
+    }
+
     const resource: Resource = {
       id: fileHash,
-      markdown: data.markdown || '',
+      markdown:
+        data.markdown && data.markdown.length > MAX_MARKDOWN_SIZE
+          ? data.markdown.slice(0, MAX_MARKDOWN_SIZE) + '...'
+          : data.markdown || '',
       url: data.url,
     };
 
@@ -172,74 +182,6 @@ export async function GET(request: Request) {
     return new Response(JSON.stringify({ err: 'Internal server error' }), {
       status: 500,
     });
-  }
-}
-
-export async function DELETE(request: Request) {
-  try {
-    const { id: resourceId } = await request.json();
-
-    // Fetch the resource metadata
-    const resourceMeta = await client.send(
-      new GetCommand({ TableName: resourceMetaTable, Key: { id: resourceId } }),
-    );
-    if (!resourceMeta.Item) {
-      throw new Error('Resource not found.');
-    }
-
-    const { documentId } = resourceMeta.Item;
-
-    // Fetch the associated document
-    const document = await client.send(
-      new GetCommand({ TableName: documentTable, Key: { id: documentId } }),
-    );
-    if (!document.Item) {
-      throw new Error('Document not found.');
-    }
-
-    const existingDocument = AWS.DynamoDB.Converter.unmarshall(document.Item);
-    let folderUpdated = false;
-
-    Object.entries(existingDocument.folders).forEach(([folderName, folder]) => {
-      folder.resources = folder.resources.filter(
-        (resource: any) => resource.id !== resourceId,
-      );
-      if (folder.resources.length < folder.resources.length)
-        folderUpdated = true;
-    });
-
-    if (!folderUpdated) {
-      throw new Error('Resource not found in document folders.');
-    }
-
-    await client.send(
-      new UpdateCommand({
-        TableName: documentTable,
-        Key: { id: documentId },
-        UpdateExpression: 'SET folders = :folders',
-        ExpressionAttributeValues: { ':folders': existingDocument.folders },
-      }),
-    );
-
-    await client.send(
-      new DeleteCommand({
-        TableName: resourceMetaTable,
-        Key: { id: resourceId },
-      }),
-    );
-
-    return new Response(
-      JSON.stringify({ msg: 'Resource deleted successfully' }),
-      { status: 200 },
-    );
-  } catch (error) {
-    console.error('Error in DELETE request:', error);
-    return new Response(
-      JSON.stringify({ err: error.message || 'Internal server error' }),
-      {
-        status: 500,
-      },
-    );
   }
 }
 

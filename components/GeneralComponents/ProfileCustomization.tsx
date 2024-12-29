@@ -125,7 +125,20 @@ export default function ProfileCustomization({
         onClick={handleOpenModal}
         className='grid h-full w-full cursor-pointer place-items-center'
       >
-        <AvatarIcon className='h-6 w-6 text-fileBlue' />
+        {session && session.user && (
+          <div className='flex items-center space-x-2'>
+            {session.user.image && (
+              <div className='relative h-6 w-6'>
+                <Image
+                  src={session.user.image}
+                  alt='User Avatar'
+                  layout='fill'
+                  className='rounded-full'
+                />
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       {isModalOpen && (

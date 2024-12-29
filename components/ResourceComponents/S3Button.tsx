@@ -44,22 +44,29 @@ const S3Button = ({ onBack }: S3ButtonProps) => {
     }
 
     setIsUploading(true);
-    const folderToSave = isNewFolder ? newFolderName : selectedFolder;
 
-    for (const file of fileQueue) {
-      try {
-        await uploadResource(file, folderToSave, currentDocument.id);
-        setUploadedFiles((prev) => ({ ...prev, [file.name]: true }));
-      } catch (error) {
-        console.error(`Error uploading file ${file.name}:`, error);
+    const folderToSave = isNewFolder ? newFolderName : selectedFolder;
+    const uploadedFilesMap: Record<string, boolean> = {};
+
+    try {
+      for (const file of fileQueue) {
+        try {
+          await uploadResource(file, folderToSave, currentDocument.id);
+          uploadedFilesMap[file.name] = true;
+        } catch (error) {
+          console.error(`Error uploading file ${file.name}:`, error);
+        }
       }
+      setFileQueue([]);
+    } catch (error) {
+      console.error('Error handling uploads:', error);
+    } finally {
+      setIsUploading(false);
+      onBack();
+      await fetchDocument(currentDocument.id);
     }
-    await fetchDocument(currentDocument.id);
-    setFileQueue([]);
-    setIsUploading(false);
   };
 
-  console.log(currentDocument);
   return (
     <div className='flex h-full flex-col'>
       <div className='flex items-center space-x-2 p-2'>
@@ -83,10 +90,10 @@ const S3Button = ({ onBack }: S3ButtonProps) => {
             </button>
             <input
               type='text'
-              placeholder='Enter new folder name'
+              placeholder='Enter Name'
               value={newFolderName}
               onChange={(e) => setNewFolderName(e.target.value)}
-              className='w-full rounded-lg border border-zinc-700 bg-gray-400 px-2 py-1 text-sm text-white outline-none focus:border-white'
+              className='w-full rounded-lg bg-gray-800 px-2 py-1 text-sm text-white outline-none focus:border-white'
             />
           </>
         )}
@@ -119,7 +126,7 @@ const S3Button = ({ onBack }: S3ButtonProps) => {
                   key={index}
                   className='flex w-full rounded-lg border-[1px] border-zinc-700'
                 >
-                  <p className='flex-1 whitespace-nowrap px-2 py-1 text-sm'>
+                  <p className='flex-1 truncate whitespace-nowrap px-2 py-1 text-sm'>
                     {file.name}
                   </p>
                   {isUploading ? (

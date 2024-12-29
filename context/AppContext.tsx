@@ -11,6 +11,7 @@ import { useSession } from 'next-auth/react';
 import React, { createContext, useContext, useState, ReactNode } from 'react';
 import { useS3Upload } from 'next-s3-upload';
 import AWS from 'aws-sdk';
+import crypto from 'crypto';
 
 interface CurrentResourceContextValue {
   currentResource: Resource | null;
@@ -110,7 +111,23 @@ export function CurrentResourceProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const extractText = async (file: File): Promise<string | null> => {
+  const extractText = async (file: File): Promise<string> => {
+    console.log('inside');
+    console.log(file);
+    const nonParsingFileTypes = [
+      'image/jpeg',
+      'image/png',
+      'image/gif',
+      'image/webp',
+      'application/zip',
+      'application/x-rar-compressed',
+    ];
+    const fileType = file.type.toLowerCase();
+
+    if (nonParsingFileTypes.includes(fileType)) {
+      return 'No Text for this type of File';
+    }
+
     const formData = new FormData();
     formData.append('myFile', file);
 
@@ -131,7 +148,7 @@ export function CurrentResourceProvider({ children }: { children: ReactNode }) {
       return markdown;
     } catch (error) {
       console.error(`Error extracting text from ${file.name}:`, error);
-      return null;
+      return '';
     }
   };
 
@@ -141,11 +158,34 @@ export function CurrentResourceProvider({ children }: { children: ReactNode }) {
     documentId: string,
   ) => {
     try {
+      const fileBuffer = await file.arrayBuffer();
+      const fileHash = crypto
+        .createHash('md5')
+        .update(Buffer.from(fileBuffer))
+        .digest('hex');
+
+      const resourceExistsResponse = await fetch(
+        `/api/db/resource/check?hash=${fileHash}`,
+        { method: 'GET' },
+      );
+
+      if (!resourceExistsResponse.ok) {
+        throw new Error(
+          `Failed to check resource existence: ${resourceExistsResponse.statusText}`,
+        );
+      }
+
+      const { exists } = await resourceExistsResponse.json();
+
       const { url } = await uploadToS3(file);
-      const parsedText = await extractText(file);
-      if (!parsedText) {
-        console.error(`Failed to parse text for file ${file.name}`);
-        return;
+
+      let parsedText = 'Did not Process';
+      if (!exists) {
+        parsedText = await extractText(file);
+        if (!parsedText) {
+          console.error(`Failed to parse text for file ${file.name}`);
+          return;
+        }
       }
 
       const fileReader = new FileReader();
@@ -167,6 +207,7 @@ export function CurrentResourceProvider({ children }: { children: ReactNode }) {
             name: file.name,
             folderName,
             url,
+            hash: fileHash,
             markdown: parsedText,
             dateAdded: new Date().toISOString(),
             lastOpened: new Date().toISOString(),
