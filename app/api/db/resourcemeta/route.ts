@@ -73,7 +73,6 @@ export async function POST(request: Request) {
 
     const determinedFileType =
       data.fileType || inferFileType(data.name || data.url);
-    console.log('Determined fileType:', determinedFileType);
 
     const resourceMetaId = uuidv4();
     const resourceMetaItem: ResourceMeta = {
@@ -96,7 +95,6 @@ export async function POST(request: Request) {
       fileType: determinedFileType,
     };
 
-    console.log(data.markdown);
     if (data.markdown.length > MAX_MARKDOWN_SIZE) {
       console.warn('Markdown content truncated to fit within size limit.');
     }

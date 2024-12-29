@@ -32,8 +32,6 @@ export async function POST(req: Request) {
       type: file.type || 'application/octet-stream',
     });
 
-    console.log('Constructed fileBlob:', fileBlob);
-
     const uploadFormData = new FormData();
     uploadFormData.append(
       'file',

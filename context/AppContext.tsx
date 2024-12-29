@@ -112,8 +112,6 @@ export function CurrentResourceProvider({ children }: { children: ReactNode }) {
   };
 
   const extractText = async (file: File): Promise<string> => {
-    console.log('inside');
-    console.log(file);
     const nonParsingFileTypes = [
       'image/jpeg',
       'image/png',
@@ -179,12 +177,14 @@ export function CurrentResourceProvider({ children }: { children: ReactNode }) {
 
       const { url } = await uploadToS3(file);
 
-      let parsedText = 'Did not Process';
+      let parsedText = 'Disabled Processing';
       if (!exists) {
-        parsedText = await extractText(file);
-        if (!parsedText) {
-          console.error(`Failed to parse text for file ${file.name}`);
-          return;
+        if (process.env.DISABLE_PARSING?.toUpperCase() === 'FALSE') {
+          parsedText = await extractText(file);
+          if (!parsedText) {
+            console.error(`Failed to parse text for file ${file.name}`);
+            return;
+          }
         }
       }
 

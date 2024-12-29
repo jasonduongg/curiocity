@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   DndContext,
   useSensor,
@@ -9,9 +9,77 @@ import {
 } from '@dnd-kit/core';
 import TableFolder from '@/components/ResourceComponents/TableFolder';
 import TextInput from '../GeneralComponents/TextInput';
-import { useCurrentDocument } from '@/context/AppContext';
 import Divider from '../GeneralComponents/Divider';
 import { FaCheck } from 'react-icons/fa';
+import { useCurrentDocument } from '@/context/AppContext';
+
+const filterResources = (
+  folders,
+  fileTypes,
+  dateRange,
+  sortOrder,
+  searchQuery,
+) => {
+  return Object.entries(folders || {}).reduce(
+    (acc, [folderName, folderData]) => {
+      let resources = folderData.resources;
+
+      // Apply file type filter
+      if (fileTypes.length > 0) {
+        resources = resources.filter((resource) =>
+          fileTypes.includes(resource.fileType),
+        );
+      }
+
+      // Apply date range filter
+      if (dateRange.from || dateRange.to) {
+        const fromDate = dateRange.from
+          ? new Date(dateRange.from + 'T00:00:00Z')
+          : null;
+        const toDate = dateRange.to
+          ? new Date(dateRange.to + 'T23:59:59Z')
+          : null;
+
+        resources = resources.filter((resource) => {
+          const resourceDate = new Date(resource.dateAdded);
+          if (fromDate && resourceDate < fromDate) return false;
+          if (toDate && resourceDate > toDate) return false;
+          return true;
+        });
+      }
+
+      // Apply sorting
+      resources = resources.sort((a, b) => {
+        switch (sortOrder) {
+          case 'a-z':
+            return a.name.localeCompare(b.name);
+          case 'z-a':
+            return b.name.localeCompare(a.name);
+          case 'dateAdded':
+            return new Date(a.dateAdded) - new Date(b.dateAdded);
+          case 'lastOpened':
+            return new Date(b.lastOpened) - new Date(a.lastOpened);
+          default:
+            return 0;
+        }
+      });
+
+      // Apply search query filter
+      if (searchQuery.trim()) {
+        resources = resources.filter((resource) =>
+          resource.name.toLowerCase().includes(searchQuery.toLowerCase()),
+        );
+      }
+
+      if (resources.length > 0 || !searchQuery.trim()) {
+        acc[folderName] = { ...folderData, resources };
+      }
+
+      return acc;
+    },
+    {},
+  );
+};
 
 const AddFileModal = ({
   isOpen,
@@ -20,16 +88,16 @@ const AddFileModal = ({
 }: {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (fileName: string) => void;
+  onSubmit: (folderName: string) => void;
 }) => {
-  const [fileName, setFileName] = useState('');
+  const [folderName, setFolderName] = useState('');
 
   if (!isOpen) return null;
 
   const handleSubmit = () => {
-    if (fileName.trim()) {
-      onSubmit(fileName);
-      setFileName('');
+    if (folderName.trim()) {
+      onSubmit(folderName);
+      setFolderName('');
       onClose();
     }
   };
@@ -37,12 +105,12 @@ const AddFileModal = ({
   return (
     <div className='fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50'>
       <div className='w-1/3 rounded-lg bg-gray-700 p-6 text-white'>
-        <h3 className='mb-4 text-lg font-semibold'>Add New File</h3>
+        <h3 className='mb-4 text-lg font-semibold'>Add New Folder</h3>
         <input
           type='text'
-          value={fileName}
-          onChange={(e) => setFileName(e.target.value)}
-          placeholder='Enter file name'
+          value={folderName}
+          onChange={(e) => setFolderName(e.target.value)}
+          placeholder='Enter folder name'
           className='mb-4 w-full rounded-md bg-gray-800 px-2 py-1 text-white outline-none'
         />
         <div className='flex justify-end gap-2'>
@@ -74,14 +142,13 @@ const FilterModal = ({
   selectedDateRange,
   setSelectedDateRange,
   availableFileTypes,
-  handleApplyFilters,
 }) => {
   if (!isOpen) return null;
 
   const handleClearFilters = () => {
-    setSelectedSortOrder('a-z'); // Reset to default sort order
-    setSelectedFileTypes([]); // Clear file types
-    setSelectedDateRange({ from: '', to: '' }); // Reset date range
+    setSelectedSortOrder('a-z');
+    setSelectedFileTypes([]);
+    setSelectedDateRange({ from: '', to: '' });
   };
 
   return (
@@ -125,7 +192,7 @@ const FilterModal = ({
                         );
                       }
                     }}
-                    className='absolute h-0 w-0 opacity-0' // Hide default checkbox
+                    className='absolute h-0 w-0 opacity-0'
                   />
                   <div
                     className={`h-5 w-5 rounded-md border-2 ${
@@ -182,10 +249,7 @@ const FilterModal = ({
         <Divider />
         <div className='flex w-full justify-end'>
           <button
-            onClick={() => {
-              handleApplyFilters();
-              onClose();
-            }}
+            onClick={onClose}
             className='rounded-md bg-gray-700 px-2 py-1 text-sm text-white hover:bg-gray-400'
           >
             Close
@@ -212,11 +276,7 @@ export default function FileList() {
   }>({ from: '', to: '' });
   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
   const [isAddFileModalOpen, setIsAddFileModalOpen] = useState(false);
-
-  const [filteredFolders, setFilteredFolders] = useState({});
-  const [searchedFolders, setSearchedFolders] = useState({});
-
-  const [loading, setLoading] = useState(true); // Add a loading state
+  const [loading, setLoading] = useState(true);
 
   const availableFileTypes = [
     'PDF',
@@ -230,122 +290,39 @@ export default function FileList() {
     'GIF',
     'Link',
     'Other',
-  ]; // Comprehensive list of file types
+  ];
 
   useEffect(() => {
     const fetchData = async () => {
-      if (!currentDocument) {
+      if (currentDocument) {
         setLoading(true);
-        await fetchDocument(currentDocument?.id); // Ensure this is awaited
+        await fetchDocument(currentDocument.id);
         setLoading(false);
       } else {
-        setLoading(false); // Already loaded
+        setLoading(false);
       }
     };
 
     fetchData();
-  }, [fetchDocument, currentDocument]);
+  }, []);
 
-  const applyFilters = () => {
-    const result = Object.entries(currentDocument?.folders || {})
-      .sort(([folderNameA], [folderNameB]) =>
-        folderNameA.localeCompare(folderNameB),
-      )
-      .reduce((acc, [folderName, folderData]) => {
-        let resources = folderData.resources;
-
-        // Apply file type filter
-        if (selectedFileTypes.length > 0) {
-          resources = resources.filter((resource) =>
-            selectedFileTypes.includes(resource.fileType),
-          );
-        }
-
-        // Apply date range filter
-        if (selectedDateRange.from || selectedDateRange.to) {
-          const fromDate = selectedDateRange.from
-            ? new Date(selectedDateRange.from + 'T00:00:00Z')
-            : null;
-          const toDate = selectedDateRange.to
-            ? new Date(selectedDateRange.to + 'T23:59:59Z')
-            : null;
-
-          resources = resources.filter((resource) => {
-            const resourceDate = new Date(resource.dateAdded);
-            if (fromDate && resourceDate < fromDate) return false;
-            if (toDate && resourceDate > toDate) return false;
-            return true;
-          });
-        }
-
-        // Apply sorting
-        if (selectedSortOrder === 'a-z') {
-          resources.sort((a, b) => a.name.localeCompare(b.name));
-        } else if (selectedSortOrder === 'z-a') {
-          resources.sort((a, b) => b.name.localeCompare(a.name));
-        } else if (selectedSortOrder === 'dateAdded') {
-          resources.sort(
-            (a, b) =>
-              new Date(a.dateAdded).getTime() - new Date(b.dateAdded).getTime(),
-          );
-        } else if (selectedSortOrder === 'lastOpened') {
-          resources.sort(
-            (a, b) =>
-              new Date(b.lastOpened).getTime() -
-              new Date(a.lastOpened).getTime(),
-          );
-        }
-
-        acc[folderName] = { ...folderData, resources };
-        return acc;
-      }, {});
-
-    setFilteredFolders(result);
-  };
-
-  const applySearch = () => {
-    const result = Object.entries(filteredFolders).reduce(
-      (acc, [folderName, folderData]) => {
-        const matchingResources = folderData.resources.filter((resource) =>
-          resource.name.toLowerCase().includes(searchQuery.toLowerCase()),
-        );
-
-        // If there's a search query, include only folders with matching resources
-        // Otherwise, include all folders
-        if (searchQuery.trim()) {
-          if (matchingResources.length > 0) {
-            acc[folderName] = {
-              ...folderData,
-              resources: matchingResources,
-            };
-          }
-        } else {
-          acc[folderName] = {
-            ...folderData,
-            resources: folderData.resources,
-          };
-        }
-
-        return acc;
-      },
-      {},
-    );
-
-    setSearchedFolders(result);
-  };
-
-  useEffect(() => {
-    applyFilters();
-  }, [
-    currentDocument,
-    selectedSortOrder,
-    selectedFileTypes,
-    selectedDateRange,
-  ]);
-
-  useEffect(() => {
-    applySearch();
-  }, [filteredFolders, searchQuery]);
+  const filteredFolders = useMemo(
+    () =>
+      filterResources(
+        currentDocument?.folders || {},
+        selectedFileTypes,
+        selectedDateRange,
+        selectedSortOrder,
+        searchQuery,
+      ),
+    [
+      currentDocument?.folders,
+      selectedFileTypes,
+      selectedDateRange,
+      selectedSortOrder,
+      searchQuery,
+    ],
+  );
 
   const handleAddFolder = async (folderName: string) => {
     if (!folderName.trim() || !currentDocument?.id) {
@@ -363,23 +340,20 @@ export default function FileList() {
         }),
       });
 
-      const result = await response.json();
-
       if (!response.ok) {
-        console.error('Error adding folder:', result.error);
-        alert(result.error || 'Failed to add folder.');
+        const error = await response.json();
+        console.error('Error adding folder:', error.message);
+        alert(error.message || 'Failed to add folder.');
         return;
       }
 
-      console.log('Folder added successfully:', result.updatedFolders);
-
-      // Optionally, refresh the document to reflect changes
       await fetchDocument(currentDocument.id);
       setIsAddFileModalOpen(false);
-      setLoading(false);
     } catch (error) {
       console.error('Error adding folder:', error);
       alert('An error occurred while adding the folder.');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -411,7 +385,7 @@ export default function FileList() {
         <Divider />
 
         <div className='h-full overflow-scroll'>
-          {Object.entries(searchedFolders).map(([key, folder]) => (
+          {Object.entries(filteredFolders).map(([key, folder]) => (
             <TableFolder
               key={key}
               folderData={folder}
@@ -453,7 +427,6 @@ export default function FileList() {
           selectedDateRange={selectedDateRange}
           setSelectedDateRange={setSelectedDateRange}
           availableFileTypes={availableFileTypes}
-          handleApplyFilters={applyFilters}
         />
       </div>
     </DndContext>

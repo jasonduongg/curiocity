@@ -46,24 +46,25 @@ const S3Button = ({ onBack }: S3ButtonProps) => {
     setIsUploading(true);
 
     const folderToSave = isNewFolder ? newFolderName : selectedFolder;
-    const uploadedFilesMap: Record<string, boolean> = {};
 
     try {
       for (const file of fileQueue) {
         try {
           await uploadResource(file, folderToSave, currentDocument.id);
-          uploadedFilesMap[file.name] = true;
+          setUploadedFiles((prev) => ({ ...prev, [file.name]: true }));
         } catch (error) {
           console.error(`Error uploading file ${file.name}:`, error);
         }
       }
+
+      await new Promise((resolve) => setTimeout(resolve, 500)); // Ensure context propagates
+      await fetchDocument(currentDocument.id);
       setFileQueue([]);
     } catch (error) {
       console.error('Error handling uploads:', error);
     } finally {
       setIsUploading(false);
       onBack();
-      await fetchDocument(currentDocument.id);
     }
   };
 
